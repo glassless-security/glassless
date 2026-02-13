@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build and Test (JDK ${{ matrix.java }}, ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['25']
+        include:
+          - java: '25'
+            os: ubuntu-latest
+            arch: amd64
+          - java: '25'
+            os: ubuntu-24.04-arm
+            arch: arm64
+          - java: '26-ea'
+            os: ubuntu-latest
+            arch: amd64
+            experimental: true
+          - java: '26-ea'
+            os: ubuntu-24.04-arm
+            arch: arm64
+            experimental: true
+
+    continue-on-error: ${{ matrix.experimental || false }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and test
+        run: mvn -B verify
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-jdk-${{ matrix.java }}-${{ matrix.arch }}
+          path: target/surefire-reports/
+          retention-days: 7
+
+  release-dry-run:
+    name: Release Dry Run
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Verify release artifacts
+        run: mvn -B package -Prelease -DskipTests -Dgpg.skip=true
+
+      - name: Check artifacts
+        run: |
+          ls -la target/*.jar
+          echo "--- Main JAR ---"
+          jar tf target/glassless-provider-*[!s].jar | head -20
+          echo "--- Sources JAR ---"
+          jar tf target/glassless-provider-*-sources.jar | head -20
+          echo "--- Javadoc JAR ---"
+          jar tf target/glassless-provider-*-javadoc.jar | head -20
