@@ -1,6 +1,7 @@
 package net.glassless.provider;
 
 import java.security.Provider;
+import java.security.Security;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -79,6 +80,39 @@ public class GlaSSLessProvider extends Provider {
     */
    public boolean isFIPSMode() {
       return fipsMode;
+   }
+
+   /**
+    * Checks if OpenSSL is available on this system.
+    *
+    * @return true if OpenSSL 3.0+ is available and can be loaded
+    */
+   public static boolean isOpenSSLAvailable() {
+      try {
+         // Attempt to load OpenSSL and get the version string
+         // This will trigger the static initializer in OpenSSLCrypto
+         OpenSSLCrypto.getOpenSSLVersion();
+         return true;
+      } catch (Throwable e) {
+         return false;
+      }
+   }
+
+   /**
+    * Registers this provider with the Java security framework if OpenSSL is available.
+    *
+    * <p>This method is a convenience for conditional registration. It checks if OpenSSL
+    * is available on the system before attempting to register the provider, avoiding
+    * exceptions when OpenSSL is not installed.
+    *
+    * @return the provider position if successfully registered, or -1 if OpenSSL is
+    *         not available or registration failed
+    */
+   public static int registerIfAvailable() {
+      if (!isOpenSSLAvailable()) {
+         return -1;
+      }
+      return Security.addProvider(new GlaSSLessProvider());
    }
 
    private void registerMessageDigestServices() {
