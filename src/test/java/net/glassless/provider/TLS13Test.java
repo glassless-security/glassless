@@ -272,13 +272,28 @@ public class TLS13Test {
          throws Exception {
       Path keystorePath = tempDir.resolve("keystore-" + System.nanoTime() + ".p12");
 
-      // Use keytool to generate a self-signed certificate
-      ProcessBuilder pb = new ProcessBuilder(
+      // Build keytool command - use -groupname for EC, -keysize for RSA
+      java.util.List<String> command = new java.util.ArrayList<>(java.util.List.of(
          "keytool",
          "-genkeypair",
          "-alias", "server",
-         "-keyalg", keyAlg,
-         "-keysize", String.valueOf(keySize),
+         "-keyalg", keyAlg
+      ));
+
+      if ("EC".equals(keyAlg)) {
+         // Map key size to curve name for EC keys
+         String groupName = switch (keySize) {
+            case 256 -> "secp256r1";
+            case 384 -> "secp384r1";
+            case 521 -> "secp521r1";
+            default -> throw new IllegalArgumentException("Unsupported EC key size: " + keySize);
+         };
+         command.addAll(java.util.List.of("-groupname", groupName));
+      } else {
+         command.addAll(java.util.List.of("-keysize", String.valueOf(keySize)));
+      }
+
+      command.addAll(java.util.List.of(
          "-sigalg", sigAlg,
          "-validity", "365",
          "-keystore", keystorePath.toString(),
@@ -286,7 +301,9 @@ public class TLS13Test {
          "-keypass", new String(PASSWORD),
          "-dname", "CN=test-server,O=Test,C=US",
          "-storetype", "PKCS12"
-      );
+      ));
+
+      ProcessBuilder pb = new ProcessBuilder(command);
       pb.inheritIO();
       Process process = pb.start();
       int exitCode = process.waitFor();
