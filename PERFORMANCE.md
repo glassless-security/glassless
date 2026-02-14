@@ -14,7 +14,7 @@ This report compares the performance of multiple JCA cryptographic providers:
 
 | Property | Value |
 |----------|-------|
-| Date | 2026-02-14T13:56:06+01:00 |
+| Date | 2026-02-14T14:38:05+01:00 |
 | Host | jakku |
 | CPU | AMD Ryzen 9 9900X 12-Core Processor |
 | Java | openjdk version "25.0.2" 2026-01-20 |
@@ -29,14 +29,14 @@ Benchmarks include the following providers: bcFips, glassless, jdk, nss
 
 | Category | Operation | GlaSSLess | JDK | BC FIPS | NSS |
 |----------|-----------|----------:|----:|--------:|----:|
-| Key Agreement | ECDH | 19.23 | 3.09 | 4.14 | 520441.43 |
+| Key Agreement | ECDH | 19.23 | 3.09 | 4.14 | - |
 | Key Agreement | X25519 | - | - | - | - |
 | Key Generation | Ed25519 | - | - | - | - |
 | Key Generation | EC P-256 | 33.05 | 17.81 | 2.32 | 17.78 |
 | Signature | Ed25519 Sign | - | - | - | - |
 | Signature | Ed25519 Verify | - | - | - | - |
-| Digest | SHA-256 (64B) | 2592.21 | 15081.45 | 8024.14 | 4128194.03 |
-| MAC | HMAC-SHA256 (64B) | 771.83 | 6162.4 | 2424.12 | 4008673.21 |
+| Digest | SHA-256 (64B) | 2592.21 | 15081.45 | 8024.14 | - |
+| MAC | HMAC-SHA256 (64B) | 771.83 | 6162.4 | 2424.12 | - |
 
 _Scores in ops/ms. Higher is better. "-" indicates no data available._
 
@@ -80,14 +80,6 @@ _Scores in ops/ms. Higher is better. "-" indicates no data available._
 | jdk | Digest | algorithm=SHA-512, dataSize=1048576 | 1.31 | ±0.01 | ops/ms |
 | jdk | Digest | algorithm=SHA-512, dataSize=16384 | 82.76 | ±0.6 | ops/ms |
 | jdk | Digest | algorithm=SHA-512, dataSize=64 | 8380.67 | ±286.47 | ops/ms |
-| nss | Digest | algorithm=SHA-256, dataSize=1024 | 4081692.12 | ±272465.21 | ops/ms |
-| nss | Digest | algorithm=SHA-256, dataSize=1048576 | 4197431.08 | ±77095.97 | ops/ms |
-| nss | Digest | algorithm=SHA-256, dataSize=16384 | 4227027.13 | ±34865.7 | ops/ms |
-| nss | Digest | algorithm=SHA-256, dataSize=64 | 4128194.03 | ±62492.19 | ops/ms |
-| nss | Digest | algorithm=SHA-512, dataSize=1024 | 4209634.24 | ±69659.16 | ops/ms |
-| nss | Digest | algorithm=SHA-512, dataSize=1048576 | 4177626.85 | ±87142.24 | ops/ms |
-| nss | Digest | algorithm=SHA-512, dataSize=16384 | 4160782.77 | ±112168.24 | ops/ms |
-| nss | Digest | algorithm=SHA-512, dataSize=64 | 3917591.97 | ±61935.46 | ops/ms |
 
 ## Cipher Benchmarks
 
@@ -121,14 +113,6 @@ _No data available for this benchmark._
 | jdk | Mac | algorithm=HmacSHA512, dataSize=1048576 | 1.31 | ±0.01 | ops/ms |
 | jdk | Mac | algorithm=HmacSHA512, dataSize=16384 | 80.54 | ±0.61 | ops/ms |
 | jdk | Mac | algorithm=HmacSHA512, dataSize=64 | 2235.06 | ±45.02 | ops/ms |
-| nss | Mac | algorithm=HmacSHA256, dataSize=1024 | 4219229.47 | ±76437.13 | ops/ms |
-| nss | Mac | algorithm=HmacSHA256, dataSize=1048576 | 3963515.32 | ±211420.15 | ops/ms |
-| nss | Mac | algorithm=HmacSHA256, dataSize=16384 | 4127806.38 | ±169122.23 | ops/ms |
-| nss | Mac | algorithm=HmacSHA256, dataSize=64 | 4008673.21 | ±159052.41 | ops/ms |
-| nss | Mac | algorithm=HmacSHA512, dataSize=1024 | 4197067.95 | ±217998.74 | ops/ms |
-| nss | Mac | algorithm=HmacSHA512, dataSize=1048576 | 4027356.88 | ±347065.71 | ops/ms |
-| nss | Mac | algorithm=HmacSHA512, dataSize=16384 | 4180518.02 | ±127293.06 | ops/ms |
-| nss | Mac | algorithm=HmacSHA512, dataSize=64 | 4082471.11 | ±268592.52 | ops/ms |
 
 ## Signature Benchmarks
 
@@ -144,10 +128,6 @@ _No data available for this benchmark._
 | jdk | Sign | algorithm=SHA384withECDSA | 1.81 | ±0.04 | ops/ms |
 | jdk | Verify | algorithm=SHA256withECDSA | 4.34 | ±0.08 | ops/ms |
 | jdk | Verify | algorithm=SHA384withECDSA | 1.01 | ±0.02 | ops/ms |
-| nss | Sign | algorithm=SHA256withECDSA | 4140279.53 | ±15330.55 | ops/ms |
-| nss | Sign | algorithm=SHA384withECDSA | 4082668.04 | ±199735.22 | ops/ms |
-| nss | Verify | algorithm=SHA256withECDSA | 5025002.69 | ±323502.79 | ops/ms |
-| nss | Verify | algorithm=SHA384withECDSA | 4679290.89 | ±122648.35 | ops/ms |
 
 ## Key Agreement Benchmarks
 
@@ -156,7 +136,6 @@ _No data available for this benchmark._
 | bcFips | KeyAgreement | algorithm=ECDH | 4.14 | ±0.03 | ops/ms |
 | glassless | KeyAgreement | algorithm=ECDH | 19.23 | ±0.25 | ops/ms |
 | jdk | KeyAgreement | algorithm=ECDH | 3.09 | ±0.08 | ops/ms |
-| nss | KeyAgreement | algorithm=ECDH | 520441.43 | ±45918.43 | ops/ms |
 
 ## Key Pair Generator Benchmarks
 

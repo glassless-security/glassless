@@ -71,6 +71,7 @@ generate_table() {
    echo "" >> "$OUTPUT_FILE"
 
    # Get unique parameter combinations with provider extracted
+   # Filter out NSS results with unrealistic scores (> 100000 ops/ms indicates provider not working)
    jq -r --arg prefix "$benchmark_prefix" '
       .[] | select(.benchmark | startswith($prefix)) |
       (.benchmark | split(".") | last) as $method |
@@ -82,7 +83,7 @@ generate_table() {
          score: .primaryMetric.score,
          error: .primaryMetric.scoreError,
          unit: .primaryMetric.scoreUnit
-      }
+      } | select(.provider != "nss" or .score < 100000)
    ' "$INPUT_FILE" | jq -s 'sort_by(.provider, .operation, (.params | to_entries | map(.value) | join(",")))' > /tmp/benchmarks.json
 
    # Check if we have data
@@ -128,8 +129,9 @@ jq -r '
    def get_score(name; params):
       [.[] | select(.benchmark | endswith(name)) | select(if params then (.params | to_entries | all(. as $e | params | has($e.key) and .[$e.key] == $e.value)) else true end)] | .[0].primaryMetric.score // null;
 
+   # Filter out unrealistic scores (> 100000 ops/ms indicates provider not actually working)
    def format_score(s):
-      if s == null then "-" else (s * 100 | round / 100 | tostring) end;
+      if s == null then "-" elif s > 100000 then "-" else (s * 100 | round / 100 | tostring) end;
 
    # Key Agreement
    (get_score("glasslessKeyAgreement"; {algorithm: "ECDH"})) as $gl_ecdh |
