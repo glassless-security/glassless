@@ -61,7 +61,7 @@
       <version.maven-source-plugin>3.3.1</version.maven-source-plugin>
       <version.maven-surefire-plugin>3.5.4</version.maven-surefire-plugin>
       <version.reproducible-build-maven-plugin>0.17</version.reproducible-build-maven-plugin>
-      <version.spotless-maven-plugin>2.44.4</version.spotless-maven-plugin>
+      <version.spotless-maven-plugin>3.2.1</version.spotless-maven-plugin>
    </properties>
 
    <dependencies>
