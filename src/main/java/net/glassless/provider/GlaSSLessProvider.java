@@ -213,8 +213,10 @@ public class GlaSSLessProvider extends Provider {
          List.of("OID.2.16.840.1.101.3.4.1.47", "2.16.840.1.101.3.4.1.47"), null));
 
       // AES-XTS - FIPS approved (for storage encryption)
-      putService(new Service(this, CIPHER, "AES_128/XTS/NoPadding", AES_128XtsNoPaddingCipher.class.getName(), null, null));
-      putService(new Service(this, CIPHER, "AES_256/XTS/NoPadding", AES_256XtsNoPaddingCipher.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES_128/XTS/NoPadding", AES_128XtsNoPaddingCipher.class.getName(),
+         List.of("OID.1.3.111.2.1619.0.1.1", "1.3.111.2.1619.0.1.1"), null));
+      putService(new Service(this, CIPHER, "AES_256/XTS/NoPadding", AES_256XtsNoPaddingCipher.class.getName(),
+         List.of("OID.1.3.111.2.1619.0.1.2", "1.3.111.2.1619.0.1.2"), null));
 
       // AES Key Wrap - FIPS approved
       putService(new Service(this, CIPHER, "AESWrap_128", AES_128WrapCipher.class.getName(),
@@ -398,10 +400,14 @@ public class GlaSSLessProvider extends Provider {
          List.of("OID.1.2.840.113549.2.11", "1.2.840.113549.2.11"), null));
 
       // HMAC with SHA-3 - FIPS approved
-      putService(new Service(this, MAC, "HmacSHA3-224", HmacSHA3_224.class.getName(), null, null));
-      putService(new Service(this, MAC, "HmacSHA3-256", HmacSHA3_256.class.getName(), null, null));
-      putService(new Service(this, MAC, "HmacSHA3-384", HmacSHA3_384.class.getName(), null, null));
-      putService(new Service(this, MAC, "HmacSHA3-512", HmacSHA3_512.class.getName(), null, null));
+      putService(new Service(this, MAC, "HmacSHA3-224", HmacSHA3_224.class.getName(),
+         List.of("OID.2.16.840.1.101.3.4.2.13", "2.16.840.1.101.3.4.2.13"), null));
+      putService(new Service(this, MAC, "HmacSHA3-256", HmacSHA3_256.class.getName(),
+         List.of("OID.2.16.840.1.101.3.4.2.14", "2.16.840.1.101.3.4.2.14"), null));
+      putService(new Service(this, MAC, "HmacSHA3-384", HmacSHA3_384.class.getName(),
+         List.of("OID.2.16.840.1.101.3.4.2.15", "2.16.840.1.101.3.4.2.15"), null));
+      putService(new Service(this, MAC, "HmacSHA3-512", HmacSHA3_512.class.getName(),
+         List.of("OID.2.16.840.1.101.3.4.2.16", "2.16.840.1.101.3.4.2.16"), null));
 
       // HmacPBE services
       if (!fipsMode) {
