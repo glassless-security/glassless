@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://central.sonatype.com/artifact/net.glassless/glassless-provider"><img src="https://img.shields.io/maven-central/v/net.glassless/glassless-provider?label=Maven%20Central" alt="Maven Central"></a>
-  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21%2B-blue?logo=openjdk" alt="Java Version"></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-25%2B-blue?logo=openjdk" alt="Java Version"></a>
   <a href="https://github.com/glassless-security/glassless/commits/main"><img src="https://img.shields.io/github/last-commit/glassless-security/glassless" alt="GitHub last commit"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="License"></a>
 </p>
@@ -21,7 +21,7 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 
 ## Requirements
 
-- **Java**: 21 or later (with `--enable-native-access` flag)
+- **Java**: 25 or later (with `--enable-native-access` flag)
 - **OpenSSL**: 3.0 or later (`libcrypto.so.3`)
 
 ### OpenSSL Version Compatibility
