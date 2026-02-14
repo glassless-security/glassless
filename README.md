@@ -586,6 +586,7 @@ mvn test -Pbenchmarks -Dexec.args=".*MessageDigestBenchmark.*"
 | MacBenchmark | HmacSHA256, HmacSHA512, HmacSHA3-256 | 64B, 1KB, 16KB, 1MB |
 | SignatureBenchmark | SHA256withECDSA, SHA384withECDSA, Ed25519 | - |
 | KeyAgreementBenchmark | ECDH, X25519 | - |
+| KEMBenchmark | ML-KEM-512, ML-KEM-768, ML-KEM-1024 | - |
 | KeyPairGeneratorBenchmark | EC P-256/P-384, RSA-2048/4096, Ed25519, X25519 | - |
 | SecureRandomBenchmark | NativePRNG | 16B to 4KB |
 
