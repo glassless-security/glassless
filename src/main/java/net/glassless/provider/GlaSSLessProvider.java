@@ -14,8 +14,11 @@ import net.glassless.provider.internal.keyfactory.*;
 import net.glassless.provider.internal.keygen.*;
 import net.glassless.provider.internal.keypairgen.*;
 import net.glassless.provider.internal.mac.*;
+import net.glassless.provider.internal.mldsa.*;
+import net.glassless.provider.internal.mlkem.*;
 import net.glassless.provider.internal.secretkeyfactory.*;
 import net.glassless.provider.internal.signature.*;
+import net.glassless.provider.internal.slhdsa.*;
 
 /**
  * OpenSSL-based JCA Provider using Java's Foreign Function &amp; Memory API.
@@ -44,6 +47,7 @@ public class GlaSSLessProvider extends Provider {
    public static final String KEY_AGREEMENT = "KeyAgreement";
    public static final String SECURE_RANDOM = "SecureRandom";
    public static final String KDF = "KDF";
+   public static final String KEM = "KEM";
 
    private final boolean fipsMode;
 
@@ -65,6 +69,7 @@ public class GlaSSLessProvider extends Provider {
       registerSecureRandomServices();
       registerAlgorithmParameterGeneratorServices();
       registerKDFServices();
+      registerKEMServices();
    }
 
    /**
@@ -547,6 +552,86 @@ public class GlaSSLessProvider extends Provider {
       putService(new Service(this, SIGNATURE, "Ed448",
          net.glassless.provider.internal.eddsa.Ed448Signature.class.getName(),
          List.of("OID.1.3.101.113", "1.3.101.113"), null));
+
+      // Post-Quantum Signatures - FIPS 204, 205 (requires OpenSSL 3.5+)
+      registerPQCSignatureServices();
+   }
+
+   private void registerPQCSignatureServices() {
+      // ML-DSA (FIPS 204) - Module-Lattice Digital Signature Algorithm
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44")) {
+         putService(new Service(this, SIGNATURE, "ML-DSA-44",
+            MLDSA44Signature.class.getName(),
+            List.of("MLDSA44", "OID.2.16.840.1.101.3.4.3.17", "2.16.840.1.101.3.4.3.17"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa65")) {
+         putService(new Service(this, SIGNATURE, "ML-DSA-65",
+            MLDSA65Signature.class.getName(),
+            List.of("MLDSA65", "OID.2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.18"), null));
+         // Register generic ML-DSA signature
+         putService(new Service(this, SIGNATURE, "ML-DSA",
+            MLDSASignature.class.getName(), List.of("MLDSA"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87")) {
+         putService(new Service(this, SIGNATURE, "ML-DSA-87",
+            MLDSA87Signature.class.getName(),
+            List.of("MLDSA87", "OID.2.16.840.1.101.3.4.3.19", "2.16.840.1.101.3.4.3.19"), null));
+      }
+
+      // SLH-DSA (FIPS 205) - Stateless Hash-Based Digital Signature Algorithm
+      // SHA-2 variants
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128s")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHA2-128s",
+            SLHDSA_SHA2_128sSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128f")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHA2-128f",
+            SLHDSA_SHA2_128fSignature.class.getName(), null, null));
+         // Register generic SLH-DSA signature
+         putService(new Service(this, SIGNATURE, "SLH-DSA",
+            SLHDSASignature.class.getName(), List.of("SLHDSA"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-192s")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHA2-192s",
+            SLHDSA_SHA2_192sSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-192f")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHA2-192f",
+            SLHDSA_SHA2_192fSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-256s")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHA2-256s",
+            SLHDSA_SHA2_256sSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-256f")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHA2-256f",
+            SLHDSA_SHA2_256fSignature.class.getName(), null, null));
+      }
+      // SHAKE variants
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-128s")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-128s",
+            SLHDSA_SHAKE_128sSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-128f")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-128f",
+            SLHDSA_SHAKE_128fSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-192s")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-192s",
+            SLHDSA_SHAKE_192sSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-192f")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-192f",
+            SLHDSA_SHAKE_192fSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-256s")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-256s",
+            SLHDSA_SHAKE_256sSignature.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-256f")) {
+         putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-256f",
+            SLHDSA_SHAKE_256fSignature.class.getName(), null, null));
+      }
    }
 
    private void registerKeyPairGeneratorServices() {
@@ -575,6 +660,106 @@ public class GlaSSLessProvider extends Provider {
       putService(new Service(this, KEY_PAIR_GENERATOR, "X448",
          net.glassless.provider.internal.xdh.X448KeyPairGenerator.class.getName(),
          List.of("OID.1.3.101.111", "1.3.101.111"), null));
+
+      // Post-Quantum Cryptography - FIPS 203, 204, 205 (requires OpenSSL 3.5+)
+      registerPQCKeyPairGeneratorServices();
+   }
+
+   private void registerPQCKeyPairGeneratorServices() {
+      // ML-KEM (FIPS 203) - Key Encapsulation Mechanism
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-512",
+            MLKEM512KeyPairGenerator.class.getName(),
+            List.of("MLKEM512", "OID.2.16.840.1.101.3.4.4.1", "2.16.840.1.101.3.4.4.1"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-768",
+            MLKEM768KeyPairGenerator.class.getName(),
+            List.of("MLKEM768", "OID.2.16.840.1.101.3.4.4.2", "2.16.840.1.101.3.4.4.2"), null));
+         // Register generic ML-KEM pointing to the most common variant
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM",
+            MLKEMKeyPairGenerator.class.getName(), List.of("MLKEM"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-1024",
+            MLKEM1024KeyPairGenerator.class.getName(),
+            List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
+      }
+
+      // ML-DSA (FIPS 204) - Digital Signature Algorithm
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-44",
+            MLDSA44KeyPairGenerator.class.getName(),
+            List.of("MLDSA44", "OID.2.16.840.1.101.3.4.3.17", "2.16.840.1.101.3.4.3.17"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa65")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-65",
+            MLDSA65KeyPairGenerator.class.getName(),
+            List.of("MLDSA65", "OID.2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.18"), null));
+         // Register generic ML-DSA pointing to the most common variant
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA",
+            MLDSAKeyPairGenerator.class.getName(), List.of("MLDSA"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-87",
+            MLDSA87KeyPairGenerator.class.getName(),
+            List.of("MLDSA87", "OID.2.16.840.1.101.3.4.3.19", "2.16.840.1.101.3.4.3.19"), null));
+      }
+
+      // SLH-DSA (FIPS 205) - Stateless Hash-Based Digital Signature Algorithm
+      // SHA-2 variants
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128s")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHA2-128s",
+            SLHDSA_SHA2_128sKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128f")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHA2-128f",
+            SLHDSA_SHA2_128fKeyPairGenerator.class.getName(), null, null));
+         // Register generic SLH-DSA pointing to a common variant
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA",
+            SLHDSAKeyPairGenerator.class.getName(), List.of("SLHDSA"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-192s")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHA2-192s",
+            SLHDSA_SHA2_192sKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-192f")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHA2-192f",
+            SLHDSA_SHA2_192fKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-256s")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHA2-256s",
+            SLHDSA_SHA2_256sKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-256f")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHA2-256f",
+            SLHDSA_SHA2_256fKeyPairGenerator.class.getName(), null, null));
+      }
+      // SHAKE variants
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-128s")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHAKE-128s",
+            SLHDSA_SHAKE_128sKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-128f")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHAKE-128f",
+            SLHDSA_SHAKE_128fKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-192s")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHAKE-192s",
+            SLHDSA_SHAKE_192sKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-192f")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHAKE-192f",
+            SLHDSA_SHAKE_192fKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-256s")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHAKE-256s",
+            SLHDSA_SHAKE_256sKeyPairGenerator.class.getName(), null, null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-256f")) {
+         putService(new Service(this, KEY_PAIR_GENERATOR, "SLH-DSA-SHAKE-256f",
+            SLHDSA_SHAKE_256fKeyPairGenerator.class.getName(), null, null));
+      }
    }
 
    private void registerSecretKeyFactoryServices() {
@@ -689,6 +874,27 @@ public class GlaSSLessProvider extends Provider {
       putService(new Service(this, KEY_FACTORY, "XDH",
          net.glassless.provider.internal.xdh.XDHKeyFactory.class.getName(),
          List.of("X25519", "X448", "OID.1.3.101.110", "1.3.101.110", "OID.1.3.101.111", "1.3.101.111"), null));
+
+      // Post-Quantum Key Factories (requires OpenSSL 3.5+)
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768")) {
+         putService(new Service(this, KEY_FACTORY, "ML-KEM",
+            MLKEMKeyFactory.class.getName(),
+            List.of("MLKEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024",
+               "OID.2.16.840.1.101.3.4.4.1", "OID.2.16.840.1.101.3.4.4.2", "OID.2.16.840.1.101.3.4.4.3"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa65")) {
+         putService(new Service(this, KEY_FACTORY, "ML-DSA",
+            MLDSAKeyFactory.class.getName(),
+            List.of("MLDSA", "ML-DSA-44", "ML-DSA-65", "ML-DSA-87",
+               "OID.2.16.840.1.101.3.4.3.17", "OID.2.16.840.1.101.3.4.3.18", "OID.2.16.840.1.101.3.4.3.19"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128f")) {
+         putService(new Service(this, KEY_FACTORY, "SLH-DSA",
+            SLHDSAKeyFactory.class.getName(),
+            List.of("SLHDSA", "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-192f",
+               "SLH-DSA-SHA2-256s", "SLH-DSA-SHA2-256f", "SLH-DSA-SHAKE-128s", "SLH-DSA-SHAKE-128f",
+               "SLH-DSA-SHAKE-192s", "SLH-DSA-SHAKE-192f", "SLH-DSA-SHAKE-256s", "SLH-DSA-SHAKE-256f"), null));
+      }
    }
 
    private void registerKeyAgreementServices() {
@@ -832,6 +1038,32 @@ public class GlaSSLessProvider extends Provider {
          net.glassless.provider.internal.kdf.TLS1PRF_SHA256.class.getName(), null, null));
       putService(new Service(this, KDF, "TLS1-PRF-SHA384",
          net.glassless.provider.internal.kdf.TLS1PRF_SHA384.class.getName(), null, null));
+   }
+
+   private void registerKEMServices() {
+      // ML-KEM (FIPS 203) - Key Encapsulation Mechanism (requires OpenSSL 3.5+)
+      if (!OpenSSLCrypto.isKEMAvailable()) {
+         return;  // KEM operations not supported on this OpenSSL version
+      }
+
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512")) {
+         putService(new Service(this, KEM, "ML-KEM-512",
+            MLKEM512.class.getName(),
+            List.of("MLKEM512", "OID.2.16.840.1.101.3.4.4.1", "2.16.840.1.101.3.4.4.1"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768")) {
+         putService(new Service(this, KEM, "ML-KEM-768",
+            MLKEM768.class.getName(),
+            List.of("MLKEM768", "OID.2.16.840.1.101.3.4.4.2", "2.16.840.1.101.3.4.4.2"), null));
+         // Register generic ML-KEM pointing to the most common variant
+         putService(new Service(this, KEM, "ML-KEM",
+            MLKEM.class.getName(), List.of("MLKEM"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024")) {
+         putService(new Service(this, KEM, "ML-KEM-1024",
+            MLKEM1024.class.getName(),
+            List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
+      }
    }
 
    /**

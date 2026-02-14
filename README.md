@@ -17,6 +17,7 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 - **No Native Compilation**: Uses Java's FFM API (no JNI required)
 - **FIPS Mode Support**: Automatically detects and respects OpenSSL FIPS mode
 - **Comprehensive Algorithm Coverage**: 275+ algorithm implementations
+- **Post-Quantum Cryptography**: ML-KEM, ML-DSA, and SLH-DSA support (OpenSSL 3.5+)
 - **Drop-in Replacement**: Standard JCA provider interface
 
 ## Requirements
@@ -31,7 +32,8 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 | 3.0.x | Supported | Base algorithms |
 | 3.1.x | Supported | Full support |
 | 3.2.x | Supported | Adds Argon2 KDFs |
-| 3.3.x+ | Supported | Latest features |
+| 3.3.x | Supported | Latest features |
+| 3.5.x | Supported | Adds Post-Quantum Cryptography (ML-KEM, ML-DSA, SLH-DSA) |
 
 ## Building
 
@@ -340,6 +342,62 @@ mac.init(keySpec);
 byte[] hmac = mac.doFinal("Message".getBytes());
 ```
 
+#### Post-Quantum Key Encapsulation (ML-KEM)
+
+Requires OpenSSL 3.5+.
+
+```java
+import javax.crypto.KEM;
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate ML-KEM key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-KEM-768", "GlaSSLess");
+KeyPair keyPair = kpg.generateKeyPair();
+
+// Encapsulation (sender side)
+KEM kem = KEM.getInstance("ML-KEM-768", "GlaSSLess");
+KEM.Encapsulator encapsulator = kem.newEncapsulator(keyPair.getPublic());
+KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+byte[] ciphertext = encapsulated.encapsulation();
+SecretKey sharedSecretSender = encapsulated.key();
+
+// Decapsulation (receiver side)
+KEM.Decapsulator decapsulator = kem.newDecapsulator(keyPair.getPrivate());
+SecretKey sharedSecretReceiver = decapsulator.decapsulate(ciphertext);
+
+// Both parties now have the same shared secret
+```
+
+#### Post-Quantum Digital Signatures (ML-DSA)
+
+Requires OpenSSL 3.5+.
+
+```java
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate ML-DSA key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+KeyPair keyPair = kpg.generateKeyPair();
+
+// Sign
+Signature signer = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+signer.initSign(keyPair.getPrivate());
+signer.update("Data to sign".getBytes());
+byte[] signature = signer.sign();
+
+// Verify
+Signature verifier = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+verifier.initVerify(keyPair.getPublic());
+verifier.update("Data to sign".getBytes());
+boolean valid = verifier.verify(signature);
+```
+
 ## Supported Algorithms
 
 ### Message Digests (18)
@@ -379,7 +437,7 @@ byte[] hmac = mac.doFinal("Message".getBytes());
 | HmacSHA1 | No |
 | Poly1305, SipHash | No |
 
-### Signatures (31)
+### Signatures (31+)
 
 | Algorithm | FIPS Approved |
 |-----------|---------------|
@@ -390,6 +448,32 @@ byte[] hmac = mac.doFinal("Message".getBytes());
 | SHA256withDSA, SHA384withDSA, SHA512withDSA | Yes |
 | Ed25519, Ed448, EdDSA | Yes |
 | SHA1withRSA, SHA1withECDSA, SHA1withDSA | No |
+
+### Post-Quantum Signatures (15)
+
+Requires OpenSSL 3.5+.
+
+| Algorithm | Security Level | FIPS Approved |
+|-----------|----------------|---------------|
+| ML-DSA-44 | 128-bit | Yes (FIPS 204) |
+| ML-DSA-65 | 192-bit | Yes (FIPS 204) |
+| ML-DSA-87 | 256-bit | Yes (FIPS 204) |
+| SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f | 128-bit | Yes (FIPS 205) |
+| SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f | 192-bit | Yes (FIPS 205) |
+| SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f | 256-bit | Yes (FIPS 205) |
+| SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f | 128-bit | Yes (FIPS 205) |
+| SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f | 192-bit | Yes (FIPS 205) |
+| SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f | 256-bit | Yes (FIPS 205) |
+
+### Key Encapsulation Mechanisms (3)
+
+Requires OpenSSL 3.5+.
+
+| Algorithm | Security Level | FIPS Approved |
+|-----------|----------------|---------------|
+| ML-KEM-512 | 128-bit | Yes (FIPS 203) |
+| ML-KEM-768 | 192-bit | Yes (FIPS 203) |
+| ML-KEM-1024 | 256-bit | Yes (FIPS 203) |
 
 ### Key Agreement (5)
 
@@ -543,6 +627,9 @@ src/main/java/net/glassless/provider/
     ├── keyfactory/              # KeyFactory implementations
     ├── keyagreement/            # KeyAgreement implementations
     ├── securerandom/            # SecureRandom implementations
+    ├── mlkem/                   # ML-KEM (FIPS 203) implementations
+    ├── mldsa/                   # ML-DSA (FIPS 204) implementations
+    ├── slhdsa/                  # SLH-DSA (FIPS 205) implementations
     └── ...
 ```
 

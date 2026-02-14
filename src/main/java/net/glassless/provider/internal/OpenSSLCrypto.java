@@ -7,6 +7,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
+import java.util.NoSuchElementException;
 
 public class OpenSSLCrypto {
 
@@ -128,6 +129,14 @@ public class OpenSSLCrypto {
 
    // Method handles for version info
    private static MethodHandle OpenSSL_version;
+
+   // Method handles for KEM (Key Encapsulation Mechanism) - OpenSSL 3.2+
+   private static MethodHandle EVP_PKEY_encapsulate_init;
+   private static MethodHandle EVP_PKEY_encapsulate;
+   private static MethodHandle EVP_PKEY_decapsulate_init;
+   private static MethodHandle EVP_PKEY_decapsulate;
+   private static MethodHandle EVP_KEYMGMT_fetch;
+   private static MethodHandle EVP_KEYMGMT_free;
 
    static {
       initFFM();
@@ -604,6 +613,58 @@ public class OpenSSLCrypto {
             libcrypto.find("OpenSSL_version").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
          );
+
+         // KEM (Key Encapsulation Mechanism) functions - OpenSSL 3.2+
+         // These may not exist on older OpenSSL versions, so we handle them gracefully
+         try {
+            // int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+            EVP_PKEY_encapsulate_init = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_encapsulate_init").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            // int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx, unsigned char *wrappedkey, size_t *wrappedkeylen,
+            //                         unsigned char *genkey, size_t *genkeylen)
+            EVP_PKEY_encapsulate = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_encapsulate").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            // int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+            EVP_PKEY_decapsulate_init = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_decapsulate_init").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            // int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx, unsigned char *unwrapped, size_t *unwrappedlen,
+            //                         const unsigned char *wrapped, size_t wrappedlen)
+            EVP_PKEY_decapsulate = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_decapsulate").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+            );
+         } catch (NoSuchElementException e) {
+            // KEM functions not available on this OpenSSL version
+            EVP_PKEY_encapsulate_init = null;
+            EVP_PKEY_encapsulate = null;
+            EVP_PKEY_decapsulate_init = null;
+            EVP_PKEY_decapsulate = null;
+         }
+
+         // EVP_KEYMGMT functions for checking algorithm availability
+         try {
+            // EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm, const char *properties)
+            EVP_KEYMGMT_fetch = linker.downcallHandle(
+               libcrypto.find("EVP_KEYMGMT_fetch").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            // void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
+            EVP_KEYMGMT_free = linker.downcallHandle(
+               libcrypto.find("EVP_KEYMGMT_free").orElseThrow(),
+               FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
+            );
+         } catch (NoSuchElementException e) {
+            EVP_KEYMGMT_fetch = null;
+            EVP_KEYMGMT_free = null;
+         }
 
       } catch (NoSuchMethodError | Exception e) {
          System.err.println("Error initializing OpenSSL FFM: " + e.getMessage());
@@ -1426,8 +1487,8 @@ public class OpenSSLCrypto {
    /**
     * Checks if a specific algorithm is available in OpenSSL.
     *
-    * @param type the algorithm type: "MD" (digest), "CIPHER", "MAC", or "KDF"
-    * @param name the algorithm name (e.g., "blake2b512", "aes-256-ccm", "KMAC128")
+    * @param type the algorithm type: "MD" (digest), "CIPHER", "MAC", "KDF", or "KEYMGMT"
+    * @param name the algorithm name (e.g., "blake2b512", "aes-256-ccm", "KMAC128", "mlkem768")
     * @return true if the algorithm is available, false otherwise
     */
    public static boolean isAlgorithmAvailable(String type, String name) {
@@ -1457,10 +1518,81 @@ public class OpenSSLCrypto {
                }
                yield false;
             }
+            case "KEYMGMT" -> {
+               // Check for key management algorithms (PQC algorithms like ML-KEM, ML-DSA, SLH-DSA)
+               if (EVP_KEYMGMT_fetch == null) {
+                  yield false;
+               }
+               MemorySegment keymgmt = EVP_KEYMGMT_fetch(MemorySegment.NULL, name, MemorySegment.NULL, arena);
+               if (keymgmt != null && keymgmt.address() != 0) {
+                  EVP_KEYMGMT_free(keymgmt);
+                  yield true;
+               }
+               yield false;
+            }
             default -> false;
          };
       } catch (Throwable e) {
          return false;
+      }
+   }
+
+   // KEM (Key Encapsulation Mechanism) wrapper methods
+
+   /**
+    * Checks if KEM operations are available on this OpenSSL version.
+    *
+    * @return true if KEM operations are supported
+    */
+   public static boolean isKEMAvailable() {
+      return EVP_PKEY_encapsulate_init != null && EVP_PKEY_encapsulate != null
+          && EVP_PKEY_decapsulate_init != null && EVP_PKEY_decapsulate != null;
+   }
+
+   public static int EVP_PKEY_encapsulate_init(MemorySegment ctx, MemorySegment params) throws Throwable {
+      if (EVP_PKEY_encapsulate_init == null) {
+         throw new UnsupportedOperationException("KEM not supported on this OpenSSL version");
+      }
+      return (int) EVP_PKEY_encapsulate_init.invokeExact(ctx, params);
+   }
+
+   public static int EVP_PKEY_encapsulate(MemorySegment ctx, MemorySegment wrappedKey, MemorySegment wrappedKeyLen,
+                                          MemorySegment genKey, MemorySegment genKeyLen) throws Throwable {
+      if (EVP_PKEY_encapsulate == null) {
+         throw new UnsupportedOperationException("KEM not supported on this OpenSSL version");
+      }
+      return (int) EVP_PKEY_encapsulate.invokeExact(ctx, wrappedKey, wrappedKeyLen, genKey, genKeyLen);
+   }
+
+   public static int EVP_PKEY_decapsulate_init(MemorySegment ctx, MemorySegment params) throws Throwable {
+      if (EVP_PKEY_decapsulate_init == null) {
+         throw new UnsupportedOperationException("KEM not supported on this OpenSSL version");
+      }
+      return (int) EVP_PKEY_decapsulate_init.invokeExact(ctx, params);
+   }
+
+   public static int EVP_PKEY_decapsulate(MemorySegment ctx, MemorySegment unwrapped, MemorySegment unwrappedLen,
+                                          MemorySegment wrapped, long wrappedLen) throws Throwable {
+      if (EVP_PKEY_decapsulate == null) {
+         throw new UnsupportedOperationException("KEM not supported on this OpenSSL version");
+      }
+      return (int) EVP_PKEY_decapsulate.invokeExact(ctx, unwrapped, unwrappedLen, wrapped, wrappedLen);
+   }
+
+   public static MemorySegment EVP_KEYMGMT_fetch(MemorySegment libctx, String algorithm,
+                                                  MemorySegment properties, Arena arena) throws Throwable {
+      if (EVP_KEYMGMT_fetch == null) {
+         return MemorySegment.NULL;
+      }
+      byte[] algBytes = algorithm.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+      MemorySegment algSegment = arena.allocate(algBytes.length + 1);
+      algSegment.asByteBuffer().put(algBytes).put((byte) 0);
+      return (MemorySegment) EVP_KEYMGMT_fetch.invokeExact(libctx, algSegment, properties);
+   }
+
+   public static void EVP_KEYMGMT_free(MemorySegment keymgmt) throws Throwable {
+      if (EVP_KEYMGMT_free != null && keymgmt != null && keymgmt.address() != 0) {
+         EVP_KEYMGMT_free.invokeExact(keymgmt);
       }
    }
 
