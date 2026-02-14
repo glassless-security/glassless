@@ -28,7 +28,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 /**
  * JMH benchmarks for ML-KEM (FIPS 203) Key Encapsulation Mechanism.
  *
- * <p>ML-KEM is currently only available in GlaSSLess (via OpenSSL 3.5+).
+ * <p>Compares performance between GlaSSLess (via OpenSSL 3.5+) and JDK (24+) implementations.
  * This benchmark measures key generation, encapsulation, and decapsulation performance.
  *
  * <p>Run with: mvn test -Pbenchmarks -Djmh.include=KEMBenchmark
@@ -44,19 +44,29 @@ public class KEMBenchmark {
    @Param({"ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"})
    private String algorithm;
 
+   // GlaSSLess components
    private KeyPairGenerator glasslessKeyPairGen;
    private KEM glasslessKEM;
-   private KeyPair keyPair;
-   private KEM.Encapsulator encapsulator;
-   private KEM.Decapsulator decapsulator;
-   private byte[] encapsulation;
-   private boolean available;
+   private KeyPair glasslessKeyPair;
+   private KEM.Encapsulator glasslessEncapsulator;
+   private KEM.Decapsulator glasslessDecapsulator;
+   private byte[] glasslessEncapsulation;
+   private boolean glasslessAvailable;
+
+   // JDK components
+   private KeyPairGenerator jdkKeyPairGen;
+   private KEM jdkKEM;
+   private KeyPair jdkKeyPair;
+   private KEM.Encapsulator jdkEncapsulator;
+   private KEM.Decapsulator jdkDecapsulator;
+   private byte[] jdkEncapsulation;
+   private boolean jdkAvailable;
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
       Security.addProvider(new GlaSSLessProvider());
 
-      // Check if ML-KEM is available (requires OpenSSL 3.5+)
+      // Setup GlaSSLess (requires OpenSSL 3.5+)
       String opensslName = switch (algorithm) {
          case "ML-KEM-512" -> "mlkem512";
          case "ML-KEM-768" -> "mlkem768";
@@ -64,29 +74,51 @@ public class KEMBenchmark {
          default -> "mlkem768";
       };
 
-      available = OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", opensslName);
+      glasslessAvailable = OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", opensslName);
 
-      if (!available) {
-         System.err.println("ML-KEM not available (requires OpenSSL 3.5+)");
-         return;
+      if (glasslessAvailable) {
+         glasslessKeyPairGen = KeyPairGenerator.getInstance(algorithm, "GlaSSLess");
+         glasslessKEM = KEM.getInstance(algorithm, "GlaSSLess");
+
+         // Pre-generate a key pair for encapsulation/decapsulation benchmarks
+         glasslessKeyPair = glasslessKeyPairGen.generateKeyPair();
+         glasslessEncapsulator = glasslessKEM.newEncapsulator(glasslessKeyPair.getPublic());
+         glasslessDecapsulator = glasslessKEM.newDecapsulator(glasslessKeyPair.getPrivate());
+
+         // Pre-generate an encapsulation for decapsulation benchmark
+         KEM.Encapsulated enc = glasslessEncapsulator.encapsulate();
+         glasslessEncapsulation = enc.encapsulation();
+      } else {
+         System.err.println("GlaSSLess ML-KEM not available (requires OpenSSL 3.5+)");
       }
 
-      glasslessKeyPairGen = KeyPairGenerator.getInstance(algorithm, "GlaSSLess");
-      glasslessKEM = KEM.getInstance(algorithm, "GlaSSLess");
+      // Setup JDK (requires JDK 24+)
+      jdkAvailable = false;
+      try {
+         // Try to get ML-KEM from the default JDK provider
+         jdkKeyPairGen = KeyPairGenerator.getInstance(algorithm);
+         jdkKEM = KEM.getInstance(algorithm);
 
-      // Pre-generate a key pair for encapsulation/decapsulation benchmarks
-      keyPair = glasslessKeyPairGen.generateKeyPair();
-      encapsulator = glasslessKEM.newEncapsulator(keyPair.getPublic());
-      decapsulator = glasslessKEM.newDecapsulator(keyPair.getPrivate());
+         // Pre-generate a key pair for encapsulation/decapsulation benchmarks
+         jdkKeyPair = jdkKeyPairGen.generateKeyPair();
+         jdkEncapsulator = jdkKEM.newEncapsulator(jdkKeyPair.getPublic());
+         jdkDecapsulator = jdkKEM.newDecapsulator(jdkKeyPair.getPrivate());
 
-      // Pre-generate an encapsulation for decapsulation benchmark
-      KEM.Encapsulated enc = encapsulator.encapsulate();
-      encapsulation = enc.encapsulation();
+         // Pre-generate an encapsulation for decapsulation benchmark
+         KEM.Encapsulated enc = jdkEncapsulator.encapsulate();
+         jdkEncapsulation = enc.encapsulation();
+
+         jdkAvailable = true;
+      } catch (Exception e) {
+         System.err.println("JDK ML-KEM not available (requires JDK 24+): " + e.getMessage());
+      }
    }
+
+   // GlaSSLess benchmarks
 
    @Benchmark
    public KeyPair glasslessKeyGen() {
-      if (!available) {
+      if (!glasslessAvailable) {
          return null;
       }
       return glasslessKeyPairGen.generateKeyPair();
@@ -94,19 +126,47 @@ public class KEMBenchmark {
 
    @Benchmark
    public void glasslessEncapsulate(Blackhole bh) throws Exception {
-      if (!available) {
+      if (!glasslessAvailable) {
          return;
       }
-      KEM.Encapsulated result = encapsulator.encapsulate();
+      KEM.Encapsulated result = glasslessEncapsulator.encapsulate();
       bh.consume(result.key());
       bh.consume(result.encapsulation());
    }
 
    @Benchmark
    public SecretKey glasslessDecapsulate() throws Exception {
-      if (!available) {
+      if (!glasslessAvailable) {
          return null;
       }
-      return decapsulator.decapsulate(encapsulation);
+      return glasslessDecapsulator.decapsulate(glasslessEncapsulation);
+   }
+
+   // JDK benchmarks
+
+   @Benchmark
+   public KeyPair jdkKeyGen() {
+      if (!jdkAvailable) {
+         return null;
+      }
+      return jdkKeyPairGen.generateKeyPair();
+   }
+
+   @Benchmark
+   public void jdkEncapsulate(Blackhole bh) throws Exception {
+      if (!jdkAvailable) {
+         return;
+      }
+      KEM.Encapsulated result = jdkEncapsulator.encapsulate();
+      bh.consume(result.key());
+      bh.consume(result.encapsulation());
+   }
+
+   @Benchmark
+   public SecretKey jdkDecapsulate() throws Exception {
+      if (!jdkAvailable) {
+         return null;
+      }
+      return jdkDecapsulator.decapsulate(jdkEncapsulation);
    }
 }
