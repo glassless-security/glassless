@@ -14,7 +14,7 @@ This report compares the performance of multiple JCA cryptographic providers:
 
 | Property | Value |
 |----------|-------|
-| Date | 2026-02-14T18:37:51+01:00 |
+| Date | 2026-02-14T18:40:40+01:00 |
 | Host | jakku |
 | CPU | AMD Ryzen 9 9900X 12-Core Processor |
 | Java | openjdk version "25.0.2" 2026-01-20 |
@@ -31,6 +31,9 @@ Benchmarks include the following providers: bcFips, glassless, jdk, nss
 |----------|-----------|----------:|----:|--------:|----:|
 | Key Agreement | ECDH | 19.09 | 3.06 | 4.13 | - |
 | Key Agreement | X25519 | - | - | - | - |
+| Key Encapsulation | ML-KEM-768 Encaps | 37.14 | - | - | - |
+| Key Encapsulation | ML-KEM-768 Decaps | 20.59 | - | - | - |
+| Key Generation | ML-KEM-768 | 23.84 | - | - | - |
 | Key Generation | Ed25519 | - | - | - | - |
 | Key Generation | EC P-256 | 33.15 | 17.81 | 2.26 | 17.73 |
 | Signature | Ed25519 Sign | - | - | - | - |
@@ -139,19 +142,17 @@ _No data available for this benchmark._
 
 ## Key Encapsulation (ML-KEM) Benchmarks
 
-ML-KEM is a post-quantum key encapsulation mechanism (FIPS 203). Currently only available in GlaSSLess via OpenSSL 3.5+.
-
 | Provider | Operation | Parameters | Score | Error | Unit |
 |----------|-----------|------------|------:|------:|------|
-| glassless | KeyGen | algorithm=ML-KEM-512 | 31.84 | ±0.75 | ops/ms |
-| glassless | KeyGen | algorithm=ML-KEM-768 | 23.84 | ±0.65 | ops/ms |
-| glassless | KeyGen | algorithm=ML-KEM-1024 | 18.16 | ±0.42 | ops/ms |
-| glassless | Encapsulate | algorithm=ML-KEM-512 | 53.86 | ±2.55 | ops/ms |
-| glassless | Encapsulate | algorithm=ML-KEM-768 | 37.14 | ±0.54 | ops/ms |
-| glassless | Encapsulate | algorithm=ML-KEM-1024 | 26.53 | ±0.28 | ops/ms |
+| glassless | Decapsulate | algorithm=ML-KEM-1024 | 15.05 | ±0.22 | ops/ms |
 | glassless | Decapsulate | algorithm=ML-KEM-512 | 29.63 | ±0.82 | ops/ms |
 | glassless | Decapsulate | algorithm=ML-KEM-768 | 20.59 | ±0.55 | ops/ms |
-| glassless | Decapsulate | algorithm=ML-KEM-1024 | 15.05 | ±0.22 | ops/ms |
+| glassless | Encapsulate | algorithm=ML-KEM-1024 | 26.53 | ±0.28 | ops/ms |
+| glassless | Encapsulate | algorithm=ML-KEM-512 | 53.86 | ±2.55 | ops/ms |
+| glassless | Encapsulate | algorithm=ML-KEM-768 | 37.14 | ±0.54 | ops/ms |
+| glassless | KeyGen | algorithm=ML-KEM-1024 | 18.16 | ±0.42 | ops/ms |
+| glassless | KeyGen | algorithm=ML-KEM-512 | 31.84 | ±0.75 | ops/ms |
+| glassless | KeyGen | algorithm=ML-KEM-768 | 23.84 | ±0.65 | ops/ms |
 
 ## Key Pair Generator Benchmarks
 
@@ -212,6 +213,7 @@ ML-KEM is a post-quantum key encapsulation mechanism (FIPS 203). Currently only 
   - **GlaSSLess (OpenSSL)**: Excels at asymmetric cryptography; FFM call overhead affects small-data operations
   - **BC FIPS**: FIPS 140-2 certified; pure Java implementation with some native acceleration
   - **NSS**: Mozilla's Network Security Services via SunPKCS11; requires system NSS libraries
+- **Post-Quantum Cryptography** (ML-KEM, ML-DSA, SLH-DSA) requires OpenSSL 3.5+ and is currently only available in GlaSSLess.
 - For large data sizes (16KB+), performance typically converges between implementations.
 - Missing data ("-") indicates the benchmark was not run or the provider was unavailable.
 
