@@ -17,13 +17,13 @@ import org.junit.jupiter.api.Test;
 
 public class FIPSStatusTest {
 
-    private static GlasslessProvider provider;
+    private static GlaSSLessProvider provider;
 
     @BeforeAll
     public static void setUp() {
         // Clear any cached FIPS status
         FIPSStatus.clearCache();
-        provider = new GlasslessProvider();
+        provider = new GlaSSLessProvider();
         Security.addProvider(provider);
     }
 
@@ -99,7 +99,7 @@ public class FIPSStatusTest {
         void testMD5Available() throws Exception {
             // If not in FIPS mode, MD5 should be available
             if (!FIPSStatus.isFIPSEnabled()) {
-                MessageDigest md = MessageDigest.getInstance("MD5", "Glassless");
+                MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
                 assertNotNull(md);
             }
         }
@@ -108,7 +108,7 @@ public class FIPSStatusTest {
         @DisplayName("SHA-1 is available in non-FIPS mode")
         void testSHA1Available() throws Exception {
             if (!FIPSStatus.isFIPSEnabled()) {
-                MessageDigest md = MessageDigest.getInstance("SHA-1", "Glassless");
+                MessageDigest md = MessageDigest.getInstance("SHA-1", "GlaSSLess");
                 assertNotNull(md);
             }
         }
@@ -117,7 +117,7 @@ public class FIPSStatusTest {
         @DisplayName("ChaCha20-Poly1305 is available in non-FIPS mode")
         void testChaCha20Poly1305Available() throws Exception {
             if (!FIPSStatus.isFIPSEnabled()) {
-                Cipher cipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+                Cipher cipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
                 assertNotNull(cipher);
             }
         }
@@ -126,7 +126,7 @@ public class FIPSStatusTest {
         @DisplayName("DESede is available in non-FIPS mode")
         void testDESedeAvailable() throws Exception {
             if (!FIPSStatus.isFIPSEnabled()) {
-                Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding", "Glassless");
+                Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding", "GlaSSLess");
                 assertNotNull(cipher);
             }
         }
@@ -135,7 +135,7 @@ public class FIPSStatusTest {
         @DisplayName("SCRYPT is available in non-FIPS mode")
         void testSCRYPTAvailable() throws Exception {
             if (!FIPSStatus.isFIPSEnabled()) {
-                SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+                SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
                 assertNotNull(skf);
             }
         }
@@ -148,35 +148,35 @@ public class FIPSStatusTest {
         @Test
         @DisplayName("SHA-256 is always available")
         void testSHA256Available() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("SHA-256", "Glassless");
+            MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
             assertNotNull(md);
         }
 
         @Test
         @DisplayName("SHA-512 is always available")
         void testSHA512Available() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("SHA-512", "Glassless");
+            MessageDigest md = MessageDigest.getInstance("SHA-512", "GlaSSLess");
             assertNotNull(md);
         }
 
         @Test
         @DisplayName("SHA3-256 is always available")
         void testSHA3_256Available() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("SHA3-256", "Glassless");
+            MessageDigest md = MessageDigest.getInstance("SHA3-256", "GlaSSLess");
             assertNotNull(md);
         }
 
         @Test
         @DisplayName("AES is always available")
         void testAESAvailable() throws Exception {
-            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "Glassless");
+            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
             assertNotNull(cipher);
         }
 
         @Test
         @DisplayName("PBKDF2WithHmacSHA256 is always available")
         void testPBKDF2Available() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "GlaSSLess");
             assertNotNull(skf);
         }
     }
@@ -188,7 +188,7 @@ public class FIPSStatusTest {
         @Test
         @DisplayName("Provider reports FIPS mode status")
         void testProviderReportsFIPSMode() {
-            GlasslessProvider gp = new GlasslessProvider();
+            GlaSSLessProvider gp = new GlaSSLessProvider();
             // Should match FIPSStatus
             assertEquals(FIPSStatus.isFIPSEnabled(), gp.isFIPSMode());
         }
@@ -208,15 +208,15 @@ public class FIPSStatusTest {
                 FIPSStatus.clearCache();
 
                 // Remove and re-add provider to pick up new FIPS status
-                Security.removeProvider("Glassless");
-                GlasslessProvider fipsProvider = new GlasslessProvider();
+                Security.removeProvider("GlaSSLess");
+                GlaSSLessProvider fipsProvider = new GlaSSLessProvider();
                 Security.addProvider(fipsProvider);
 
                 assertTrue(fipsProvider.isFIPSMode(), "Provider should be in FIPS mode");
 
                 // MD5 should not be available
                 assertThrows(NoSuchAlgorithmException.class, () ->
-                    MessageDigest.getInstance("MD5", "Glassless"));
+                    MessageDigest.getInstance("MD5", "GlaSSLess"));
             } finally {
                 // Restore
                 if (original != null) {
@@ -227,7 +227,7 @@ public class FIPSStatusTest {
                 FIPSStatus.clearCache();
 
                 // Restore original provider
-                Security.removeProvider("Glassless");
+                Security.removeProvider("GlaSSLess");
                 Security.addProvider(provider);
             }
         }
@@ -240,12 +240,12 @@ public class FIPSStatusTest {
                 System.setProperty("glassless.fips.mode", "true");
                 FIPSStatus.clearCache();
 
-                Security.removeProvider("Glassless");
-                GlasslessProvider fipsProvider = new GlasslessProvider();
+                Security.removeProvider("GlaSSLess");
+                GlaSSLessProvider fipsProvider = new GlaSSLessProvider();
                 Security.addProvider(fipsProvider);
 
                 assertThrows(NoSuchAlgorithmException.class, () ->
-                    Cipher.getInstance("ChaCha20-Poly1305", "Glassless"));
+                    Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess"));
             } finally {
                 if (original != null) {
                     System.setProperty("glassless.fips.mode", original);
@@ -253,7 +253,7 @@ public class FIPSStatusTest {
                     System.clearProperty("glassless.fips.mode");
                 }
                 FIPSStatus.clearCache();
-                Security.removeProvider("Glassless");
+                Security.removeProvider("GlaSSLess");
                 Security.addProvider(provider);
             }
         }
@@ -266,12 +266,12 @@ public class FIPSStatusTest {
                 System.setProperty("glassless.fips.mode", "true");
                 FIPSStatus.clearCache();
 
-                Security.removeProvider("Glassless");
-                GlasslessProvider fipsProvider = new GlasslessProvider();
+                Security.removeProvider("GlaSSLess");
+                GlaSSLessProvider fipsProvider = new GlaSSLessProvider();
                 Security.addProvider(fipsProvider);
 
                 assertThrows(NoSuchAlgorithmException.class, () ->
-                    SecretKeyFactory.getInstance("SCRYPT", "Glassless"));
+                    SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess"));
             } finally {
                 if (original != null) {
                     System.setProperty("glassless.fips.mode", original);
@@ -279,7 +279,7 @@ public class FIPSStatusTest {
                     System.clearProperty("glassless.fips.mode");
                 }
                 FIPSStatus.clearCache();
-                Security.removeProvider("Glassless");
+                Security.removeProvider("GlaSSLess");
                 Security.addProvider(provider);
             }
         }
@@ -292,12 +292,12 @@ public class FIPSStatusTest {
                 System.setProperty("glassless.fips.mode", "true");
                 FIPSStatus.clearCache();
 
-                Security.removeProvider("Glassless");
-                GlasslessProvider fipsProvider = new GlasslessProvider();
+                Security.removeProvider("GlaSSLess");
+                GlaSSLessProvider fipsProvider = new GlaSSLessProvider();
                 Security.addProvider(fipsProvider);
 
                 // SHA-256 should still be available
-                MessageDigest md = MessageDigest.getInstance("SHA-256", "Glassless");
+                MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
                 assertNotNull(md);
             } finally {
                 if (original != null) {
@@ -306,7 +306,7 @@ public class FIPSStatusTest {
                     System.clearProperty("glassless.fips.mode");
                 }
                 FIPSStatus.clearCache();
-                Security.removeProvider("Glassless");
+                Security.removeProvider("GlaSSLess");
                 Security.addProvider(provider);
             }
         }
@@ -319,12 +319,12 @@ public class FIPSStatusTest {
                 System.setProperty("glassless.fips.mode", "true");
                 FIPSStatus.clearCache();
 
-                Security.removeProvider("Glassless");
-                GlasslessProvider fipsProvider = new GlasslessProvider();
+                Security.removeProvider("GlaSSLess");
+                GlaSSLessProvider fipsProvider = new GlaSSLessProvider();
                 Security.addProvider(fipsProvider);
 
                 // AES-GCM should still be available
-                Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "Glassless");
+                Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
                 assertNotNull(cipher);
             } finally {
                 if (original != null) {
@@ -333,7 +333,7 @@ public class FIPSStatusTest {
                     System.clearProperty("glassless.fips.mode");
                 }
                 FIPSStatus.clearCache();
-                Security.removeProvider("Glassless");
+                Security.removeProvider("GlaSSLess");
                 Security.addProvider(provider);
             }
         }

@@ -8,7 +8,7 @@ import java.util.Arrays;
 /**
  * EdDSA public key implementation for Ed25519 and Ed448.
  */
-public class GlasslessEdECPublicKey implements EdECPublicKey {
+public class GlaSSLessEdECPublicKey implements EdECPublicKey {
 
     private static final long serialVersionUID = 1L;
 
@@ -16,7 +16,7 @@ public class GlasslessEdECPublicKey implements EdECPublicKey {
     private final EdECPoint point;
     private final byte[] encoded;
 
-    public GlasslessEdECPublicKey(NamedParameterSpec params, EdECPoint point, byte[] encoded) {
+    public GlaSSLessEdECPublicKey(NamedParameterSpec params, EdECPoint point, byte[] encoded) {
         this.params = params;
         this.point = point;
         this.encoded = encoded.clone();
@@ -62,6 +62,6 @@ public class GlasslessEdECPublicKey implements EdECPublicKey {
 
     @Override
     public String toString() {
-        return "GlasslessEdECPublicKey [algorithm=" + params.getName() + "]";
+        return "GlaSSLessEdECPublicKey [algorithm=" + params.getName() + "]";
     }
 }

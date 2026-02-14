@@ -23,7 +23,7 @@ public class Argon2Test {
 
    @BeforeAll
    public static void setUp() {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
    }
 
    static boolean isArgon2Available() {
@@ -34,7 +34,7 @@ public class Argon2Test {
    @DisplayName("Argon2id key derivation")
    @EnabledIf("isArgon2Available")
    void testArgon2id() throws Exception {
-      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", "Glassless");
+      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", "GlaSSLess");
       assertNotNull(skf);
 
       char[] password = "test-password".toCharArray();
@@ -52,7 +52,7 @@ public class Argon2Test {
    @DisplayName("Argon2i key derivation")
    @EnabledIf("isArgon2Available")
    void testArgon2i() throws Exception {
-      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2i", "Glassless");
+      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2i", "GlaSSLess");
       assertNotNull(skf);
 
       char[] password = "test-password".toCharArray();
@@ -70,7 +70,7 @@ public class Argon2Test {
    @DisplayName("Argon2d key derivation")
    @EnabledIf("isArgon2Available")
    void testArgon2d() throws Exception {
-      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2d", "Glassless");
+      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2d", "GlaSSLess");
       assertNotNull(skf);
 
       char[] password = "test-password".toCharArray();
@@ -88,7 +88,7 @@ public class Argon2Test {
    @DisplayName("Argon2id produces consistent results")
    @EnabledIf("isArgon2Available")
    void testArgon2idConsistency() throws Exception {
-      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", "Glassless");
+      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", "GlaSSLess");
 
       char[] password = "consistent-password".toCharArray();
       byte[] salt = "fixed-salt-value".getBytes();
@@ -107,7 +107,7 @@ public class Argon2Test {
    @DisplayName("Different passwords produce different keys")
    @EnabledIf("isArgon2Available")
    void testDifferentPasswords() throws Exception {
-      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", "Glassless");
+      SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", "GlaSSLess");
 
       byte[] salt = "same-salt-value!".getBytes();
 

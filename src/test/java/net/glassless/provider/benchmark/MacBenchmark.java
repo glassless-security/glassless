@@ -22,10 +22,10 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
 /**
- * JMH benchmarks comparing MAC performance between JDK, Glassless, BC FIPS, and NSS providers.
+ * JMH benchmarks comparing MAC performance between JDK, GlaSSLess, BC FIPS, and NSS providers.
  *
  * <p>Run with: mvn test -Pbenchmarks -Djmh.include=MacBenchmark
  */
@@ -60,7 +60,7 @@ public class MacBenchmark {
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
       Security.addProvider(new BouncyCastleFipsProvider());
 
       data = new byte[dataSize];
@@ -75,7 +75,7 @@ public class MacBenchmark {
       jdkMac = Mac.getInstance(algorithm);
       jdkMac.init(keySpec);
 
-      glasslessMac = Mac.getInstance(algorithm, "Glassless");
+      glasslessMac = Mac.getInstance(algorithm, "GlaSSLess");
       glasslessMac.init(keySpec);
 
       bcFipsMac = Mac.getInstance(algorithm, "BCFIPS");

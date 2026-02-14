@@ -23,7 +23,7 @@ public class SHADigestTest {
 
    @BeforeAll
    static void setUp() {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
    }
 
    @Test
@@ -32,9 +32,9 @@ public class SHADigestTest {
       byte[] inputBytes = testString.getBytes(StandardCharsets.UTF_8);
 
       // Get MessageDigest instance from our OpenSSLProvider
-      MessageDigest digest = MessageDigest.getInstance(algorithm, GlasslessProvider.PROVIDER_NAME);
+      MessageDigest digest = MessageDigest.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       assertNotNull(digest, "MessageDigest should not be null");
-      assertEquals(GlasslessProvider.PROVIDER_NAME, digest.getProvider().getName(), "Provider name mismatch");
+      assertEquals(GlaSSLessProvider.PROVIDER_NAME, digest.getProvider().getName(), "Provider name mismatch");
 
       // Perform digest
       digest.update(inputBytes);
@@ -59,7 +59,7 @@ public class SHADigestTest {
       byte[] inputBytesPart3 = testStringPart3.getBytes(StandardCharsets.UTF_8);
 
       // OpenSSL Provider
-      MessageDigest digest = MessageDigest.getInstance(algorithm, GlasslessProvider.PROVIDER_NAME);
+      MessageDigest digest = MessageDigest.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       digest.update(inputBytesPart1);
       digest.update(inputBytesPart2);
       digest.update(inputBytesPart3);
@@ -82,7 +82,7 @@ public class SHADigestTest {
       byte[] inputBytes1 = testString1.getBytes(StandardCharsets.UTF_8);
       byte[] inputBytes2 = testString2.getBytes(StandardCharsets.UTF_8);
 
-      MessageDigest digest = MessageDigest.getInstance(algorithm, GlasslessProvider.PROVIDER_NAME);
+      MessageDigest digest = MessageDigest.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
 
       // First digest
       digest.update(inputBytes1);

@@ -113,7 +113,7 @@ public class DHParameterGenerator extends AlgorithmParameterGeneratorSpi {
                     }
 
                     // Create and initialize AlgorithmParameters
-                    AlgorithmParameters params = AlgorithmParameters.getInstance("DH", "Glassless");
+                    AlgorithmParameters params = AlgorithmParameters.getInstance("DH", "GlaSSLess");
                     params.init(dhSpec);
 
                     return params;

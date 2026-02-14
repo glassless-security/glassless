@@ -23,10 +23,10 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
 /**
- * JMH benchmarks comparing KeyAgreement performance between JDK, Glassless, BC FIPS, and NSS providers.
+ * JMH benchmarks comparing KeyAgreement performance between JDK, GlaSSLess, BC FIPS, and NSS providers.
  *
  * <p>Run with: mvn test -Pbenchmarks -Djmh.include=KeyAgreementBenchmark
  */
@@ -58,7 +58,7 @@ public class KeyAgreementBenchmark {
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
       Security.addProvider(new BouncyCastleFipsProvider());
 
       KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
@@ -67,7 +67,7 @@ public class KeyAgreementBenchmark {
       bobKeyPair = kpg.generateKeyPair();
 
       jdkKeyAgreement = KeyAgreement.getInstance(algorithm);
-      glasslessKeyAgreement = KeyAgreement.getInstance(algorithm, "Glassless");
+      glasslessKeyAgreement = KeyAgreement.getInstance(algorithm, "GlaSSLess");
       bcFipsKeyAgreement = KeyAgreement.getInstance(algorithm, "BCFIPS");
 
       // Try to configure NSS provider

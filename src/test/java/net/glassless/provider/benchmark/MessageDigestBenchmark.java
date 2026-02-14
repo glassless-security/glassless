@@ -19,10 +19,10 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
 /**
- * JMH benchmarks comparing MessageDigest performance between JDK, Glassless, BC FIPS, and NSS providers.
+ * JMH benchmarks comparing MessageDigest performance between JDK, GlaSSLess, BC FIPS, and NSS providers.
  *
  * <p>Run with: mvn test -Pbenchmarks -Djmh.include=MessageDigestBenchmark
  */
@@ -56,7 +56,7 @@ public class MessageDigestBenchmark {
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
       Security.addProvider(new BouncyCastleFipsProvider());
 
       // Try to configure NSS provider
@@ -80,7 +80,7 @@ public class MessageDigestBenchmark {
       }
 
       jdkDigest = MessageDigest.getInstance(algorithm);
-      glasslessDigest = MessageDigest.getInstance(algorithm, "Glassless");
+      glasslessDigest = MessageDigest.getInstance(algorithm, "GlaSSLess");
       bcFipsDigest = MessageDigest.getInstance(algorithm, "BCFIPS");
    }
 

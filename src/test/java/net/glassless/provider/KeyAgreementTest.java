@@ -23,7 +23,7 @@ public class KeyAgreementTest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -41,13 +41,13 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -69,13 +69,13 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -95,13 +95,13 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -122,13 +122,13 @@ public class KeyAgreementTest {
             KeyPair charlieKeyPair = keyGen.generateKeyPair();
 
             // Alice-Bob shared secret
-            KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             ka1.init(aliceKeyPair.getPrivate());
             ka1.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceBobSecret = ka1.generateSecret();
 
             // Alice-Charlie shared secret
-            KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             ka2.init(aliceKeyPair.getPrivate());
             ka2.doPhase(charlieKeyPair.getPublic(), true);
             byte[] aliceCharlieSecret = ka2.generateSecret();
@@ -148,7 +148,7 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret as an AES key
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             SecretKey aliceSecretKey = aliceKeyAgreement.generateSecret("AES");
@@ -168,7 +168,7 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
 
@@ -189,7 +189,7 @@ public class KeyAgreementTest {
             KeyPair charlieKeyPair = keyGen.generateKeyPair();
 
             // Alice can perform multiple key agreements
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
 
             // First agreement with Bob
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
@@ -207,23 +207,23 @@ public class KeyAgreementTest {
         }
 
         @Test
-        @DisplayName("ECDH with Glassless KeyPairGenerator")
-        void testECDHWithGlasslessKeyGen() throws Exception {
-            // Use Glassless provider for key generation as well
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "Glassless");
+        @DisplayName("ECDH with GlaSSLess KeyPairGenerator")
+        void testECDHWithGlaSSLessKeyGen() throws Exception {
+            // Use GlaSSLess provider for key generation as well
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
             keyGen.initialize(new ECGenParameterSpec("secp256r1"));
 
             KeyPair aliceKeyPair = keyGen.generateKeyPair();
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -243,8 +243,8 @@ public class KeyAgreementTest {
             KeyPair aliceKeyPair = keyGen.generateKeyPair();
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
-            // Alice uses Glassless
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "Glassless");
+            // Alice uses GlaSSLess
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
@@ -257,7 +257,7 @@ public class KeyAgreementTest {
 
             // Both should compute the same shared secret
             assertArrayEquals(aliceSharedSecret, bobSharedSecret,
-                    "Glassless and default provider should produce the same shared secret");
+                    "GlaSSLess and default provider should produce the same shared secret");
         }
     }
 }

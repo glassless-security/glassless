@@ -34,7 +34,7 @@ public class KeyFactoryTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
 
         // Generate RSA key pair for testing
         KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
@@ -54,7 +54,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate public key from X509EncodedKeySpec")
         void testGeneratePublicFromX509() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
             assertNotNull(kf);
 
             byte[] encoded = rsaKeyPair.getPublic().getEncoded();
@@ -70,7 +70,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate private key from PKCS8EncodedKeySpec")
         void testGeneratePrivateFromPKCS8() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             byte[] encoded = rsaKeyPair.getPrivate().getEncoded();
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
@@ -85,7 +85,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate public key from RSAPublicKeySpec")
         void testGeneratePublicFromRSASpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             RSAPublicKey rsaPub = (RSAPublicKey) rsaKeyPair.getPublic();
             RSAPublicKeySpec spec = new RSAPublicKeySpec(rsaPub.getModulus(), rsaPub.getPublicExponent());
@@ -103,7 +103,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate private key from RSAPrivateCrtKeySpec")
         void testGeneratePrivateFromRSACrtSpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             RSAPrivateCrtKey rsaPriv = (RSAPrivateCrtKey) rsaKeyPair.getPrivate();
             RSAPrivateCrtKeySpec spec = new RSAPrivateCrtKeySpec(
@@ -126,7 +126,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Get X509EncodedKeySpec from RSA public key")
         void testGetX509SpecFromPublic() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             X509EncodedKeySpec spec = kf.getKeySpec(rsaKeyPair.getPublic(), X509EncodedKeySpec.class);
 
@@ -137,7 +137,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Get RSAPublicKeySpec from RSA public key")
         void testGetRSASpecFromPublic() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             RSAPublicKeySpec spec = kf.getKeySpec(rsaKeyPair.getPublic(), RSAPublicKeySpec.class);
 
@@ -150,7 +150,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Get PKCS8EncodedKeySpec from RSA private key")
         void testGetPKCS8SpecFromPrivate() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             PKCS8EncodedKeySpec spec = kf.getKeySpec(rsaKeyPair.getPrivate(), PKCS8EncodedKeySpec.class);
 
@@ -161,7 +161,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Translate RSA key")
         void testTranslateKey() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("RSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("RSA", "GlaSSLess");
 
             PublicKey translated = (PublicKey) kf.translateKey(rsaKeyPair.getPublic());
 
@@ -178,7 +178,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate public key from X509EncodedKeySpec")
         void testGeneratePublicFromX509() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
             assertNotNull(kf);
 
             byte[] encoded = ecKeyPair.getPublic().getEncoded();
@@ -194,7 +194,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate private key from PKCS8EncodedKeySpec")
         void testGeneratePrivateFromPKCS8() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             byte[] encoded = ecKeyPair.getPrivate().getEncoded();
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
@@ -209,7 +209,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate public key from ECPublicKeySpec")
         void testGeneratePublicFromECSpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             ECPublicKey ecPub = (ECPublicKey) ecKeyPair.getPublic();
             ECPublicKeySpec spec = new ECPublicKeySpec(ecPub.getW(), ecPub.getParams());
@@ -226,7 +226,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Generate private key from ECPrivateKeySpec")
         void testGeneratePrivateFromECSpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             ECPrivateKey ecPriv = (ECPrivateKey) ecKeyPair.getPrivate();
             ECPrivateKeySpec spec = new ECPrivateKeySpec(ecPriv.getS(), ecPriv.getParams());
@@ -243,7 +243,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Get X509EncodedKeySpec from EC public key")
         void testGetX509SpecFromPublic() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             X509EncodedKeySpec spec = kf.getKeySpec(ecKeyPair.getPublic(), X509EncodedKeySpec.class);
 
@@ -254,7 +254,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Get ECPublicKeySpec from EC public key")
         void testGetECSpecFromPublic() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             ECPublicKeySpec spec = kf.getKeySpec(ecKeyPair.getPublic(), ECPublicKeySpec.class);
 
@@ -266,7 +266,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Get PKCS8EncodedKeySpec from EC private key")
         void testGetPKCS8SpecFromPrivate() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             PKCS8EncodedKeySpec spec = kf.getKeySpec(ecKeyPair.getPrivate(), PKCS8EncodedKeySpec.class);
 
@@ -277,7 +277,7 @@ public class KeyFactoryTest {
         @Test
         @DisplayName("Translate EC key")
         void testTranslateKey() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("EC", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EC", "GlaSSLess");
 
             PublicKey translated = (PublicKey) kf.translateKey(ecKeyPair.getPublic());
 

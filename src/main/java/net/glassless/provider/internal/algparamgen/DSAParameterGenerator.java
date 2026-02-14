@@ -116,7 +116,7 @@ public class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi {
                     DSAParameterSpec dsaSpec = new DSAParameterSpec(p, q, g);
 
                     // Create and initialize AlgorithmParameters
-                    AlgorithmParameters params = AlgorithmParameters.getInstance("DSA", "Glassless");
+                    AlgorithmParameters params = AlgorithmParameters.getInstance("DSA", "GlaSSLess");
                     params.init(dsaSpec);
 
                     return params;

@@ -18,7 +18,7 @@ public class ScryptTest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -28,7 +28,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Derive key with standard parameters")
         void testDeriveKey() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             char[] password = "password".toCharArray();
             byte[] salt = "salt1234salt1234".getBytes();  // 16 bytes
@@ -48,7 +48,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Derive key with minimal cost for testing")
         void testDeriveKeyMinimalCost() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             char[] password = "test".toCharArray();
             byte[] salt = new byte[16];
@@ -67,7 +67,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Same parameters produce same key")
         void testDeterministic() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             char[] password = "mypassword".toCharArray();
             byte[] salt = "randomsalt123456".getBytes();
@@ -89,7 +89,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Different passwords produce different keys")
         void testDifferentPasswords() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             byte[] salt = "salt1234salt1234".getBytes();
             int n = 1024;
@@ -110,7 +110,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Different salts produce different keys")
         void testDifferentSalts() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             char[] password = "samepassword".toCharArray();
             int n = 1024;
@@ -131,7 +131,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Different N values produce different keys")
         void testDifferentCostParameter() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             char[] password = "password".toCharArray();
             byte[] salt = "salt1234salt1234".getBytes();
@@ -152,7 +152,7 @@ public class ScryptTest {
         @Test
         @DisplayName("Constructor with defaults (r=8, p=1)")
         void testConstructorWithDefaults() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
 
             char[] password = "test".toCharArray();
             byte[] salt = "0123456789abcdef".getBytes();
@@ -233,7 +233,7 @@ public class ScryptTest {
         @Test
         @DisplayName("128-bit key")
         void test128BitKey() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
             ScryptKeySpec spec = new ScryptKeySpec("password".toCharArray(),
                 "salt1234salt1234".getBytes(), 1024, 8, 1, 128);
             SecretKey key = skf.generateSecret(spec);
@@ -243,7 +243,7 @@ public class ScryptTest {
         @Test
         @DisplayName("256-bit key")
         void test256BitKey() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
             ScryptKeySpec spec = new ScryptKeySpec("password".toCharArray(),
                 "salt1234salt1234".getBytes(), 1024, 8, 1, 256);
             SecretKey key = skf.generateSecret(spec);
@@ -253,7 +253,7 @@ public class ScryptTest {
         @Test
         @DisplayName("512-bit key")
         void test512BitKey() throws Exception {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "Glassless");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", "GlaSSLess");
             ScryptKeySpec spec = new ScryptKeySpec("password".toCharArray(),
                 "salt1234salt1234".getBytes(), 1024, 8, 1, 512);
             SecretKey key = skf.generateSecret(spec);

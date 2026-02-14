@@ -25,10 +25,10 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
 /**
- * JMH benchmarks comparing Cipher performance between JDK, Glassless, BC FIPS, and NSS providers.
+ * JMH benchmarks comparing Cipher performance between JDK, GlaSSLess, BC FIPS, and NSS providers.
  *
  * <p>Run with: mvn test -Pbenchmarks -Djmh.include=CipherBenchmark
  */
@@ -70,7 +70,7 @@ public class CipherBenchmark {
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
       Security.addProvider(new BouncyCastleFipsProvider());
 
       plaintext = new byte[dataSize];
@@ -106,10 +106,10 @@ public class CipherBenchmark {
          jdkDecrypt = Cipher.getInstance(algorithm);
          jdkDecrypt.init(Cipher.DECRYPT_MODE, key, gcmSpec);
 
-         glasslessEncrypt = Cipher.getInstance(algorithm, "Glassless");
+         glasslessEncrypt = Cipher.getInstance(algorithm, "GlaSSLess");
          glasslessEncrypt.init(Cipher.ENCRYPT_MODE, key, gcmSpec);
 
-         glasslessDecrypt = Cipher.getInstance(algorithm, "Glassless");
+         glasslessDecrypt = Cipher.getInstance(algorithm, "GlaSSLess");
          glasslessDecrypt.init(Cipher.DECRYPT_MODE, key, gcmSpec);
 
          bcFipsEncrypt = Cipher.getInstance(algorithm, "BCFIPS");
@@ -148,10 +148,10 @@ public class CipherBenchmark {
          jdkDecrypt = Cipher.getInstance(algorithm);
          jdkDecrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
-         glasslessEncrypt = Cipher.getInstance(algorithm, "Glassless");
+         glasslessEncrypt = Cipher.getInstance(algorithm, "GlaSSLess");
          glasslessEncrypt.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
-         glasslessDecrypt = Cipher.getInstance(algorithm, "Glassless");
+         glasslessDecrypt = Cipher.getInstance(algorithm, "GlaSSLess");
          glasslessDecrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
          bcFipsEncrypt = Cipher.getInstance(algorithm, "BCFIPS");

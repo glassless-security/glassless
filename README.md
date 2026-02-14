@@ -1,6 +1,15 @@
-# Glassless
+<p align="center">
+  <img src="docs/img/glassless.png" alt="GlaSSLess Logo" width="400">
+</p>
 
-Glassless is a Java Cryptography Architecture (JCA) provider that wraps a system-installed OpenSSL library to provide a comprehensive suite of cryptographic algorithms. It uses Java's Foreign Function & Memory (FFM) API for native interoperability, requiring no JNI code or native compilation.
+<p align="center">
+  <a href="https://central.sonatype.com/artifact/net.glassless/glassless-provider"><img src="https://img.shields.io/maven-central/v/net.glassless/glassless-provider?label=Maven%20Central" alt="Maven Central"></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21%2B-blue?logo=openjdk" alt="Java Version"></a>
+  <a href="https://github.com/glassless-security/glassless/commits/main"><img src="https://img.shields.io/github/last-commit/glassless-security/glassless" alt="GitHub last commit"></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="License"></a>
+</p>
+
+GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system-installed OpenSSL library to provide a comprehensive suite of cryptographic algorithms. It uses Java's Foreign Function & Memory (FFM) API for native interoperability, requiring no JNI code or native compilation.
 
 ## Features
 
@@ -76,18 +85,18 @@ export JAVA_TOOL_OPTIONS="--enable-native-access=ALL-UNNAMED"
 
 ```java
 import java.security.Security;
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
 // Option 1: Add provider programmatically
-Security.addProvider(new GlasslessProvider());
+Security.addProvider(new GlaSSLessProvider());
 
 // Option 2: Insert at highest priority
-Security.insertProviderAt(new GlasslessProvider(), 1);
+Security.insertProviderAt(new GlaSSLessProvider(), 1);
 ```
 
 ### Configuring in java.security
 
-For system-wide installation, add Glassless to the `java.security` file located at `$JAVA_HOME/conf/security/java.security`.
+For system-wide installation, add GlaSSLess to the `java.security` file located at `$JAVA_HOME/conf/security/java.security`.
 
 #### Finding the Configuration File
 
@@ -99,7 +108,7 @@ java -XshowSettings:all 2>&1 | grep java.home
 
 #### Adding the Provider
 
-Providers are listed with numeric priorities (lower numbers = higher priority). Add Glassless to the provider list:
+Providers are listed with numeric priorities (lower numbers = higher priority). Add GlaSSLess to the provider list:
 
 ```properties
 # Existing providers (example)
@@ -116,8 +125,8 @@ security.provider.10=JdkLDAP
 security.provider.11=JdkSASL
 security.provider.12=SunPKCS11
 
-# Add Glassless
-security.provider.13=net.glassless.provider.GlasslessProvider
+# Add GlaSSLess
+security.provider.13=net.glassless.provider.GlaSSLessProvider
 ```
 
 #### Best Practices
@@ -126,28 +135,28 @@ security.provider.13=net.glassless.provider.GlasslessProvider
 
 | Position | Use Case | Recommendation |
 |----------|----------|----------------|
-| Low priority (e.g., 13) | Explicit use only | Use `getInstance("ALG", "Glassless")` to select |
-| Mid priority (e.g., 5-6) | Preferred for specific algorithms | Glassless used when JDK doesn't provide algorithm |
-| High priority (e.g., 1-2) | Default for all operations | All crypto uses Glassless unless unavailable |
+| Low priority (e.g., 13) | Explicit use only | Use `getInstance("ALG", "GlaSSLess")` to select |
+| Mid priority (e.g., 5-6) | Preferred for specific algorithms | GlaSSLess used when JDK doesn't provide algorithm |
+| High priority (e.g., 1-2) | Default for all operations | All crypto uses GlaSSLess unless unavailable |
 
 **2. Recommended: Low Priority with Explicit Selection**
 
-For most applications, add Glassless at low priority and explicitly request it when needed:
+For most applications, add GlaSSLess at low priority and explicitly request it when needed:
 
 ```properties
-# Add at low priority
-security.provider.13=net.glassless.provider.GlasslessProvider
+# Add GlaSSLess at low priority
+security.provider.13=net.glassless.provider.GlaSSLessProvider
 ```
 
 ```java
-// Explicitly request Glassless for performance-critical operations
-KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", "Glassless");
-Signature sig = Signature.getInstance("Ed25519", "Glassless");
+// Explicitly request GlaSSLess for performance-critical operations
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
 ```
 
 This approach:
 - Maintains JDK behavior by default
-- Allows selective use of Glassless where beneficial
+- Allows selective use of GlaSSLess where beneficial
 - Avoids unexpected behavior changes
 
 **3. High Priority for OpenSSL-First Strategy**
@@ -155,8 +164,8 @@ This approach:
 If you want all cryptographic operations to use OpenSSL by default:
 
 ```properties
-# Insert Glassless at high priority
-security.provider.1=net.glassless.provider.GlasslessProvider
+# Insert GlaSSLess at high priority
+security.provider.1=net.glassless.provider.GlaSSLessProvider
 security.provider.2=SUN
 security.provider.3=SunRsaSign
 # ... remaining providers renumbered
@@ -166,26 +175,26 @@ security.provider.3=SunRsaSign
 
 **4. FIPS Mode Considerations**
 
-When OpenSSL is in FIPS mode, Glassless automatically excludes non-approved algorithms. For FIPS-compliant deployments:
+When OpenSSL is in FIPS mode, GlaSSLess automatically excludes non-approved algorithms. For FIPS-compliant deployments:
 
 ```properties
-# Place Glassless at high priority to ensure FIPS-approved algorithms are used
-security.provider.1=net.glassless.provider.GlasslessProvider
+# Place GlaSSLess at high priority to ensure FIPS-approved algorithms are used
+security.provider.1=net.glassless.provider.GlaSSLessProvider
 security.provider.2=SunJSSE
 # ... other providers
 ```
 
 **5. TLS/SSL Configuration**
 
-For TLS connections to use Glassless algorithms, ensure the provider is available before `SunJSSE`:
+For TLS connections to use GlaSSLess algorithms, ensure the provider is available before `SunJSSE`:
 
 ```properties
-security.provider.1=net.glassless.provider.GlasslessProvider
+security.provider.1=net.glassless.provider.GlaSSLessProvider
 security.provider.2=SunJSSE
 # ... remaining providers
 ```
 
-The JSSE implementation will automatically use Glassless for underlying cryptographic operations.
+The JSSE implementation will automatically use GlaSSLess for underlying cryptographic operations.
 
 **6. Alternative: Security Properties File Override**
 
@@ -193,7 +202,7 @@ Instead of modifying the system `java.security`, create a custom properties file
 
 ```properties
 # custom-security.properties
-security.provider.1=net.glassless.provider.GlasslessProvider
+security.provider.1=net.glassless.provider.GlaSSLessProvider
 security.provider.2=SUN
 # ... etc
 ```
@@ -208,7 +217,7 @@ java -Djava.security.properties=/path/to/custom-security.properties \
 
 **7. Module Path Configuration**
 
-When using the module path, ensure Glassless is accessible:
+When using the module path, ensure GlaSSLess is accessible:
 
 ```bash
 java --module-path /path/to/glassless-provider.jar \
@@ -224,11 +233,11 @@ java --module-path /path/to/glassless-provider.jar \
 ```java
 import java.security.MessageDigest;
 import java.security.Security;
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
-Security.addProvider(new GlasslessProvider());
+Security.addProvider(new GlaSSLessProvider());
 
-MessageDigest md = MessageDigest.getInstance("SHA-256", "Glassless");
+MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
 byte[] hash = md.digest("Hello, World!".getBytes());
 ```
 
@@ -241,22 +250,22 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import java.security.SecureRandom;
 import java.security.Security;
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
-Security.addProvider(new GlasslessProvider());
+Security.addProvider(new GlaSSLessProvider());
 
 // Generate a key
-KeyGenerator keyGen = KeyGenerator.getInstance("AES", "Glassless");
+KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
 keyGen.init(256);
 SecretKey key = keyGen.generateKey();
 
 // Generate IV
 byte[] iv = new byte[12];
-SecureRandom random = SecureRandom.getInstance("NativePRNG", "Glassless");
+SecureRandom random = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
 random.nextBytes(iv);
 
 // Encrypt
-Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "Glassless");
+Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
 cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
 byte[] ciphertext = cipher.doFinal("Secret message".getBytes());
 
@@ -269,23 +278,23 @@ byte[] plaintext = cipher.doFinal(ciphertext);
 
 ```java
 import java.security.*;
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
-Security.addProvider(new GlasslessProvider());
+Security.addProvider(new GlaSSLessProvider());
 
 // Generate key pair
-KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("EC", "Glassless");
+KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
 keyPairGen.initialize(256);
 KeyPair keyPair = keyPairGen.generateKeyPair();
 
 // Sign
-Signature signer = Signature.getInstance("SHA256withECDSA", "Glassless");
+Signature signer = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
 signer.initSign(keyPair.getPrivate());
 signer.update("Data to sign".getBytes());
 byte[] signature = signer.sign();
 
 // Verify
-Signature verifier = Signature.getInstance("SHA256withECDSA", "Glassless");
+Signature verifier = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
 verifier.initVerify(keyPair.getPublic());
 verifier.update("Data to sign".getBytes());
 boolean valid = verifier.verify(signature);
@@ -299,16 +308,16 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.HKDFParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Security;
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
-Security.addProvider(new GlasslessProvider());
+Security.addProvider(new GlaSSLessProvider());
 
 // Input keying material
 byte[] ikm = "input-key-material".getBytes();
 byte[] salt = "salt-value".getBytes();
 byte[] info = "context-info".getBytes();
 
-KDF hkdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+KDF hkdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
 SecretKey derived = hkdf.deriveKey("AES",
     HKDFParameterSpec.expandOnly(new SecretKeySpec(ikm, "HKDF"), info, 32));
 ```
@@ -319,14 +328,14 @@ SecretKey derived = hkdf.deriveKey("AES",
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Security;
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
-Security.addProvider(new GlasslessProvider());
+Security.addProvider(new GlaSSLessProvider());
 
 byte[] key = "secret-key".getBytes();
 SecretKeySpec keySpec = new SecretKeySpec(key, "HmacSHA256");
 
-Mac mac = Mac.getInstance("HmacSHA256", "Glassless");
+Mac mac = Mac.getInstance("HmacSHA256", "GlaSSLess");
 mac.init(keySpec);
 byte[] hmac = mac.doFinal("Message".getBytes());
 ```
@@ -415,10 +424,10 @@ byte[] hmac = mac.doFinal("Message".getBytes());
 
 ## FIPS Mode
 
-When OpenSSL is configured with FIPS mode enabled, Glassless automatically detects this and excludes non-FIPS-approved algorithms from registration.
+When OpenSSL is configured with FIPS mode enabled, GlaSSLess automatically detects this and excludes non-FIPS-approved algorithms from registration.
 
 ```java
-GlasslessProvider provider = new GlasslessProvider();
+GlaSSLessProvider provider = new GlaSSLessProvider();
 boolean fipsMode = provider.isFIPSMode();
 System.out.println("FIPS Mode: " + (fipsMode ? "ENABLED" : "DISABLED"));
 ```
@@ -436,9 +445,9 @@ java --enable-native-access=ALL-UNNAMED -jar glassless-provider-1.0-SNAPSHOT.jar
 
 ## Performance
 
-Glassless provides significant performance advantages for asymmetric cryptography operations while JDK implementations excel at small-data symmetric operations due to HotSpot intrinsics.
+GlaSSLess provides significant performance advantages for asymmetric cryptography operations while JDK implementations excel at small-data symmetric operations due to HotSpot intrinsics.
 
-### Where Glassless Excels
+### Where GlaSSLess Excels
 
 | Operation | Typical Speedup |
 |-----------|-----------------|
@@ -471,7 +480,7 @@ This generates `PERFORMANCE.md` with full benchmark data for your environment.
 
 ## Benchmarks
 
-JMH microbenchmarks compare performance between JDK and Glassless implementations. Benchmarks are activated via a Maven profile:
+JMH microbenchmarks compare performance between JDK and GlaSSLess implementations. Benchmarks are activated via a Maven profile:
 
 ```bash
 # Run all benchmarks (~12 minutes)
@@ -520,7 +529,7 @@ mvn spotless:apply
 
 ```
 src/main/java/net/glassless/provider/
-├── GlasslessProvider.java       # Main provider class
+├── GlaSSLessProvider.java       # Main provider class
 ├── FIPSStatus.java              # FIPS mode detection
 └── internal/
     ├── OpenSSLCrypto.java       # FFM bindings to OpenSSL

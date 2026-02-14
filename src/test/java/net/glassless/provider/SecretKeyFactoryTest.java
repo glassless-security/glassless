@@ -28,7 +28,7 @@ public class SecretKeyFactoryTest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     private byte[] generateSalt(int length) {
@@ -51,7 +51,7 @@ public class SecretKeyFactoryTest {
         })
         void testPBKDF2KeyDerivation(String hashAlgorithm, int expectedKeyLength) throws Exception {
             String algorithm = "PBKDF2WithHmac" + hashAlgorithm;
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "GlaSSLess");
             assertNotNull(factory);
 
             char[] password = "testPassword123!".toCharArray();
@@ -69,7 +69,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("PBKDF2 produces consistent keys")
         void testPBKDF2Consistency() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "GlaSSLess");
 
             char[] password = "testPassword123!".toCharArray();
             byte[] salt = generateSalt(16);
@@ -87,7 +87,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("PBKDF2 different passwords produce different keys")
         void testPBKDF2DifferentPasswords() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "GlaSSLess");
 
             byte[] salt = generateSalt(16);
             int iterationCount = 10000;
@@ -121,7 +121,7 @@ public class SecretKeyFactoryTest {
         })
         void testPBKDF2With8BitEncoding(String hashAlgorithm, int expectedKeyLength) throws Exception {
             String algorithm = "PBKDF2WithHmac" + hashAlgorithm + "And8BIT";
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "GlaSSLess");
             assertNotNull(factory);
 
             char[] password = "testPassword123!".toCharArray();
@@ -145,7 +145,7 @@ public class SecretKeyFactoryTest {
         })
         void testPBKDF2WithSHA3(String sha3Variant, int expectedKeyLength) throws Exception {
             String algorithm = "PBKDF2WithHmacSHA3-" + sha3Variant;
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "GlaSSLess");
             assertNotNull(factory);
 
             char[] password = "testPassword123!".toCharArray();
@@ -163,8 +163,8 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("8BIT encoding differs from UTF-8 for high-byte chars")
         void testEncodingDifference() throws Exception {
-            SecretKeyFactory utf8Factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "Glassless");
-            SecretKeyFactory eightBitFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256And8BIT", "Glassless");
+            SecretKeyFactory utf8Factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "GlaSSLess");
+            SecretKeyFactory eightBitFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256And8BIT", "GlaSSLess");
 
             // Use a password with characters that encode differently in UTF-8 vs 8-bit
             char[] password = new char[] { '\u00E9', '\u00FC', '\u00F1' }; // é, ü, ñ
@@ -193,7 +193,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("PBKDF2 derived key can be used for AES encryption")
         void testPBKDF2KeyForEncryption() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", "GlaSSLess");
 
             char[] password = "testPassword123!".toCharArray();
             byte[] salt = generateSalt(16);
@@ -207,7 +207,7 @@ public class SecretKeyFactoryTest {
             SecretKey aesKey = new SecretKeySpec(derivedKey.getEncoded(), "AES");
 
             // Use for AES encryption
-            Cipher cipher = Cipher.getInstance("AES_256/CBC/PKCS5Padding", "Glassless");
+            Cipher cipher = Cipher.getInstance("AES_256/CBC/PKCS5Padding", "GlaSSLess");
             byte[] iv = generateSalt(16);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new IvParameterSpec(iv));
 
@@ -229,7 +229,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("PBE key generation from password")
         void testPBEKeyGeneration() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBE", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBE", "GlaSSLess");
             assertNotNull(factory);
 
             char[] password = "testPassword123!".toCharArray();
@@ -248,7 +248,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("DESede key from DESedeKeySpec")
         void testDESedeFromKeySpec() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede", "GlaSSLess");
             assertNotNull(factory);
 
             // Generate 24-byte key material
@@ -266,7 +266,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("DESede key has correct parity bits")
         void testDESedeParityBits() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede", "GlaSSLess");
 
             byte[] keyBytes = new byte[24];
             new SecureRandom().nextBytes(keyBytes);
@@ -284,7 +284,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("TripleDES alias works")
         void testTripleDESAlias() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("TripleDES", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("TripleDES", "GlaSSLess");
             assertNotNull(factory);
 
             byte[] keyBytes = new byte[24];
@@ -316,7 +316,7 @@ public class SecretKeyFactoryTest {
         })
         void testPBES2KeyDerivation(String hashAlgorithm, int keySize) throws Exception {
             String algorithm = "PBEWithHmac" + hashAlgorithm + "AndAES_" + keySize;
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "GlaSSLess");
             assertNotNull(factory);
 
             char[] password = "testPassword123!".toCharArray();
@@ -340,7 +340,7 @@ public class SecretKeyFactoryTest {
         })
         void testPBES2WithSHA512Truncated(String truncation, int keySize) throws Exception {
             String algorithm = "PBEWithHmacSHA512/" + truncation + "AndAES_" + keySize;
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, "GlaSSLess");
             assertNotNull(factory);
 
             char[] password = "testPassword123!".toCharArray();
@@ -358,7 +358,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("PBES2 produces consistent keys")
         void testPBES2Consistency() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256", "GlaSSLess");
 
             char[] password = "testPassword123!".toCharArray();
             byte[] salt = generateSalt(16);
@@ -376,7 +376,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("PBES2 derived key can be used for AES encryption")
         void testPBES2KeyForEncryption() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256", "GlaSSLess");
 
             char[] password = "testPassword123!".toCharArray();
             byte[] salt = generateSalt(16);
@@ -389,7 +389,7 @@ public class SecretKeyFactoryTest {
             SecretKey aesKey = new SecretKeySpec(derivedKey.getEncoded(), "AES");
 
             // Use for AES encryption
-            Cipher cipher = Cipher.getInstance("AES_256/CBC/PKCS5Padding", "Glassless");
+            Cipher cipher = Cipher.getInstance("AES_256/CBC/PKCS5Padding", "GlaSSLess");
             byte[] iv = generateSalt(16);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new IvParameterSpec(iv));
 
@@ -411,7 +411,7 @@ public class SecretKeyFactoryTest {
         @ParameterizedTest(name = "AES with {0}-byte key")
         @ValueSource(ints = {16, 24, 32})
         void testAESFromSecretKeySpec(int keyLength) throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("AES", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("AES", "GlaSSLess");
             assertNotNull(factory);
 
             byte[] keyBytes = new byte[keyLength];
@@ -429,7 +429,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("AES key translation")
         void testAESKeyTranslation() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("AES", "Glassless");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("AES", "GlaSSLess");
 
             byte[] keyBytes = new byte[32];
             new SecureRandom().nextBytes(keyBytes);

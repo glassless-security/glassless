@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * XDH private key implementation for X25519 and X448.
  */
-public class GlasslessXECPrivateKey implements XECPrivateKey {
+public class GlaSSLessXECPrivateKey implements XECPrivateKey {
 
     private static final long serialVersionUID = 1L;
 
@@ -17,7 +17,7 @@ public class GlasslessXECPrivateKey implements XECPrivateKey {
     private final byte[] scalar;
     private final byte[] encoded;
 
-    public GlasslessXECPrivateKey(NamedParameterSpec params, byte[] scalar, byte[] encoded) {
+    public GlaSSLessXECPrivateKey(NamedParameterSpec params, byte[] scalar, byte[] encoded) {
         this.params = params;
         this.scalar = scalar.clone();
         this.encoded = encoded.clone();
@@ -65,7 +65,7 @@ public class GlasslessXECPrivateKey implements XECPrivateKey {
 
     @Override
     public String toString() {
-        return "GlasslessXECPrivateKey [algorithm=" + params.getName() + "]";
+        return "GlaSSLessXECPrivateKey [algorithm=" + params.getName() + "]";
     }
 
     /**

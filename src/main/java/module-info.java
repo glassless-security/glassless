@@ -16,5 +16,5 @@ module net.glassless.provider {
    opens net.glassless.provider.internal.eddsa to java.base;
    opens net.glassless.provider.internal.xdh to java.base;
 
-   provides java.security.Provider with net.glassless.provider.GlasslessProvider;
+   provides java.security.Provider with net.glassless.provider.GlaSSLessProvider;
 }

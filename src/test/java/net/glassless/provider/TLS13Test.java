@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Tests that simulate full TLS 1.3 client/server connections using the Glassless provider.
+ * Tests that simulate full TLS 1.3 client/server connections using the GlaSSLess provider.
  * These tests verify that the provider's algorithms work correctly together in a realistic
  * TLS handshake and data transfer scenario.
  */
@@ -42,7 +42,7 @@ public class TLS13Test {
 
    @BeforeAll
    public static void setUp() {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
    }
 
    @Nested
@@ -86,7 +86,7 @@ public class TLS13Test {
       void testLargeDataTransfer() throws Exception {
          // Generate 100KB of random data
          byte[] largeData = new byte[100 * 1024];
-         SecureRandom random = SecureRandom.getInstance("NativePRNG", "Glassless");
+         SecureRandom random = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
          random.nextBytes(largeData);
 
          KeyStore[] stores = generateKeyStoreWithKeytool("EC", 256, "SHA256withECDSA");
@@ -124,7 +124,7 @@ public class TLS13Test {
 
                   // Send back hash as acknowledgment
                   java.security.MessageDigest md =
-                        java.security.MessageDigest.getInstance("SHA-256", "Glassless");
+                        java.security.MessageDigest.getInstance("SHA-256", "GlaSSLess");
                   byte[] hash = md.digest(data);
                   out.write(hash);
                   out.flush();
@@ -161,7 +161,7 @@ public class TLS13Test {
 
             // Verify hash
             java.security.MessageDigest md =
-                  java.security.MessageDigest.getInstance("SHA-256", "Glassless");
+                  java.security.MessageDigest.getInstance("SHA-256", "GlaSSLess");
             byte[] expectedHash = md.digest(largeData);
             assertArrayEquals(expectedHash, receivedHash, "Data integrity check failed");
          }
@@ -201,16 +201,16 @@ public class TLS13Test {
    class AlgorithmVerificationTests {
 
       @Test
-      @DisplayName("Verify Glassless algorithms are used for crypto operations")
+      @DisplayName("Verify GlaSSLess algorithms are used for crypto operations")
       @Timeout(30)
-      void testGlasslessAlgorithmsUsed() throws Exception {
-         // Test that we can get algorithms from Glassless
-         assertNotNull(java.security.MessageDigest.getInstance("SHA-256", "Glassless"));
-         assertNotNull(javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "Glassless"));
-         assertNotNull(javax.crypto.Mac.getInstance("HmacSHA256", "Glassless"));
-         assertNotNull(KeyPairGenerator.getInstance("EC", "Glassless"));
-         assertNotNull(java.security.Signature.getInstance("SHA256withECDSA", "Glassless"));
-         assertNotNull(SecureRandom.getInstance("NativePRNG", "Glassless"));
+      void testGlaSSLessAlgorithmsUsed() throws Exception {
+         // Test that we can get algorithms from GlaSSLess
+         assertNotNull(java.security.MessageDigest.getInstance("SHA-256", "GlaSSLess"));
+         assertNotNull(javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess"));
+         assertNotNull(javax.crypto.Mac.getInstance("HmacSHA256", "GlaSSLess"));
+         assertNotNull(KeyPairGenerator.getInstance("EC", "GlaSSLess"));
+         assertNotNull(java.security.Signature.getInstance("SHA256withECDSA", "GlaSSLess"));
+         assertNotNull(SecureRandom.getInstance("NativePRNG", "GlaSSLess"));
       }
 
       @Test
@@ -218,7 +218,7 @@ public class TLS13Test {
       @Timeout(10)
       void testHKDFKeyDerivation() throws Exception {
          // TLS 1.3 uses HKDF for key derivation
-         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", "Glassless");
+         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", "GlaSSLess");
          assertNotNull(hkdf);
 
          byte[] ikm = "input-key-material".getBytes();
@@ -242,14 +242,14 @@ public class TLS13Test {
       @Timeout(10)
       void testAESGCMEncryption() throws Exception {
          // TLS 1.3 uses AES-GCM for bulk encryption
-         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "Glassless");
+         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
 
-         javax.crypto.KeyGenerator keyGen = javax.crypto.KeyGenerator.getInstance("AES", "Glassless");
+         javax.crypto.KeyGenerator keyGen = javax.crypto.KeyGenerator.getInstance("AES", "GlaSSLess");
          keyGen.init(256);
          javax.crypto.SecretKey key = keyGen.generateKey();
 
          byte[] iv = new byte[12];
-         SecureRandom.getInstance("NativePRNG", "Glassless").nextBytes(iv);
+         SecureRandom.getInstance("NativePRNG", "GlaSSLess").nextBytes(iv);
 
          javax.crypto.spec.GCMParameterSpec gcmSpec = new javax.crypto.spec.GCMParameterSpec(128, iv);
 
@@ -317,7 +317,7 @@ public class TLS13Test {
 
       SSLContext ctx = SSLContext.getInstance("TLSv1.3");
       ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(),
-            SecureRandom.getInstance("NativePRNG", "Glassless"));
+            SecureRandom.getInstance("NativePRNG", "GlaSSLess"));
 
       return ctx;
    }
@@ -328,7 +328,7 @@ public class TLS13Test {
 
       SSLContext ctx = SSLContext.getInstance("TLSv1.3");
       ctx.init(null, tmf.getTrustManagers(),
-            SecureRandom.getInstance("NativePRNG", "Glassless"));
+            SecureRandom.getInstance("NativePRNG", "GlaSSLess"));
 
       return ctx;
    }

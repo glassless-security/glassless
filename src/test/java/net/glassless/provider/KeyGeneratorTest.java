@@ -22,7 +22,7 @@ public class KeyGeneratorTest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -32,7 +32,7 @@ public class KeyGeneratorTest {
         @ParameterizedTest(name = "AES with {0}-bit key")
         @ValueSource(ints = {128, 192, 256})
         void testAESKeyGeneration(int keySize) throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
             assertNotNull(keyGen);
 
             keyGen.init(keySize);
@@ -46,7 +46,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("AES default key size should be 128 bits")
         void testAESDefaultKeySize() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
             SecretKey key = keyGen.generateKey();
 
             assertNotNull(key);
@@ -57,14 +57,14 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("AES should reject invalid key sizes")
         void testAESInvalidKeySize() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
             assertThrows(Exception.class, () -> keyGen.init(64));
         }
 
         @Test
         @DisplayName("Generated AES keys should be unique")
         void testAESKeyUniqueness() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
             keyGen.init(256);
 
             SecretKey key1 = keyGen.generateKey();
@@ -94,7 +94,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("DESede key generation")
         void testDESedeKeyGeneration() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("DESede", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("DESede", "GlaSSLess");
             assertNotNull(keyGen);
 
             SecretKey key = keyGen.generateKey();
@@ -107,7 +107,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("DESede keys should have correct parity bits")
         void testDESedeParityBits() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("DESede", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("DESede", "GlaSSLess");
             SecretKey key = keyGen.generateKey();
 
             byte[] keyBytes = key.getEncoded();
@@ -121,7 +121,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("TripleDES alias should work")
         void testTripleDESAlias() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("TripleDES", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("TripleDES", "GlaSSLess");
             assertNotNull(keyGen);
 
             SecretKey key = keyGen.generateKey();
@@ -144,7 +144,7 @@ public class KeyGeneratorTest {
         })
         void testHmacSHAKeyGeneration(String algorithm, int expectedKeyLength) throws Exception {
             String keyGenAlgorithm = "Hmac" + algorithm;
-            KeyGenerator keyGen = KeyGenerator.getInstance(keyGenAlgorithm, "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance(keyGenAlgorithm, "GlaSSLess");
             assertNotNull(keyGen);
 
             SecretKey key = keyGen.generateKey();
@@ -157,7 +157,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("HmacSHA256 with custom key size")
         void testHmacSHA256CustomKeySize() throws Exception {
-            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256", "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256", "GlaSSLess");
             keyGen.init(512); // 512 bits = 64 bytes
 
             SecretKey key = keyGen.generateKey();
@@ -180,7 +180,7 @@ public class KeyGeneratorTest {
         })
         void testHmacSHA3KeyGeneration(int bits, int expectedKeyLength) throws Exception {
             String keyGenAlgorithm = "HmacSHA3-" + bits;
-            KeyGenerator keyGen = KeyGenerator.getInstance(keyGenAlgorithm, "Glassless");
+            KeyGenerator keyGen = KeyGenerator.getInstance(keyGenAlgorithm, "GlaSSLess");
             assertNotNull(keyGen);
 
             SecretKey key = keyGen.generateKey();

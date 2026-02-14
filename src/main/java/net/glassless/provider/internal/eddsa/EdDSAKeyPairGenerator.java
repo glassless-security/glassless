@@ -106,8 +106,8 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
                     EdECPoint point = createEdECPoint(rawPublicKey);
 
                     // Create key objects
-                    GlasslessEdECPublicKey publicKey = new GlasslessEdECPublicKey(params, point, publicKeyEncoded);
-                    GlasslessEdECPrivateKey privateKey = new GlasslessEdECPrivateKey(params, rawPrivateKey, privateKeyEncoded);
+                    GlaSSLessEdECPublicKey publicKey = new GlaSSLessEdECPublicKey(params, point, publicKeyEncoded);
+                    GlaSSLessEdECPrivateKey privateKey = new GlaSSLessEdECPrivateKey(params, rawPrivateKey, privateKeyEncoded);
 
                     return new KeyPair(publicKey, privateKey);
                 } finally {

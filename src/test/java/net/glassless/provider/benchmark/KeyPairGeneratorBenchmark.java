@@ -21,10 +21,10 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import net.glassless.provider.GlasslessProvider;
+import net.glassless.provider.GlaSSLessProvider;
 
 /**
- * JMH benchmarks comparing KeyPairGenerator performance between JDK, Glassless, BC FIPS, and NSS providers.
+ * JMH benchmarks comparing KeyPairGenerator performance between JDK, GlaSSLess, BC FIPS, and NSS providers.
  *
  * <p>Run with: mvn test -Pbenchmarks -Djmh.include=KeyPairGeneratorBenchmark
  */
@@ -55,7 +55,7 @@ public class KeyPairGeneratorBenchmark {
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
       Security.addProvider(new BouncyCastleFipsProvider());
 
       // Try to configure NSS provider
@@ -78,7 +78,7 @@ public class KeyPairGeneratorBenchmark {
          jdkKeyPairGen = KeyPairGenerator.getInstance("EC");
          jdkKeyPairGen.initialize(new ECGenParameterSpec(curve));
 
-         glasslessKeyPairGen = KeyPairGenerator.getInstance("EC", "Glassless");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
          glasslessKeyPairGen.initialize(new ECGenParameterSpec(curve));
 
          bcFipsKeyPairGen = KeyPairGenerator.getInstance("EC", "BCFIPS");
@@ -98,7 +98,7 @@ public class KeyPairGeneratorBenchmark {
          jdkKeyPairGen = KeyPairGenerator.getInstance("RSA");
          jdkKeyPairGen.initialize(keySize);
 
-         glasslessKeyPairGen = KeyPairGenerator.getInstance("RSA", "Glassless");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
          glasslessKeyPairGen.initialize(keySize);
 
          bcFipsKeyPairGen = KeyPairGenerator.getInstance("RSA", "BCFIPS");

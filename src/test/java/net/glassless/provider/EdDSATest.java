@@ -24,7 +24,7 @@ public class EdDSATest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -34,7 +34,7 @@ public class EdDSATest {
         @Test
         @DisplayName("Generate Ed25519 key pair")
         void testGenerateKeyPair() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -62,7 +62,7 @@ public class EdDSATest {
         @Test
         @DisplayName("Generate EdDSA key pair with Ed25519 param")
         void testGenerateKeyPairWithParam() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EdDSA", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EdDSA", "GlaSSLess");
             kpg.initialize(NamedParameterSpec.ED25519);
             KeyPair kp = kpg.generateKeyPair();
 
@@ -79,7 +79,7 @@ public class EdDSATest {
         @Test
         @DisplayName("Generate Ed448 key pair")
         void testGenerateKeyPair() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed448", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed448", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -104,10 +104,10 @@ public class EdDSATest {
         @Test
         @DisplayName("Sign and verify with Ed25519")
         void testSignAndVerify() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("Ed25519", "Glassless");
+            Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
             sig.initSign(kp.getPrivate());
             sig.update("test message".getBytes());
             byte[] signature = sig.sign();
@@ -123,10 +123,10 @@ public class EdDSATest {
         @Test
         @DisplayName("Verify fails with wrong message")
         void testVerifyFailsWithWrongMessage() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("Ed25519", "Glassless");
+            Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
             sig.initSign(kp.getPrivate());
             sig.update("original message".getBytes());
             byte[] signature = sig.sign();
@@ -139,10 +139,10 @@ public class EdDSATest {
         @Test
         @DisplayName("Sign empty message")
         void testSignEmptyMessage() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("Ed25519", "Glassless");
+            Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
             sig.initSign(kp.getPrivate());
             byte[] signature = sig.sign();
 
@@ -153,10 +153,10 @@ public class EdDSATest {
         @Test
         @DisplayName("EdDSA signature with Ed25519 key")
         void testEdDSASignatureWithEd25519() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("EdDSA", "Glassless");
+            Signature sig = Signature.getInstance("EdDSA", "GlaSSLess");
             sig.initSign(kp.getPrivate());
             sig.update("test".getBytes());
             byte[] signature = sig.sign();
@@ -174,10 +174,10 @@ public class EdDSATest {
         @Test
         @DisplayName("Sign and verify with Ed448")
         void testSignAndVerify() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed448", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed448", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("Ed448", "Glassless");
+            Signature sig = Signature.getInstance("Ed448", "GlaSSLess");
             sig.initSign(kp.getPrivate());
             sig.update("test message".getBytes());
             byte[] signature = sig.sign();
@@ -198,10 +198,10 @@ public class EdDSATest {
         @Test
         @DisplayName("Reconstruct Ed25519 keys from encoded")
         void testReconstructEd25519Keys() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair original = kpg.generateKeyPair();
 
-            KeyFactory kf = KeyFactory.getInstance("EdDSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EdDSA", "GlaSSLess");
 
             // Reconstruct public key
             X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(original.getPublic().getEncoded());
@@ -217,10 +217,10 @@ public class EdDSATest {
         @Test
         @DisplayName("Get key specs from keys")
         void testGetKeySpecs() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            KeyFactory kf = KeyFactory.getInstance("EdDSA", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("EdDSA", "GlaSSLess");
 
             // Get X509 spec from public key
             X509EncodedKeySpec x509Spec = kf.getKeySpec(kp.getPublic(), X509EncodedKeySpec.class);
@@ -249,8 +249,8 @@ public class EdDSATest {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519");
             KeyPair original = kpg.generateKeyPair();
 
-            // Translate to Glassless
-            KeyFactory kf = KeyFactory.getInstance("EdDSA", "Glassless");
+            // Translate to GlaSSLess
+            KeyFactory kf = KeyFactory.getInstance("EdDSA", "GlaSSLess");
             EdECPublicKey translatedPub = (EdECPublicKey) kf.translateKey(original.getPublic());
             EdECPrivateKey translatedPriv = (EdECPrivateKey) kf.translateKey(original.getPrivate());
 
@@ -258,7 +258,7 @@ public class EdDSATest {
             assertNotNull(translatedPriv);
 
             // Use translated keys for signing
-            Signature sig = Signature.getInstance("Ed25519", "Glassless");
+            Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
             sig.initSign(translatedPriv);
             sig.update("test".getBytes());
             byte[] signature = sig.sign();
@@ -274,13 +274,13 @@ public class EdDSATest {
     class CrossProviderTests {
 
         @Test
-        @DisplayName("Glassless signs, SunEC verifies")
-        void testGlasslessSignSunVerify() throws Exception {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "Glassless");
+        @DisplayName("GlaSSLess signs, SunEC verifies")
+        void testGlaSSLessSignSunVerify() throws Exception {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
             KeyPair kp = kpg.generateKeyPair();
 
-            // Sign with Glassless
-            Signature sig = Signature.getInstance("Ed25519", "Glassless");
+            // Sign with GlaSSLess
+            Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
             sig.initSign(kp.getPrivate());
             sig.update("cross-provider test".getBytes());
             byte[] signature = sig.sign();
@@ -297,8 +297,8 @@ public class EdDSATest {
         }
 
         @Test
-        @DisplayName("SunEC signs, Glassless verifies")
-        void testSunSignGlasslessVerify() throws Exception {
+        @DisplayName("SunEC signs, GlaSSLess verifies")
+        void testSunSignGlaSSLessVerify() throws Exception {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519");
             KeyPair kp = kpg.generateKeyPair();
 
@@ -308,12 +308,12 @@ public class EdDSATest {
             sig.update("reverse cross-provider test".getBytes());
             byte[] signature = sig.sign();
 
-            // Verify with Glassless
-            KeyFactory kf = KeyFactory.getInstance("EdDSA", "Glassless");
+            // Verify with GlaSSLess
+            KeyFactory kf = KeyFactory.getInstance("EdDSA", "GlaSSLess");
             EdECPublicKey glassPub = (EdECPublicKey) kf.generatePublic(
                 new X509EncodedKeySpec(kp.getPublic().getEncoded()));
 
-            Signature glassSig = Signature.getInstance("Ed25519", "Glassless");
+            Signature glassSig = Signature.getInstance("Ed25519", "GlaSSLess");
             glassSig.initVerify(glassPub);
             glassSig.update("reverse cross-provider test".getBytes());
             assertTrue(glassSig.verify(signature));

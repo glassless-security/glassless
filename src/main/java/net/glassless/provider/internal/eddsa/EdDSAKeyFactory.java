@@ -77,7 +77,7 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
 
     @Override
     protected Key engineTranslateKey(Key key) throws InvalidKeyException {
-        if (key instanceof GlasslessEdECPublicKey || key instanceof GlasslessEdECPrivateKey) {
+        if (key instanceof GlaSSLessEdECPublicKey || key instanceof GlaSSLessEdECPrivateKey) {
             return key;  // Already our implementation
         }
 
@@ -119,7 +119,7 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
                 // Create EdECPoint
                 EdECPoint point = createEdECPoint(rawKey);
 
-                return new GlasslessEdECPublicKey(params, point, encoded);
+                return new GlaSSLessEdECPublicKey(params, point, encoded);
             } finally {
                 OpenSSLCrypto.EVP_PKEY_free(pkey);
             }
@@ -147,7 +147,7 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
                 byte[] rawKey = new byte[keyLen];
                 System.arraycopy(encoded, encoded.length - keyLen, rawKey, 0, keyLen);
 
-                return new GlasslessEdECPrivateKey(params, rawKey, encoded);
+                return new GlaSSLessEdECPrivateKey(params, rawKey, encoded);
             } finally {
                 OpenSSLCrypto.EVP_PKEY_free(pkey);
             }
@@ -169,7 +169,7 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
         // Create X.509 encoded form
         byte[] encoded = createX509Encoding(params, rawKey);
 
-        return new GlasslessEdECPublicKey(params, point, encoded);
+        return new GlaSSLessEdECPublicKey(params, point, encoded);
     }
 
     private PrivateKey generatePrivateFromSpec(EdECPrivateKeySpec spec) throws InvalidKeySpecException {
@@ -179,7 +179,7 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
         // Create PKCS#8 encoded form
         byte[] encoded = createPKCS8Encoding(params, keyBytes);
 
-        return new GlasslessEdECPrivateKey(params, keyBytes, encoded);
+        return new GlaSSLessEdECPrivateKey(params, keyBytes, encoded);
     }
 
     private NamedParameterSpec detectCurveFromPublicKey(byte[] encoded) {

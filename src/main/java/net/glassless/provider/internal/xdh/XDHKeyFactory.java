@@ -76,7 +76,7 @@ public class XDHKeyFactory extends KeyFactorySpi {
 
     @Override
     protected Key engineTranslateKey(Key key) throws InvalidKeyException {
-        if (key instanceof GlasslessXECPublicKey || key instanceof GlasslessXECPrivateKey) {
+        if (key instanceof GlaSSLessXECPublicKey || key instanceof GlaSSLessXECPrivateKey) {
             return key;
         }
 
@@ -114,7 +114,7 @@ public class XDHKeyFactory extends KeyFactorySpi {
 
                 BigInteger u = createUCoordinate(rawKey);
 
-                return new GlasslessXECPublicKey(params, u, encoded);
+                return new GlaSSLessXECPublicKey(params, u, encoded);
             } finally {
                 OpenSSLCrypto.EVP_PKEY_free(pkey);
             }
@@ -139,7 +139,7 @@ public class XDHKeyFactory extends KeyFactorySpi {
                 byte[] rawKey = new byte[keyLen];
                 System.arraycopy(encoded, encoded.length - keyLen, rawKey, 0, keyLen);
 
-                return new GlasslessXECPrivateKey(params, rawKey, encoded);
+                return new GlaSSLessXECPrivateKey(params, rawKey, encoded);
             } finally {
                 OpenSSLCrypto.EVP_PKEY_free(pkey);
             }
@@ -159,7 +159,7 @@ public class XDHKeyFactory extends KeyFactorySpi {
         byte[] rawKey = encodeUCoordinate(u, params);
         byte[] encoded = createX509Encoding(params, rawKey);
 
-        return new GlasslessXECPublicKey(params, u, encoded);
+        return new GlaSSLessXECPublicKey(params, u, encoded);
     }
 
     private PrivateKey generatePrivateFromSpec(XECPrivateKeySpec spec) throws InvalidKeySpecException {
@@ -170,7 +170,7 @@ public class XDHKeyFactory extends KeyFactorySpi {
         byte[] scalar = spec.getScalar();
         byte[] encoded = createPKCS8Encoding(params, scalar);
 
-        return new GlasslessXECPrivateKey(params, scalar, encoded);
+        return new GlaSSLessXECPrivateKey(params, scalar, encoded);
     }
 
     private NamedParameterSpec detectCurveFromPublicKey(byte[] encoded) {

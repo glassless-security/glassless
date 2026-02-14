@@ -23,7 +23,7 @@ public class AlgorithmParameterGeneratorTest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -33,7 +33,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("Generate DSA parameters with default size")
         void testGenerateDSAParametersDefault() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "GlaSSLess");
             assertNotNull(gen);
 
             gen.init(2048);
@@ -56,7 +56,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("Generate DSA parameters with DSAGenParameterSpec")
         void testGenerateDSAParametersWithSpec() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "GlaSSLess");
 
             DSAGenParameterSpec genSpec = new DSAGenParameterSpec(2048, 256);
             gen.init(genSpec);
@@ -72,7 +72,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("Generated DSA parameters can be used for key generation")
         void testDSAParametersForKeyGen() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "GlaSSLess");
             gen.init(2048);
 
             AlgorithmParameters params = gen.generateParameters();
@@ -91,7 +91,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("DSA parameters have valid mathematical properties")
         void testDSAParameterProperties() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DSA", "GlaSSLess");
             gen.init(2048);
 
             AlgorithmParameters params = gen.generateParameters();
@@ -124,7 +124,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("Generate DH parameters with default size")
         void testGenerateDHParametersDefault() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "GlaSSLess");
             assertNotNull(gen);
 
             gen.init(2048);
@@ -145,7 +145,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("Generate DH parameters with DHGenParameterSpec")
         void testGenerateDHParametersWithSpec() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "GlaSSLess");
 
             DHGenParameterSpec genSpec = new DHGenParameterSpec(2048, 256);
             gen.init(genSpec);
@@ -161,7 +161,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("Generated DH parameters can be used for key generation")
         void testDHParametersForKeyGen() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "GlaSSLess");
             gen.init(2048);
 
             AlgorithmParameters params = gen.generateParameters();
@@ -180,7 +180,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("DiffieHellman alias works")
         void testDiffieHellmanAlias() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DiffieHellman", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DiffieHellman", "GlaSSLess");
             assertNotNull(gen);
 
             gen.init(2048);
@@ -192,7 +192,7 @@ public class AlgorithmParameterGeneratorTest {
         @Test
         @DisplayName("DH parameters have valid generator")
         void testDHParameterProperties() throws Exception {
-            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "Glassless");
+            AlgorithmParameterGenerator gen = AlgorithmParameterGenerator.getInstance("DH", "GlaSSLess");
             gen.init(2048);
 
             AlgorithmParameters params = gen.generateParameters();

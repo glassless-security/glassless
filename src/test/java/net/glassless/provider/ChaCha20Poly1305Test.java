@@ -19,7 +19,7 @@ public class ChaCha20Poly1305Test {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -43,7 +43,7 @@ public class ChaCha20Poly1305Test {
             byte[] plaintext = "Hello, ChaCha20-Poly1305!".getBytes();
 
             // Encrypt
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
@@ -51,7 +51,7 @@ public class ChaCha20Poly1305Test {
             assertEquals(plaintext.length + 16, ciphertext.length);
 
             // Decrypt
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
             byte[] decrypted = decryptCipher.doFinal(ciphertext);
 
@@ -72,11 +72,11 @@ public class ChaCha20Poly1305Test {
             new SecureRandom().nextBytes(nonce1);
             new SecureRandom().nextBytes(nonce2);
 
-            Cipher cipher1 = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher cipher1 = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             cipher1.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(nonce1));
             byte[] ciphertext1 = cipher1.doFinal(plaintext);
 
-            Cipher cipher2 = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher cipher2 = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             cipher2.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(nonce2));
             byte[] ciphertext2 = cipher2.doFinal(plaintext);
 
@@ -97,14 +97,14 @@ public class ChaCha20Poly1305Test {
 
             byte[] plaintext = "Authenticate me!".getBytes();
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
             // Tamper with the ciphertext
             ciphertext[0] ^= 0xFF;
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
             assertThrows(Exception.class, () -> decryptCipher.doFinal(ciphertext),
@@ -124,14 +124,14 @@ public class ChaCha20Poly1305Test {
 
             byte[] plaintext = "Authenticate me!".getBytes();
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
             // Tamper with the tag (last 16 bytes)
             ciphertext[ciphertext.length - 1] ^= 0xFF;
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
             assertThrows(Exception.class, () -> decryptCipher.doFinal(ciphertext),
@@ -151,14 +151,14 @@ public class ChaCha20Poly1305Test {
 
             byte[] plaintext = new byte[0];
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
             // Should be just the 16-byte tag
             assertEquals(16, ciphertext.length);
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
             byte[] decrypted = decryptCipher.doFinal(ciphertext);
 
@@ -180,13 +180,13 @@ public class ChaCha20Poly1305Test {
             byte[] plaintext = new byte[1024 * 1024];
             new SecureRandom().nextBytes(plaintext);
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
             assertEquals(plaintext.length + 16, ciphertext.length);
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
             byte[] decrypted = decryptCipher.doFinal(ciphertext);
 
@@ -199,8 +199,8 @@ public class ChaCha20Poly1305Test {
     class CrossProviderTests {
 
         @Test
-        @DisplayName("Glassless encrypted, SunJCE decrypted")
-        void testGlasslessToSunJCE() throws Exception {
+        @DisplayName("GlaSSLess encrypted, SunJCE decrypted")
+        void testGlaSSLessToSunJCE() throws Exception {
             byte[] keyBytes = new byte[32];
             new SecureRandom().nextBytes(keyBytes);
             SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
@@ -211,8 +211,8 @@ public class ChaCha20Poly1305Test {
 
             byte[] plaintext = "Cross-provider test".getBytes();
 
-            // Encrypt with Glassless
-            Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            // Encrypt with GlaSSLess
+            Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             glasslessCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = glasslessCipher.doFinal(plaintext);
 
@@ -222,12 +222,12 @@ public class ChaCha20Poly1305Test {
             byte[] decrypted = sunCipher.doFinal(ciphertext);
 
             assertArrayEquals(plaintext, decrypted,
-                "SunJCE should decrypt Glassless ciphertext correctly");
+                "SunJCE should decrypt GlaSSLess ciphertext correctly");
         }
 
         @Test
-        @DisplayName("SunJCE encrypted, Glassless decrypted")
-        void testSunJCEToGlassless() throws Exception {
+        @DisplayName("SunJCE encrypted, GlaSSLess decrypted")
+        void testSunJCEToGlaSSLess() throws Exception {
             byte[] keyBytes = new byte[32];
             new SecureRandom().nextBytes(keyBytes);
             SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
@@ -243,13 +243,13 @@ public class ChaCha20Poly1305Test {
             sunCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
             byte[] ciphertext = sunCipher.doFinal(plaintext);
 
-            // Decrypt with Glassless
-            Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", "Glassless");
+            // Decrypt with GlaSSLess
+            Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
             glasslessCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
             byte[] decrypted = glasslessCipher.doFinal(ciphertext);
 
             assertArrayEquals(plaintext, decrypted,
-                "Glassless should decrypt SunJCE ciphertext correctly");
+                "GlaSSLess should decrypt SunJCE ciphertext correctly");
         }
     }
 }

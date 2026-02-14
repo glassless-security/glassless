@@ -106,8 +106,8 @@ public class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
                     BigInteger u = createUCoordinate(rawPublicKey);
 
                     // Create key objects
-                    GlasslessXECPublicKey publicKey = new GlasslessXECPublicKey(params, u, publicKeyEncoded);
-                    GlasslessXECPrivateKey privateKey = new GlasslessXECPrivateKey(params, rawPrivateKey, privateKeyEncoded);
+                    GlaSSLessXECPublicKey publicKey = new GlaSSLessXECPublicKey(params, u, publicKeyEncoded);
+                    GlaSSLessXECPrivateKey privateKey = new GlaSSLessXECPrivateKey(params, rawPrivateKey, privateKeyEncoded);
 
                     return new KeyPair(publicKey, privateKey);
                 } finally {

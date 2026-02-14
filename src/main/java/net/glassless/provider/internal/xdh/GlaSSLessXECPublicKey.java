@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * XDH public key implementation for X25519 and X448.
  */
-public class GlasslessXECPublicKey implements XECPublicKey {
+public class GlaSSLessXECPublicKey implements XECPublicKey {
 
     private static final long serialVersionUID = 1L;
 
@@ -17,7 +17,7 @@ public class GlasslessXECPublicKey implements XECPublicKey {
     private final BigInteger u;
     private final byte[] encoded;
 
-    public GlasslessXECPublicKey(NamedParameterSpec params, BigInteger u, byte[] encoded) {
+    public GlaSSLessXECPublicKey(NamedParameterSpec params, BigInteger u, byte[] encoded) {
         this.params = params;
         this.u = u;
         this.encoded = encoded.clone();
@@ -63,6 +63,6 @@ public class GlasslessXECPublicKey implements XECPublicKey {
 
     @Override
     public String toString() {
-        return "GlasslessXECPublicKey [algorithm=" + params.getName() + "]";
+        return "GlaSSLessXECPublicKey [algorithm=" + params.getName() + "]";
     }
 }

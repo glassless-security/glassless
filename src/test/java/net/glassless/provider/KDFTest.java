@@ -24,7 +24,7 @@ public class KDFTest {
 
    @BeforeAll
    public static void setUp() {
-      Security.addProvider(new GlasslessProvider());
+      Security.addProvider(new GlaSSLessProvider());
    }
 
    @Nested
@@ -34,7 +34,7 @@ public class KDFTest {
       @Test
       @DisplayName("X963KDF-SHA256 basic derivation")
       void testX963KDFSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("X963KDF-SHA256", "Glassless");
+         KDF kdf = KDF.getInstance("X963KDF-SHA256", "GlaSSLess");
          assertNotNull(kdf);
 
          byte[] sharedSecret = new byte[32];
@@ -52,7 +52,7 @@ public class KDFTest {
       @Test
       @DisplayName("X963KDF produces consistent results")
       void testX963KDFConsistency() throws Exception {
-         KDF kdf = KDF.getInstance("X963KDF-SHA256", "Glassless");
+         KDF kdf = KDF.getInstance("X963KDF-SHA256", "GlaSSLess");
 
          byte[] sharedSecret = "shared-secret-value-1234".getBytes();
          byte[] sharedInfo = "info".getBytes();
@@ -74,7 +74,7 @@ public class KDFTest {
       @Test
       @DisplayName("SSHKDF-SHA256 basic derivation")
       void testSSHKDFSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("SSHKDF-SHA256", "Glassless");
+         KDF kdf = KDF.getInstance("SSHKDF-SHA256", "GlaSSLess");
          assertNotNull(kdf);
 
          byte[] sharedSecret = new byte[32];
@@ -97,7 +97,7 @@ public class KDFTest {
       @Test
       @DisplayName("Different key types produce different keys")
       void testSSHKDFKeyTypes() throws Exception {
-         KDF kdf = KDF.getInstance("SSHKDF-SHA256", "Glassless");
+         KDF kdf = KDF.getInstance("SSHKDF-SHA256", "GlaSSLess");
 
          byte[] sharedSecret = "ssh-shared-secret".getBytes();
          byte[] exchangeHash = "ssh-exchange-hash!".getBytes();
@@ -125,7 +125,7 @@ public class KDFTest {
       @Test
       @DisplayName("KBKDF-HMAC-SHA256 basic derivation")
       void testKBKDFHMACSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("KBKDF-HMAC-SHA256", "Glassless");
+         KDF kdf = KDF.getInstance("KBKDF-HMAC-SHA256", "GlaSSLess");
          assertNotNull(kdf);
 
          byte[] key = new byte[32];
@@ -149,7 +149,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS1-PRF-SHA256 basic derivation")
       void testTLSPRFSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("TLS1-PRF-SHA256", "Glassless");
+         KDF kdf = KDF.getInstance("TLS1-PRF-SHA256", "GlaSSLess");
          assertNotNull(kdf);
 
          byte[] secret = new byte[48];  // Pre-master secret size
@@ -177,7 +177,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS1-PRF-SHA384 basic derivation")
       void testTLSPRFSHA384() throws Exception {
-         KDF kdf = KDF.getInstance("TLS1-PRF-SHA384", "Glassless");
+         KDF kdf = KDF.getInstance("TLS1-PRF-SHA384", "GlaSSLess");
          assertNotNull(kdf);
 
          byte[] secret = new byte[48];

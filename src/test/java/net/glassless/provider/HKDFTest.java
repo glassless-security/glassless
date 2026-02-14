@@ -18,7 +18,7 @@ public class HKDFTest {
 
     @BeforeAll
     public static void setUp() {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
     }
 
     @Nested
@@ -28,7 +28,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Extract and Expand")
         void testExtractAndExpand() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
             assertNotNull(kdf);
             assertEquals("HKDF-SHA256", kdf.getAlgorithm());
 
@@ -50,7 +50,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Extract Only")
         void testExtractOnly() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
 
             byte[] ikm = "input key material".getBytes();
             byte[] salt = "salt".getBytes();
@@ -69,7 +69,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Expand Only")
         void testExpandOnly() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
 
             // Use a 32-byte PRK (SHA-256 hash length)
             byte[] prk = new byte[32];
@@ -90,7 +90,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Derive Data")
         void testDeriveData() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
 
             byte[] ikm = "input key material".getBytes();
             byte[] salt = "salt".getBytes();
@@ -109,7 +109,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Multiple IKMs")
         void testMultipleIKMs() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
 
             byte[] ikm1 = "first key".getBytes();
             byte[] ikm2 = "second key".getBytes();
@@ -135,7 +135,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Extract and Expand")
         void testExtractAndExpand() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA384", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA384", "GlaSSLess");
             assertNotNull(kdf);
             assertEquals("HKDF-SHA384", kdf.getAlgorithm());
 
@@ -156,7 +156,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Extract Only")
         void testExtractOnly() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA384", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA384", "GlaSSLess");
 
             byte[] ikm = "input key material".getBytes();
             byte[] salt = "salt".getBytes();
@@ -180,7 +180,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Extract and Expand")
         void testExtractAndExpand() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA512", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA512", "GlaSSLess");
             assertNotNull(kdf);
             assertEquals("HKDF-SHA512", kdf.getAlgorithm());
 
@@ -201,7 +201,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Extract Only")
         void testExtractOnly() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA512", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA512", "GlaSSLess");
 
             byte[] ikm = "input key material".getBytes();
             byte[] salt = "salt".getBytes();
@@ -220,7 +220,7 @@ public class HKDFTest {
         @Test
         @DisplayName("Expand Only with Large Output")
         void testExpandOnlyLargeOutput() throws Exception {
-            KDF kdf = KDF.getInstance("HKDF-SHA512", "Glassless");
+            KDF kdf = KDF.getInstance("HKDF-SHA512", "GlaSSLess");
 
             // Use a 64-byte PRK (SHA-512 hash length)
             byte[] prk = new byte[64];
@@ -245,14 +245,14 @@ public class HKDFTest {
     class CrossProviderTests {
 
         @Test
-        @DisplayName("Glassless and SunJCE produce same output")
+        @DisplayName("GlaSSLess and SunJCE produce same output")
         void testCrossProviderCompatibility() throws Exception {
             byte[] ikm = "input key material for cross-provider test".getBytes();
             byte[] salt = "common salt".getBytes();
             byte[] info = "context info".getBytes();
 
-            // Glassless provider
-            KDF glasslessKdf = KDF.getInstance("HKDF-SHA256", "Glassless");
+            // GlaSSLess provider
+            KDF glasslessKdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
             HKDFParameterSpec params1 = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
                 .addSalt(salt)
@@ -268,7 +268,7 @@ public class HKDFTest {
             byte[] sunOutput = sunKdf.deriveData(params2);
 
             // Both should produce the same output
-            assertArrayEquals(sunOutput, glasslessOutput, "Glassless and SunJCE should produce same HKDF output");
+            assertArrayEquals(sunOutput, glasslessOutput, "GlaSSLess and SunJCE should produce same HKDF output");
         }
     }
 }

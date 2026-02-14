@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * EdDSA private key implementation for Ed25519 and Ed448.
  */
-public class GlasslessEdECPrivateKey implements EdECPrivateKey {
+public class GlaSSLessEdECPrivateKey implements EdECPrivateKey {
 
     private static final long serialVersionUID = 1L;
 
@@ -16,7 +16,7 @@ public class GlasslessEdECPrivateKey implements EdECPrivateKey {
     private final byte[] keyBytes;
     private final byte[] encoded;
 
-    public GlasslessEdECPrivateKey(NamedParameterSpec params, byte[] keyBytes, byte[] encoded) {
+    public GlaSSLessEdECPrivateKey(NamedParameterSpec params, byte[] keyBytes, byte[] encoded) {
         this.params = params;
         this.keyBytes = keyBytes.clone();
         this.encoded = encoded.clone();
@@ -64,7 +64,7 @@ public class GlasslessEdECPrivateKey implements EdECPrivateKey {
 
     @Override
     public String toString() {
-        return "GlasslessEdECPrivateKey [algorithm=" + params.getName() + "]";
+        return "GlaSSLessEdECPrivateKey [algorithm=" + params.getName() + "]";
     }
 
     /**

@@ -33,7 +33,7 @@ public class DHTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
 
         // Generate DH key pair for testing
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
@@ -48,7 +48,7 @@ public class DHTest {
         @Test
         @DisplayName("Generate DH key pair with 2048 bits")
         void testGenerateKeyPair2048() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "Glassless");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "GlaSSLess");
             keyGen.initialize(2048);
 
             KeyPair keyPair = keyGen.generateKeyPair();
@@ -68,7 +68,7 @@ public class DHTest {
         @Test
         @DisplayName("Generate public key from X509EncodedKeySpec")
         void testGeneratePublicFromX509() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
             assertNotNull(kf);
 
             byte[] encoded = dhKeyPair.getPublic().getEncoded();
@@ -84,7 +84,7 @@ public class DHTest {
         @Test
         @DisplayName("Generate private key from PKCS8EncodedKeySpec")
         void testGeneratePrivateFromPKCS8() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
 
             byte[] encoded = dhKeyPair.getPrivate().getEncoded();
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
@@ -99,7 +99,7 @@ public class DHTest {
         @Test
         @DisplayName("Generate public key from DHPublicKeySpec")
         void testGeneratePublicFromDHSpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
 
             DHPublicKey dhPub = (DHPublicKey) dhKeyPair.getPublic();
             DHPublicKeySpec spec = new DHPublicKeySpec(
@@ -120,7 +120,7 @@ public class DHTest {
         @Test
         @DisplayName("Generate private key from DHPrivateKeySpec")
         void testGeneratePrivateFromDHSpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
 
             DHPrivateKey dhPriv = (DHPrivateKey) dhKeyPair.getPrivate();
             DHPrivateKeySpec spec = new DHPrivateKeySpec(
@@ -141,7 +141,7 @@ public class DHTest {
         @Test
         @DisplayName("Get X509EncodedKeySpec from DH public key")
         void testGetX509SpecFromPublic() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
 
             X509EncodedKeySpec spec = kf.getKeySpec(dhKeyPair.getPublic(), X509EncodedKeySpec.class);
 
@@ -152,7 +152,7 @@ public class DHTest {
         @Test
         @DisplayName("Get PKCS8EncodedKeySpec from DH private key")
         void testGetPKCS8SpecFromPrivate() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
 
             PKCS8EncodedKeySpec spec = kf.getKeySpec(dhKeyPair.getPrivate(), PKCS8EncodedKeySpec.class);
 
@@ -163,7 +163,7 @@ public class DHTest {
         @Test
         @DisplayName("Translate DH key")
         void testTranslateKey() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DH", "Glassless");
+            KeyFactory kf = KeyFactory.getInstance("DH", "GlaSSLess");
 
             PublicKey translated = (PublicKey) kf.translateKey(dhKeyPair.getPublic());
 
@@ -192,13 +192,13 @@ public class DHTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("DH", "Glassless");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("DH", "GlaSSLess");
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -224,13 +224,13 @@ public class DHTest {
             KeyPair charlieKeyPair = keyGen.generateKeyPair();
 
             // Alice-Bob shared secret
-            KeyAgreement ka1 = KeyAgreement.getInstance("DH", "Glassless");
+            KeyAgreement ka1 = KeyAgreement.getInstance("DH", "GlaSSLess");
             ka1.init(aliceKeyPair.getPrivate());
             ka1.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceBobSecret = ka1.generateSecret();
 
             // Alice-Charlie shared secret
-            KeyAgreement ka2 = KeyAgreement.getInstance("DH", "Glassless");
+            KeyAgreement ka2 = KeyAgreement.getInstance("DH", "GlaSSLess");
             ka2.init(aliceKeyPair.getPrivate());
             ka2.doPhase(charlieKeyPair.getPublic(), true);
             byte[] aliceCharlieSecret = ka2.generateSecret();
@@ -253,7 +253,7 @@ public class DHTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret as an AES key
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "Glassless");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             SecretKey aliceSecretKey = aliceKeyAgreement.generateSecret("AES");
@@ -264,29 +264,29 @@ public class DHTest {
         }
 
         @Test
-        @DisplayName("DH key agreement with Glassless KeyPairGenerator")
-        void testDHWithGlasslessKeyGen() throws Exception {
-            // Generate Alice's keys with Glassless
-            KeyPairGenerator glasslessKeyGen = KeyPairGenerator.getInstance("DH", "Glassless");
+        @DisplayName("DH key agreement with GlaSSLess KeyPairGenerator")
+        void testDHWithGlaSSLessKeyGen() throws Exception {
+            // Generate Alice's keys with GlaSSLess
+            KeyPairGenerator glasslessKeyGen = KeyPairGenerator.getInstance("DH", "GlaSSLess");
             glasslessKeyGen.initialize(2048);
             KeyPair aliceKeyPair = glasslessKeyGen.generateKeyPair();
 
             // Generate Bob's keys using default provider with Alice's parameters
-            // (Glassless DHKeyPairGenerator extracts key size from DHParameterSpec,
+            // (GlaSSLess DHKeyPairGenerator extracts key size from DHParameterSpec,
             // so we use default provider to ensure matching parameters)
             DHPublicKey alicePubKey = (DHPublicKey) aliceKeyPair.getPublic();
             KeyPairGenerator defaultKeyGen = KeyPairGenerator.getInstance("DH");
             defaultKeyGen.initialize(alicePubKey.getParams());
             KeyPair bobKeyPair = defaultKeyGen.generateKeyPair();
 
-            // Alice computes the shared secret with Glassless
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "Glassless");
+            // Alice computes the shared secret with GlaSSLess
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
-            // Bob computes the shared secret with Glassless
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("DH", "Glassless");
+            // Bob computes the shared secret with GlaSSLess
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("DH", "GlaSSLess");
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -309,8 +309,8 @@ public class DHTest {
             keyGen.initialize(alicePubKey.getParams());
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
-            // Alice uses Glassless
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "Glassless");
+            // Alice uses GlaSSLess
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DH", "GlaSSLess");
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
@@ -323,7 +323,7 @@ public class DHTest {
 
             // Both should compute the same shared secret
             assertArrayEquals(aliceSharedSecret, bobSharedSecret,
-                    "Glassless and default provider should produce the same shared secret");
+                    "GlaSSLess and default provider should produce the same shared secret");
         }
     }
 }

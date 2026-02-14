@@ -23,7 +23,7 @@ public class SignatureTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        Security.addProvider(new GlasslessProvider());
+        Security.addProvider(new GlaSSLessProvider());
 
         // Generate RSA key pair
         KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
@@ -43,7 +43,7 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = {"SHA1withRSA", "SHA224withRSA", "SHA256withRSA", "SHA384withRSA", "SHA512withRSA"})
         void testRSASignAndVerify(String algorithm) throws Exception {
-            Signature sig = Signature.getInstance(algorithm, "Glassless");
+            Signature sig = Signature.getInstance(algorithm, "GlaSSLess");
             assertNotNull(sig);
 
             byte[] data = "Test data for RSA signature".getBytes();
@@ -65,7 +65,7 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0} with modified data should fail verification")
         @ValueSource(strings = {"SHA256withRSA", "SHA512withRSA"})
         void testRSAVerifyFailsWithModifiedData(String algorithm) throws Exception {
-            Signature sig = Signature.getInstance(algorithm, "Glassless");
+            Signature sig = Signature.getInstance(algorithm, "GlaSSLess");
 
             byte[] data = "Test data for RSA signature".getBytes();
 
@@ -84,7 +84,7 @@ public class SignatureTest {
         @Test
         @DisplayName("SHA256withRSA incremental update")
         void testRSAIncrementalUpdate() throws Exception {
-            Signature sig = Signature.getInstance("SHA256withRSA", "Glassless");
+            Signature sig = Signature.getInstance("SHA256withRSA", "GlaSSLess");
 
             // Sign with incremental updates
             sig.initSign(rsaKeyPair.getPrivate());
@@ -107,7 +107,7 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = {"SHA1withECDSA", "SHA224withECDSA", "SHA256withECDSA", "SHA384withECDSA", "SHA512withECDSA"})
         void testECDSASignAndVerify(String algorithm) throws Exception {
-            Signature sig = Signature.getInstance(algorithm, "Glassless");
+            Signature sig = Signature.getInstance(algorithm, "GlaSSLess");
             assertNotNull(sig);
 
             byte[] data = "Test data for ECDSA signature".getBytes();
@@ -129,7 +129,7 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0} with modified data should fail verification")
         @ValueSource(strings = {"SHA256withECDSA", "SHA512withECDSA"})
         void testECDSAVerifyFailsWithModifiedData(String algorithm) throws Exception {
-            Signature sig = Signature.getInstance(algorithm, "Glassless");
+            Signature sig = Signature.getInstance(algorithm, "GlaSSLess");
 
             byte[] data = "Test data for ECDSA signature".getBytes();
 
@@ -148,7 +148,7 @@ public class SignatureTest {
         @Test
         @DisplayName("SHA256withECDSA incremental update")
         void testECDSAIncrementalUpdate() throws Exception {
-            Signature sig = Signature.getInstance("SHA256withECDSA", "Glassless");
+            Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
 
             // Sign with incremental updates
             sig.initSign(ecKeyPair.getPrivate());
@@ -171,7 +171,7 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = {"SHA1withRSAandMGF1", "SHA224withRSAandMGF1", "SHA256withRSAandMGF1", "SHA384withRSAandMGF1", "SHA512withRSAandMGF1"})
         void testRSAPSSSignAndVerify(String algorithm) throws Exception {
-            Signature sig = Signature.getInstance(algorithm, "Glassless");
+            Signature sig = Signature.getInstance(algorithm, "GlaSSLess");
             assertNotNull(sig);
 
             byte[] data = "Test data for RSA-PSS signature".getBytes();
@@ -193,7 +193,7 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0} with modified data should fail verification")
         @ValueSource(strings = {"SHA256withRSAandMGF1", "SHA512withRSAandMGF1"})
         void testRSAPSSVerifyFailsWithModifiedData(String algorithm) throws Exception {
-            Signature sig = Signature.getInstance(algorithm, "Glassless");
+            Signature sig = Signature.getInstance(algorithm, "GlaSSLess");
 
             byte[] data = "Test data for RSA-PSS signature".getBytes();
 

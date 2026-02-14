@@ -27,9 +27,9 @@ import net.glassless.provider.internal.signature.*;
  * <p>Note that some algorithms may have runtime restrictions in FIPS mode
  * (e.g., minimum RSA key sizes) that are enforced by OpenSSL.
  */
-public class GlasslessProvider extends Provider {
+public class GlaSSLessProvider extends Provider {
 
-   public static final String PROVIDER_NAME = "Glassless";
+   public static final String PROVIDER_NAME = "GlaSSLess";
 
    public static final String MESSAGE_DIGEST = "MessageDigest";
    public static final String CIPHER = "Cipher";
@@ -47,7 +47,7 @@ public class GlasslessProvider extends Provider {
 
    private final boolean fipsMode;
 
-   public GlasslessProvider() {
+   public GlaSSLessProvider() {
       super(PROVIDER_NAME, "1.0", "OpenSSL Native Provider using FFM API");
 
       this.fipsMode = FIPSStatus.isFIPSEnabled();
@@ -842,9 +842,9 @@ public class GlasslessProvider extends Provider {
          }
       }
 
-      GlasslessProvider provider = new GlasslessProvider();
+      GlaSSLessProvider provider = new GlaSSLessProvider();
 
-      System.out.println("Glassless Provider Information");
+      System.out.println("GlaSSLess Provider Information");
       System.out.println("==============================");
       System.out.println();
       System.out.println("Provider: " + provider.getName() + " v" + provider.getVersionStr());
