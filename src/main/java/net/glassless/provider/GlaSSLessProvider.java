@@ -48,7 +48,7 @@ public class GlaSSLessProvider extends Provider {
    private final boolean fipsMode;
 
    public GlaSSLessProvider() {
-      super(PROVIDER_NAME, "1.0", "OpenSSL Native Provider using FFM API");
+      super(PROVIDER_NAME, "0.1", "OpenSSL Native Provider using FFM API");
 
       this.fipsMode = FIPSStatus.isFIPSEnabled();
 

@@ -61,7 +61,7 @@ mvn spotless:apply
 <dependency>
    <groupId>net.glassless</groupId>
    <artifactId>glassless-provider</artifactId>
-   <version>1.0-SNAPSHOT</version>
+   <version>0.1-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -437,10 +437,10 @@ System.out.println("FIPS Mode: " + (fipsMode ? "ENABLED" : "DISABLED"));
 Display provider information:
 
 ```bash
-java --enable-native-access=ALL-UNNAMED -jar glassless-provider-1.0-SNAPSHOT.jar
+java --enable-native-access=ALL-UNNAMED -jar glassless-provider-0.1-SNAPSHOT.jar
 
 # Verbose mode (list all algorithms)
-java --enable-native-access=ALL-UNNAMED -jar glassless-provider-1.0-SNAPSHOT.jar --verbose
+java --enable-native-access=ALL-UNNAMED -jar glassless-provider-0.1-SNAPSHOT.jar --verbose
 ```
 
 ## Performance
