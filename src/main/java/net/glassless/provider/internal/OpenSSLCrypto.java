@@ -138,6 +138,12 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_KEYMGMT_fetch;
    private static MethodHandle EVP_KEYMGMT_free;
 
+   // Method handles for raw key export/import (for hybrid KEMs)
+   private static MethodHandle EVP_PKEY_get_raw_public_key;
+   private static MethodHandle EVP_PKEY_get_raw_private_key;
+   private static MethodHandle EVP_PKEY_new_raw_public_key_ex;
+   private static MethodHandle EVP_PKEY_new_raw_private_key_ex;
+
    static {
       initFFM();
    }
@@ -664,6 +670,39 @@ public class OpenSSLCrypto {
          } catch (NoSuchElementException e) {
             EVP_KEYMGMT_fetch = null;
             EVP_KEYMGMT_free = null;
+         }
+
+         // Raw key export/import functions (for hybrid KEMs which don't have ASN.1 encoders)
+         try {
+            // int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub, size_t *len)
+            EVP_PKEY_get_raw_public_key = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_get_raw_public_key").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            // int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv, size_t *len)
+            EVP_PKEY_get_raw_private_key = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_get_raw_private_key").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            // EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OSSL_LIB_CTX *libctx, const char *keytype,
+            //                                          const char *propq, const unsigned char *pub, size_t len)
+            EVP_PKEY_new_raw_public_key_ex = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_new_raw_public_key_ex").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+            );
+            // EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OSSL_LIB_CTX *libctx, const char *keytype,
+            //                                           const char *propq, const unsigned char *priv, size_t len)
+            EVP_PKEY_new_raw_private_key_ex = linker.downcallHandle(
+               libcrypto.find("EVP_PKEY_new_raw_private_key_ex").orElseThrow(),
+               FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+            );
+         } catch (NoSuchElementException e) {
+            EVP_PKEY_get_raw_public_key = null;
+            EVP_PKEY_get_raw_private_key = null;
+            EVP_PKEY_new_raw_public_key_ex = null;
+            EVP_PKEY_new_raw_private_key_ex = null;
          }
 
       } catch (NoSuchMethodError | Exception e) {
@@ -1249,6 +1288,127 @@ public class OpenSSLCrypto {
       byte[] result = new byte[written];
       buffer.asByteBuffer().get(result);
       return result;
+   }
+
+   /**
+    * Exports an EVP_PKEY to raw public key bytes.
+    * Used for hybrid KEMs which don't have standard ASN.1 encoders.
+    */
+   public static byte[] exportRawPublicKey(MemorySegment pkey, Arena arena) throws Throwable {
+      if (EVP_PKEY_get_raw_public_key == null) {
+         throw new IllegalStateException("Raw key export not available on this OpenSSL version");
+      }
+
+      // First call to get the length
+      MemorySegment lenPtr = arena.allocate(ValueLayout.JAVA_LONG);
+      int result = (int) EVP_PKEY_get_raw_public_key.invokeExact(pkey, MemorySegment.NULL, lenPtr);
+      if (result != 1) {
+         throw new IllegalStateException("Failed to get raw public key length");
+      }
+
+      long len = lenPtr.get(ValueLayout.JAVA_LONG, 0);
+      MemorySegment buffer = arena.allocate(ValueLayout.JAVA_BYTE, len);
+
+      result = (int) EVP_PKEY_get_raw_public_key.invokeExact(pkey, buffer, lenPtr);
+      if (result != 1) {
+         throw new IllegalStateException("Failed to export raw public key");
+      }
+
+      byte[] keyBytes = new byte[(int) lenPtr.get(ValueLayout.JAVA_LONG, 0)];
+      buffer.asByteBuffer().get(keyBytes);
+      return keyBytes;
+   }
+
+   /**
+    * Exports an EVP_PKEY to raw private key bytes.
+    * Used for hybrid KEMs which don't have standard ASN.1 encoders.
+    */
+   public static byte[] exportRawPrivateKey(MemorySegment pkey, Arena arena) throws Throwable {
+      if (EVP_PKEY_get_raw_private_key == null) {
+         throw new IllegalStateException("Raw key export not available on this OpenSSL version");
+      }
+
+      // First call to get the length
+      MemorySegment lenPtr = arena.allocate(ValueLayout.JAVA_LONG);
+      int result = (int) EVP_PKEY_get_raw_private_key.invokeExact(pkey, MemorySegment.NULL, lenPtr);
+      if (result != 1) {
+         throw new IllegalStateException("Failed to get raw private key length");
+      }
+
+      long len = lenPtr.get(ValueLayout.JAVA_LONG, 0);
+      MemorySegment buffer = arena.allocate(ValueLayout.JAVA_BYTE, len);
+
+      result = (int) EVP_PKEY_get_raw_private_key.invokeExact(pkey, buffer, lenPtr);
+      if (result != 1) {
+         throw new IllegalStateException("Failed to export raw private key");
+      }
+
+      byte[] keyBytes = new byte[(int) lenPtr.get(ValueLayout.JAVA_LONG, 0)];
+      buffer.asByteBuffer().get(keyBytes);
+      return keyBytes;
+   }
+
+   /**
+    * Loads a raw public key from bytes.
+    * Used for hybrid KEMs which don't have standard ASN.1 encoders.
+    *
+    * @param keytype the OpenSSL key type name (e.g., "X25519MLKEM768")
+    * @param keyBytes the raw public key bytes
+    * @param arena the memory arena
+    * @return the EVP_PKEY handle
+    */
+   public static MemorySegment loadRawPublicKey(String keytype, byte[] keyBytes, Arena arena) throws Throwable {
+      if (EVP_PKEY_new_raw_public_key_ex == null) {
+         throw new IllegalStateException("Raw key import not available on this OpenSSL version");
+      }
+
+      MemorySegment keytypeSegment = arena.allocateFrom(keytype);
+      MemorySegment keyBuffer = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
+      keyBuffer.asByteBuffer().put(keyBytes);
+
+      MemorySegment pkey = (MemorySegment) EVP_PKEY_new_raw_public_key_ex.invokeExact(
+         MemorySegment.NULL, keytypeSegment, MemorySegment.NULL, keyBuffer, (long) keyBytes.length);
+
+      if (pkey == null || pkey.address() == 0) {
+         throw new IllegalStateException("Failed to load raw public key for " + keytype);
+      }
+
+      return pkey;
+   }
+
+   /**
+    * Loads a raw private key from bytes.
+    * Used for hybrid KEMs which don't have standard ASN.1 encoders.
+    *
+    * @param keytype the OpenSSL key type name (e.g., "X25519MLKEM768")
+    * @param keyBytes the raw private key bytes
+    * @param arena the memory arena
+    * @return the EVP_PKEY handle
+    */
+   public static MemorySegment loadRawPrivateKey(String keytype, byte[] keyBytes, Arena arena) throws Throwable {
+      if (EVP_PKEY_new_raw_private_key_ex == null) {
+         throw new IllegalStateException("Raw key import not available on this OpenSSL version");
+      }
+
+      MemorySegment keytypeSegment = arena.allocateFrom(keytype);
+      MemorySegment keyBuffer = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
+      keyBuffer.asByteBuffer().put(keyBytes);
+
+      MemorySegment pkey = (MemorySegment) EVP_PKEY_new_raw_private_key_ex.invokeExact(
+         MemorySegment.NULL, keytypeSegment, MemorySegment.NULL, keyBuffer, (long) keyBytes.length);
+
+      if (pkey == null || pkey.address() == 0) {
+         throw new IllegalStateException("Failed to load raw private key for " + keytype);
+      }
+
+      return pkey;
+   }
+
+   /**
+    * Checks if raw key functions are available.
+    */
+   public static boolean isRawKeyAvailable() {
+      return EVP_PKEY_get_raw_public_key != null && EVP_PKEY_new_raw_public_key_ex != null;
    }
 
    // Key agreement wrapper methods

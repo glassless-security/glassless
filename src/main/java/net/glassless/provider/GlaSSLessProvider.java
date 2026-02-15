@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.cipher.*;
 import net.glassless.provider.internal.digest.*;
+import net.glassless.provider.internal.hybridkem.*;
 import net.glassless.provider.internal.keyagreement.*;
 import net.glassless.provider.internal.keyfactory.*;
 import net.glassless.provider.internal.keygen.*;
@@ -1098,6 +1099,36 @@ public class GlaSSLessProvider extends Provider {
             MLKEM1024.class.getName(),
             List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
       }
+
+      // Hybrid KEMs - combine classical key agreement with ML-KEM (requires OpenSSL 3.5+)
+      // Note: Only X25519 and X448 variants are supported because OpenSSL 3.5 doesn't provide
+      // raw key export for EC-based hybrids (SecP256r1MLKEM768, SecP384r1MLKEM1024)
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768") &&
+          OpenSSLCrypto.isRawKeyAvailable()) {
+         putService(new Service(this, KEM, "X25519MLKEM768",
+            X25519MLKEM768.class.getName(),
+            List.of("X25519-MLKEM-768"), null));
+         putService(new Service(this, KEY_PAIR_GENERATOR, "X25519MLKEM768",
+            X25519MLKEM768KeyPairGenerator.class.getName(),
+            List.of("X25519-MLKEM-768"), null));
+         putService(new Service(this, KEY_FACTORY, "X25519MLKEM768",
+            HybridKEMKeyFactory.class.getName(),
+            List.of("X25519-MLKEM-768"), null));
+      }
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X448MLKEM1024") &&
+          OpenSSLCrypto.isRawKeyAvailable()) {
+         putService(new Service(this, KEM, "X448MLKEM1024",
+            X448MLKEM1024.class.getName(),
+            List.of("X448-MLKEM-1024"), null));
+         putService(new Service(this, KEY_PAIR_GENERATOR, "X448MLKEM1024",
+            X448MLKEM1024KeyPairGenerator.class.getName(),
+            List.of("X448-MLKEM-1024"), null));
+         putService(new Service(this, KEY_FACTORY, "X448MLKEM1024",
+            HybridKEMKeyFactory.class.getName(),
+            List.of("X448-MLKEM-1024"), null));
+      }
+      // EC-based hybrid KEMs (SecP256r1MLKEM768, SecP384r1MLKEM1024) are not currently
+      // supported because OpenSSL 3.5 doesn't provide raw key export for these types.
    }
 
    /**
