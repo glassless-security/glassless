@@ -1,0 +1,269 @@
+# Post-Quantum Cryptography in GlaSSLess
+
+This document describes the post-quantum cryptography (PQC) support in GlaSSLess, including the standalone algorithms (ML-KEM, ML-DSA, SLH-DSA) and the hybrid key exchange schemes that combine classical and post-quantum cryptography.
+
+## Requirements
+
+- **OpenSSL 3.5+** for all PQC algorithms
+- **Java 25+** with `--enable-native-access` flag
+
+## Standalone PQC Algorithms
+
+GlaSSLess supports the three NIST-standardized post-quantum algorithms:
+
+| Algorithm | Standard | Type | Variants |
+|-----------|----------|------|----------|
+| ML-KEM | FIPS 203 | Key Encapsulation | ML-KEM-512, ML-KEM-768, ML-KEM-1024 |
+| ML-DSA | FIPS 204 | Digital Signature | ML-DSA-44, ML-DSA-65, ML-DSA-87 |
+| SLH-DSA | FIPS 205 | Digital Signature | 12 variants (SHA2/SHAKE, 128/192/256, s/f) |
+
+See the main [README.md](README.md) for usage examples of these algorithms.
+
+## Hybrid Key Encapsulation Mechanisms
+
+Hybrid KEMs combine a classical key exchange algorithm (X25519 or X448) with ML-KEM to provide security against both classical and quantum computers. This "hybrid" approach ensures that the key exchange remains secure even if one of the underlying algorithms is broken.
+
+### Supported Hybrid KEMs
+
+| Algorithm | Classical Component | PQC Component | Shared Secret Size | Ciphertext Size |
+|-----------|---------------------|---------------|-------------------|-----------------|
+| X25519MLKEM768 | X25519 | ML-KEM-768 | 64 bytes | 1120 bytes |
+| X448MLKEM1024 | X448 | ML-KEM-1024 | 64 bytes | 1632 bytes |
+
+### Unsupported Variants
+
+The following hybrid KEMs are defined in standards but **not currently supported** because OpenSSL 3.5 does not provide raw key export for EC-based hybrid keys:
+
+- SecP256r1MLKEM768 (P-256 + ML-KEM-768)
+- SecP384r1MLKEM1024 (P-384 + ML-KEM-1024)
+
+These may be added in future OpenSSL releases.
+
+### Usage Examples
+
+#### Basic Hybrid Key Exchange
+
+```java
+import javax.crypto.KEM;
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Server: Generate hybrid key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPair serverKeyPair = kpg.generateKeyPair();
+
+// Server sends public key to client...
+PublicKey serverPublicKey = serverKeyPair.getPublic();
+
+// Client: Encapsulate a shared secret
+KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+KEM.Encapsulator encapsulator = kem.newEncapsulator(serverPublicKey);
+KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+
+// Client has: shared secret and ciphertext to send to server
+SecretKey clientSharedSecret = encapsulated.key();
+byte[] ciphertext = encapsulated.encapsulation();
+
+// Client sends ciphertext to server...
+
+// Server: Decapsulate to recover the same shared secret
+KEM.Decapsulator decapsulator = kem.newDecapsulator(serverKeyPair.getPrivate());
+SecretKey serverSharedSecret = decapsulator.decapsulate(ciphertext);
+
+// Both parties now have the same 64-byte shared secret
+assert Arrays.equals(clientSharedSecret.getEncoded(), serverSharedSecret.getEncoded());
+```
+
+#### Deriving AES Key from Shared Secret
+
+The 64-byte shared secret should be processed through a KDF to derive application keys:
+
+```java
+import javax.crypto.KDF;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.HKDFParameterSpec;
+
+// After key exchange, derive an AES-256 key
+KDF hkdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+
+byte[] info = "my-application v1.0".getBytes();
+HKDFParameterSpec params = HKDFParameterSpec
+    .ofExtract()
+    .addIKM(sharedSecret.getEncoded())
+    .addSalt(new byte[32])  // Can use a fixed salt or random nonce
+    .thenExpand(info, 32);  // 32 bytes for AES-256
+
+SecretKey aesKey = hkdf.deriveKey("AES", params);
+```
+
+#### Partial Key Extraction
+
+You can extract a specific portion of the shared secret directly during encapsulation:
+
+```java
+// Extract only the first 32 bytes as an AES key
+KEM.Encapsulated encapsulated = encapsulator.encapsulate(0, 32, "AES");
+SecretKey aesKey = encapsulated.key();  // 32-byte AES key
+```
+
+#### Checking Algorithm Availability
+
+```java
+import net.glassless.provider.internal.OpenSSLCrypto;
+
+// Check if hybrid KEMs are available
+if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768")) {
+    System.out.println("X25519MLKEM768 is available");
+} else {
+    System.out.println("X25519MLKEM768 requires OpenSSL 3.5+");
+}
+```
+
+#### Key Serialization
+
+Hybrid KEM keys use a custom encoding format (not standard ASN.1) due to OpenSSL limitations:
+
+```java
+// Get encoded key bytes
+byte[] publicKeyBytes = serverKeyPair.getPublic().getEncoded();
+byte[] privateKeyBytes = serverKeyPair.getPrivate().getEncoded();
+
+// Reconstruct keys using KeyFactory
+KeyFactory kf = KeyFactory.getInstance("X25519MLKEM768", "GlaSSLess");
+
+// For public key
+X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(publicKeyBytes);
+PublicKey reconstructedPublic = kf.generatePublic(pubSpec);
+
+// For private key
+PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+PrivateKey reconstructedPrivate = kf.generatePrivate(privSpec);
+```
+
+## TLS 1.3 Integration
+
+### Current Limitations
+
+**JDK 25 does not support hybrid named groups in JSSE.** The supported TLS 1.3 named groups are:
+
+- `x25519`, `x448` (XDH)
+- `secp256r1`, `secp384r1`, `secp521r1` (ECDHE)
+- `ffdhe2048`, `ffdhe3072`, `ffdhe4096`, `ffdhe6144`, `ffdhe8192` (DHE)
+
+Hybrid groups like `x25519_mlkem768` are **not yet supported** by JSSE.
+
+### Workarounds
+
+Until JSSE adds hybrid group support, you can:
+
+1. **Use hybrid KEMs at the application layer** for additional key material
+2. **Implement a custom TLS provider** that supports hybrid key exchange
+3. **Use a TLS library with hybrid support** (e.g., BoringSSL, s2n-tls)
+
+### Application-Layer Hybrid Key Exchange
+
+For applications that need quantum-resistant key exchange today, perform the hybrid KEM exchange at the application layer after establishing a classical TLS connection:
+
+```java
+// Step 1: Establish classical TLS 1.3 connection
+SSLSocket socket = (SSLSocket) sslContext.getSocketFactory()
+    .createSocket("server.example.com", 443);
+socket.startHandshake();
+
+// Step 2: Perform hybrid key exchange over the TLS channel
+ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+// Server generates and sends hybrid public key
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPair keyPair = kpg.generateKeyPair();
+out.writeObject(keyPair.getPublic().getEncoded());
+
+// Client encapsulates and sends ciphertext back
+byte[] serverPubKeyBytes = (byte[]) in.readObject();
+// ... reconstruct public key and encapsulate ...
+out.writeObject(ciphertext);
+
+// Both sides derive application keys from both:
+// - TLS session keys (classical security)
+// - Hybrid KEM shared secret (quantum resistance)
+```
+
+### Simulating TLS 1.3 Hybrid Key Exchange
+
+The GlaSSLess test suite includes tests that simulate TLS 1.3 hybrid key exchange:
+
+```java
+// This is how TLS 1.3 would use hybrid KEMs internally
+
+// 1. Server generates ephemeral hybrid key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPair serverKeyPair = kpg.generateKeyPair();
+
+// 2. Client encapsulates using server's public key (from ServerHello)
+KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+KEM.Encapsulator enc = kem.newEncapsulator(serverKeyPair.getPublic());
+KEM.Encapsulated encapsulated = enc.encapsulate();
+
+// 3. Server decapsulates using private key
+KEM.Decapsulator dec = kem.newDecapsulator(serverKeyPair.getPrivate());
+SecretKey sharedSecret = dec.decapsulate(encapsulated.encapsulation());
+
+// 4. Both sides derive traffic keys using HKDF (as per RFC 8446)
+KDF hkdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+HKDFParameterSpec keyParams = HKDFParameterSpec
+    .ofExtract()
+    .addIKM(sharedSecret.getEncoded())
+    .addSalt(earlySecret)
+    .thenExpand("tls13 c hs traffic".getBytes(), 32);
+SecretKey clientHandshakeKey = hkdf.deriveKey("AES", keyParams);
+```
+
+## Security Considerations
+
+### Why Hybrid?
+
+Hybrid key exchange provides defense-in-depth:
+
+1. **If ML-KEM is broken**: Classical X25519/X448 still provides security
+2. **If X25519/X448 is broken by quantum computers**: ML-KEM provides security
+3. **Cryptographic agility**: Easy to transition as standards evolve
+
+### Key Sizes
+
+| Algorithm | Public Key | Private Key | Ciphertext | Shared Secret |
+|-----------|------------|-------------|------------|---------------|
+| X25519MLKEM768 | 1216 bytes | 2432 bytes | 1120 bytes | 64 bytes |
+| X448MLKEM1024 | 1664 bytes | 3168 bytes | 1632 bytes | 64 bytes |
+
+### Performance
+
+Hybrid KEMs are slower than classical key exchange due to the additional ML-KEM operations. Typical performance (varies by hardware):
+
+| Operation | X25519MLKEM768 | X448MLKEM1024 |
+|-----------|----------------|---------------|
+| Key Generation | ~0.1ms | ~0.15ms |
+| Encapsulation | ~0.1ms | ~0.15ms |
+| Decapsulation | ~0.1ms | ~0.15ms |
+
+### Standards Compliance
+
+The hybrid KEMs follow the construction specified in:
+- [draft-ietf-tls-hybrid-design](https://datatracker.ietf.org/doc/draft-ietf-tls-hybrid-design/) for TLS integration
+- [draft-ounsworth-cfrg-kem-combiners](https://datatracker.ietf.org/doc/draft-ounsworth-cfrg-kem-combiners/) for KEM combination
+
+## Future Work
+
+- **EC-based hybrids**: Support for SecP256r1MLKEM768 and SecP384r1MLKEM1024 pending OpenSSL improvements
+- **JSSE integration**: Native TLS 1.3 hybrid key exchange when JDK adds support
+- **Additional hybrids**: Support for other combinations as they are standardized
+
+## See Also
+
+- [README.md](README.md) - Main documentation
+- [PERFORMANCE.md](PERFORMANCE.md) - Benchmark results
+- [FIPS 203](https://csrc.nist.gov/pubs/fips/203/final) - ML-KEM standard
+- [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final) - ML-DSA standard
+- [FIPS 205](https://csrc.nist.gov/pubs/fips/205/final) - SLH-DSA standard

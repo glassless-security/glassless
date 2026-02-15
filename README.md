@@ -398,6 +398,38 @@ verifier.update("Data to sign".getBytes());
 boolean valid = verifier.verify(signature);
 ```
 
+#### Hybrid Key Encapsulation (X25519MLKEM768)
+
+Hybrid KEMs combine classical and post-quantum cryptography. Requires OpenSSL 3.5+.
+
+```java
+import javax.crypto.KEM;
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Server generates hybrid key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPair serverKeyPair = kpg.generateKeyPair();
+
+// Client encapsulates shared secret using server's public key
+KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
+KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+
+byte[] ciphertext = encapsulated.encapsulation();  // Send to server
+SecretKey clientSecret = encapsulated.key();       // 64-byte shared secret
+
+// Server decapsulates to recover the same shared secret
+KEM.Decapsulator decapsulator = kem.newDecapsulator(serverKeyPair.getPrivate());
+SecretKey serverSecret = decapsulator.decapsulate(ciphertext);
+
+// Both parties now have identical shared secrets
+```
+
+> **Note**: JDK 25's JSSE does not yet support hybrid named groups for TLS 1.3. See [README-PQC.md](README-PQC.md) for workarounds and detailed documentation.
+
 ## Supported Algorithms
 
 ### Message Digests (18)
@@ -465,7 +497,7 @@ Requires OpenSSL 3.5+.
 | SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f | 192-bit | Yes (FIPS 205) |
 | SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f | 256-bit | Yes (FIPS 205) |
 
-### Key Encapsulation Mechanisms (3)
+### Key Encapsulation Mechanisms (5)
 
 Requires OpenSSL 3.5+.
 
@@ -474,6 +506,10 @@ Requires OpenSSL 3.5+.
 | ML-KEM-512 | 128-bit | Yes (FIPS 203) |
 | ML-KEM-768 | 192-bit | Yes (FIPS 203) |
 | ML-KEM-1024 | 256-bit | Yes (FIPS 203) |
+| X25519MLKEM768 | Hybrid | Yes |
+| X448MLKEM1024 | Hybrid | Yes |
+
+> **Hybrid KEMs** combine classical key exchange (X25519/X448) with ML-KEM for defense against both classical and quantum attacks. See [README-PQC.md](README-PQC.md) for details.
 
 ### Key Agreement (5)
 
