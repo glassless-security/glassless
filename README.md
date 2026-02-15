@@ -17,7 +17,7 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 - **No Native Compilation**: Uses Java's FFM API (no JNI required)
 - **FIPS Mode Support**: Automatically detects and respects OpenSSL FIPS mode
 - **Comprehensive Algorithm Coverage**: 275+ algorithm implementations
-- **Post-Quantum Cryptography**: ML-KEM, ML-DSA, and SLH-DSA support (OpenSSL 3.5+)
+- **Post-Quantum Cryptography**: ML-KEM, ML-DSA, SLH-DSA, and hybrid key exchange (OpenSSL 3.5+)
 - **Drop-in Replacement**: Standard JCA provider interface
 
 ## Requirements
