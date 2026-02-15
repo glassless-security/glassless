@@ -53,8 +53,14 @@ public class GlaSSLessProvider extends Provider {
 
    private final boolean fipsMode;
 
+   private static String getProviderVersion() {
+      Package pkg = GlaSSLessProvider.class.getPackage();
+      String version = (pkg != null) ? pkg.getImplementationVersion() : null;
+      return (version != null) ? version : "dev";
+   }
+
    public GlaSSLessProvider() {
-      super(PROVIDER_NAME, "0.1", "OpenSSL Native Provider using FFM API");
+      super(PROVIDER_NAME, getProviderVersion(), "OpenSSL Native Provider using FFM API");
 
       this.fipsMode = FIPSStatus.isFIPSEnabled();
 
@@ -1161,8 +1167,8 @@ public class GlaSSLessProvider extends Provider {
       System.out.println("FIPS Provider Available: " + FIPSStatus.isFIPSProviderAvailable());
       System.out.println("OpenSSL FIPS Enabled: " + net.glassless.provider.internal.OpenSSLCrypto.isFIPSEnabled());
 
+      System.out.println();
       if (verbose) {
-         System.out.println();
          System.out.println("Available Algorithms");
          System.out.println("--------------------");
 
@@ -1182,7 +1188,6 @@ public class GlaSSLessProvider extends Provider {
             }
          }
       } else {
-         System.out.println();
          System.out.println("Use --verbose or -v to list all available algorithms.");
       }
    }
