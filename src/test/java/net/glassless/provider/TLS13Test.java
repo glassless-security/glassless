@@ -1,15 +1,20 @@
 package net.glassless.provider;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.Security;
+
+import javax.crypto.KEM;
+import javax.crypto.SecretKey;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,6 +31,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
+
+import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Tests that simulate full TLS 1.3 client/server connections using the GlaSSLess provider.
@@ -263,6 +270,166 @@ public class TLS13Test {
          byte[] decrypted = cipher.doFinal(ciphertext);
 
          assertArrayEquals(plaintext, decrypted);
+      }
+   }
+
+   @Nested
+   @DisplayName("TLS 1.3 Hybrid Key Exchange Simulation")
+   class HybridKeyExchangeTests {
+
+      /**
+       * Simulates a TLS 1.3 hybrid key exchange using X25519MLKEM768.
+       * This test exercises the hybrid KEM in a TLS-like scenario:
+       * 1. Server generates hybrid key pair
+       * 2. Client encapsulates a shared secret using server's public key
+       * 3. Server decapsulates to recover the shared secret
+       * 4. Both sides derive traffic keys using HKDF (as in TLS 1.3)
+       * 5. Verify encryption/decryption works with derived keys
+       */
+      @Test
+      @DisplayName("Hybrid key exchange with X25519MLKEM768 and TLS 1.3 key derivation")
+      @Timeout(30)
+      void testHybridKeyExchangeX25519MLKEM768() throws Exception {
+         assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
+            "X25519MLKEM768 requires OpenSSL 3.5+");
+
+         // Server generates hybrid key pair
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPair serverKeyPair = kpg.generateKeyPair();
+
+         // Client encapsulates shared secret using server's public key
+         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
+         KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+
+         byte[] clientSharedSecret = encapsulated.key().getEncoded();
+         byte[] ciphertext = encapsulated.encapsulation();
+
+         // Server decapsulates to get the same shared secret
+         KEM.Decapsulator decapsulator = kem.newDecapsulator(serverKeyPair.getPrivate());
+         SecretKey serverSharedSecretKey = decapsulator.decapsulate(ciphertext);
+         byte[] serverSharedSecret = serverSharedSecretKey.getEncoded();
+
+         // Verify both sides have the same shared secret
+         assertArrayEquals(clientSharedSecret, serverSharedSecret,
+            "Client and server must derive the same shared secret");
+         assertEquals(64, clientSharedSecret.length,
+            "X25519MLKEM768 shared secret should be 64 bytes");
+
+         // Derive TLS 1.3 traffic keys using HKDF (as per RFC 8446)
+         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+
+         // Simulate TLS 1.3 key schedule: extract -> expand for client/server keys
+         byte[] earlySecret = new byte[32]; // All zeros for initial extraction
+         byte[] context = "tls13 hybrid test".getBytes();
+
+         // Client write key derivation
+         javax.crypto.spec.HKDFParameterSpec clientKeyParams = javax.crypto.spec.HKDFParameterSpec
+               .ofExtract()
+               .addIKM(clientSharedSecret)
+               .addSalt(earlySecret)
+               .thenExpand(context, 32);
+         SecretKey clientWriteKey = hkdf.deriveKey("AES", clientKeyParams);
+
+         // Server derives the same key from its shared secret
+         javax.crypto.spec.HKDFParameterSpec serverKeyParams = javax.crypto.spec.HKDFParameterSpec
+               .ofExtract()
+               .addIKM(serverSharedSecret)
+               .addSalt(earlySecret)
+               .thenExpand(context, 32);
+         SecretKey serverReadKey = hkdf.deriveKey("AES", serverKeyParams);
+
+         // Verify derived keys match
+         assertArrayEquals(clientWriteKey.getEncoded(), serverReadKey.getEncoded(),
+            "Derived keys must match on both sides");
+
+         // Test actual encryption/decryption with derived keys
+         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+         byte[] iv = new byte[12];
+         SecureRandom.getInstance("NativePRNG", "GlaSSLess").nextBytes(iv);
+         javax.crypto.spec.GCMParameterSpec gcmSpec = new javax.crypto.spec.GCMParameterSpec(128, iv);
+
+         // Client encrypts
+         cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, clientWriteKey, gcmSpec);
+         byte[] plaintext = "Hybrid PQC protected message".getBytes();
+         byte[] encrypted = cipher.doFinal(plaintext);
+
+         // Server decrypts
+         cipher.init(javax.crypto.Cipher.DECRYPT_MODE, serverReadKey, gcmSpec);
+         byte[] decrypted = cipher.doFinal(encrypted);
+
+         assertArrayEquals(plaintext, decrypted, "Decryption must recover original plaintext");
+
+         System.out.println("Hybrid key exchange test passed: X25519MLKEM768 with TLS 1.3 key derivation");
+      }
+
+      @Test
+      @DisplayName("Hybrid key exchange with X448MLKEM1024 and TLS 1.3 key derivation")
+      @Timeout(30)
+      void testHybridKeyExchangeX448MLKEM1024() throws Exception {
+         assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X448MLKEM1024"),
+            "X448MLKEM1024 requires OpenSSL 3.5+");
+
+         // Server generates hybrid key pair
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X448MLKEM1024", "GlaSSLess");
+         KeyPair serverKeyPair = kpg.generateKeyPair();
+
+         // Client encapsulates
+         KEM kem = KEM.getInstance("X448MLKEM1024", "GlaSSLess");
+         KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
+         KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+
+         // Server decapsulates
+         KEM.Decapsulator decapsulator = kem.newDecapsulator(serverKeyPair.getPrivate());
+         SecretKey serverSharedSecret = decapsulator.decapsulate(encapsulated.encapsulation());
+
+         // Verify shared secrets match
+         assertArrayEquals(encapsulated.key().getEncoded(), serverSharedSecret.getEncoded(),
+            "Shared secrets must match");
+
+         // Derive traffic keys using HKDF-SHA384 (appropriate for higher security)
+         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA384", "GlaSSLess");
+         byte[] salt = new byte[48];
+         byte[] info = "tls13 x448mlkem1024 test".getBytes();
+
+         javax.crypto.spec.HKDFParameterSpec keyParams = javax.crypto.spec.HKDFParameterSpec
+               .ofExtract()
+               .addIKM(encapsulated.key().getEncoded())
+               .addSalt(salt)
+               .thenExpand(info, 32);
+         SecretKey trafficKey = hkdf.deriveKey("AES", keyParams);
+
+         assertNotNull(trafficKey);
+         assertEquals(32, trafficKey.getEncoded().length);
+
+         System.out.println("Hybrid key exchange test passed: X448MLKEM1024 with TLS 1.3 key derivation");
+      }
+
+      @Test
+      @DisplayName("Multiple hybrid key exchanges (simulating session resumption)")
+      @Timeout(60)
+      void testMultipleHybridKeyExchanges() throws Exception {
+         assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
+            "X25519MLKEM768 requires OpenSSL 3.5+");
+
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+
+         // Simulate multiple handshakes (e.g., different clients connecting)
+         for (int i = 0; i < 5; i++) {
+            KeyPair serverKeyPair = kpg.generateKeyPair();
+
+            KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
+            KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+
+            KEM.Decapsulator decapsulator = kem.newDecapsulator(serverKeyPair.getPrivate());
+            SecretKey decapsulatedKey = decapsulator.decapsulate(encapsulated.encapsulation());
+
+            assertArrayEquals(encapsulated.key().getEncoded(), decapsulatedKey.getEncoded(),
+               "Handshake " + (i + 1) + " failed: shared secrets don't match");
+         }
+
+         System.out.println("Multiple hybrid key exchange test passed: 5 successful handshakes");
       }
    }
 
