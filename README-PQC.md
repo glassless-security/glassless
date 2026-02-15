@@ -154,6 +154,39 @@ PrivateKey reconstructedPrivate = kf.generatePrivate(privSpec);
 
 Hybrid groups like `x25519_mlkem768` are **not yet supported** by JSSE.
 
+### JEP 527: Post-Quantum Hybrid Key Exchange for TLS 1.3
+
+[JEP 527](https://openjdk.org/jeps/527) will add native support for hybrid post-quantum key exchange in TLS 1.3 to the JDK. This JEP builds on [JEP 496](https://openjdk.org/jeps/496) (ML-KEM), which was delivered in JDK 24.
+
+#### Roadmap
+
+| Date | Milestone |
+|------|-----------|
+| JDK 24 (March 2024) | JEP 496: ML-KEM support added |
+| September 2025 | JEP 527 elevated to Candidate status |
+| January 2026 | JEP 527 elevated to Targeted for JDK 27 |
+| JDK 26 (March 2026) | No hybrid TLS support yet |
+| **JDK 27 (September 2026)** | **JEP 527 targeted - hybrid TLS 1.3 support** |
+
+#### What JEP 527 Will Provide
+
+- Native JSSE support for hybrid named groups in TLS 1.3
+- `X25519MLKEM768` as the default hybrid group (fastest option)
+- `SecP256r1MLKEM768` and `SecP384r1MLKEM1024` available but not enabled by default
+- Implementation based on the [IETF Hybrid Key Exchange draft](https://datatracker.ietf.org/doc/draft-ietf-tls-hybrid-design/)
+
+#### Why Hybrid Key Exchange Matters
+
+Quantum computing poses an increasing threat to widely-deployed public-key encryption algorithms like RSA and ECDH. Even though large-scale quantum computers don't yet exist, adversaries could harvest encrypted data today and decrypt it later ("harvest now, decrypt later" attacks). Hybrid key exchange provides immediate protection by combining classical algorithms with quantum-resistant ones.
+
+#### GlaSSLess and JEP 527
+
+Until JDK 27 is released, GlaSSLess provides hybrid KEM support through OpenSSL 3.5+. Once JEP 527 lands:
+
+- Applications can use native JSSE hybrid TLS without GlaSSLess
+- GlaSSLess hybrid KEMs remain useful for application-layer key exchange
+- GlaSSLess may offer performance advantages depending on OpenSSL optimizations
+
 ### Workarounds
 
 Until JSSE adds hybrid group support, you can:
@@ -256,14 +289,16 @@ The hybrid KEMs follow the construction specified in:
 
 ## Future Work
 
+- **JDK 27 / JEP 527**: Native JSSE hybrid TLS support expected in September 2026
 - **EC-based hybrids**: Support for SecP256r1MLKEM768 and SecP384r1MLKEM1024 pending OpenSSL improvements
-- **JSSE integration**: Native TLS 1.3 hybrid key exchange when JDK adds support
 - **Additional hybrids**: Support for other combinations as they are standardized
 
 ## See Also
 
 - [README.md](README.md) - Main documentation
 - [PERFORMANCE.md](PERFORMANCE.md) - Benchmark results
+- [JEP 527](https://openjdk.org/jeps/527) - Post-Quantum Hybrid Key Exchange for TLS 1.3
+- [JEP 496](https://openjdk.org/jeps/496) - Quantum-Resistant ML-KEM (JDK 24)
 - [FIPS 203](https://csrc.nist.gov/pubs/fips/203/final) - ML-KEM standard
 - [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final) - ML-DSA standard
 - [FIPS 205](https://csrc.nist.gov/pubs/fips/205/final) - SLH-DSA standard
