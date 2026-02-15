@@ -9,13 +9,13 @@ import java.util.Objects;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
 
-public abstract class SHADigest extends MessageDigestSpi implements Cloneable {
+public abstract class AbstractDigest extends MessageDigestSpi implements Cloneable {
 
    private final MemorySegment evpMdCtx;
    private final MemorySegment handle;
    private final Arena arena;
 
-   protected SHADigest(String algorithmName) throws ProviderException {
+   protected AbstractDigest(String algorithmName) throws ProviderException {
       super();
       try {
          arena = Arena.ofShared();
