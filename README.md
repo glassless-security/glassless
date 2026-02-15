@@ -552,6 +552,22 @@ boolean fipsMode = provider.isFIPSMode();
 System.out.println("FIPS Mode: " + (fipsMode ? "ENABLED" : "DISABLED"));
 ```
 
+### Supported FIPS Standards
+
+| Standard | Description | Algorithms |
+|----------|-------------|------------|
+| FIPS 140-3 | Cryptographic Module Validation | OpenSSL FIPS provider |
+| FIPS 180-4 | Secure Hash Standard | SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256 |
+| FIPS 186-5 | Digital Signature Standard | DSA, ECDSA, EdDSA (Ed25519, Ed448) |
+| FIPS 197 | Advanced Encryption Standard | AES-128, AES-192, AES-256 |
+| FIPS 198-1 | HMAC | HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512 |
+| FIPS 202 | SHA-3 Standard | SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, SHAKE256 |
+| FIPS 203 | ML-KEM | ML-KEM-512, ML-KEM-768, ML-KEM-1024 (OpenSSL 3.5+) |
+| FIPS 204 | ML-DSA | ML-DSA-44, ML-DSA-65, ML-DSA-87 (OpenSSL 3.5+) |
+| FIPS 205 | SLH-DSA | SLH-DSA-SHA2-*, SLH-DSA-SHAKE-* (OpenSSL 3.5+) |
+
+> **Note**: FIPS 203, 204, and 205 are the post-quantum cryptography standards. Support requires OpenSSL 3.5+ compiled with the FIPS provider that includes these algorithms.
+
 ## Command-Line Tool
 
 Display provider information:
