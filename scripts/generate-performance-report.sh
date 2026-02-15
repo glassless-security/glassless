@@ -181,12 +181,15 @@ jq -r '
    (get_score("glasslessEncapsulate"; {algorithm: "ML-KEM-768"})) as $gl_mlkem_enc |
    (get_score("glasslessDecapsulate"; {algorithm: "ML-KEM-768"})) as $gl_mlkem_dec |
    (get_score("glasslessKeyGen"; {algorithm: "ML-KEM-768"})) as $gl_mlkem_keygen |
+   (get_score("jdkEncapsulate"; {algorithm: "ML-KEM-768"})) as $jdk_mlkem_enc |
+   (get_score("jdkDecapsulate"; {algorithm: "ML-KEM-768"})) as $jdk_mlkem_dec |
+   (get_score("jdkKeyGen"; {algorithm: "ML-KEM-768"})) as $jdk_mlkem_keygen |
 
    "| Key Agreement | ECDH | \(format_score($gl_ecdh)) | \(format_score($jdk_ecdh)) | \(format_score($bc_ecdh)) | \(format_score($nss_ecdh)) |",
    "| Key Agreement | X25519 | \(format_score($gl_x25519)) | \(format_score($jdk_x25519)) | \(format_score($bc_x25519)) | \(format_score($nss_x25519)) |",
-   "| Key Encapsulation | ML-KEM-768 Encaps | \(format_score($gl_mlkem_enc)) | - | - | - |",
-   "| Key Encapsulation | ML-KEM-768 Decaps | \(format_score($gl_mlkem_dec)) | - | - | - |",
-   "| Key Generation | ML-KEM-768 | \(format_score($gl_mlkem_keygen)) | - | - | - |",
+   "| Key Encapsulation | ML-KEM-768 Encaps | \(format_score($gl_mlkem_enc)) | \(format_score($jdk_mlkem_enc)) | - | - |",
+   "| Key Encapsulation | ML-KEM-768 Decaps | \(format_score($gl_mlkem_dec)) | \(format_score($jdk_mlkem_dec)) | - | - |",
+   "| Key Generation | ML-KEM-768 | \(format_score($gl_mlkem_keygen)) | \(format_score($jdk_mlkem_keygen)) | - | - |",
    "| Key Generation | Ed25519 | \(format_score($gl_ed25519_gen)) | \(format_score($jdk_ed25519_gen)) | \(format_score($bc_ed25519_gen)) | \(format_score($nss_ed25519_gen)) |",
    "| Key Generation | EC P-256 | \(format_score($gl_ec256_gen)) | \(format_score($jdk_ec256_gen)) | \(format_score($bc_ec256_gen)) | \(format_score($nss_ec256_gen)) |",
    "| Signature | Ed25519 Sign | \(format_score($gl_ed_sign)) | \(format_score($jdk_ed_sign)) | \(format_score($bc_ed_sign)) | \(format_score($nss_ed_sign)) |",
@@ -237,8 +240,19 @@ jq -r '
    (get_score("glasslessDigest"; {algorithm: "SHA-256", dataSize: "64"})) as $gl_sha256 |
    (get_score("jdkDigest"; {algorithm: "SHA-256", dataSize: "64"})) as $jdk_sha256 |
 
+   # ML-KEM
+   (get_score("glasslessEncapsulate"; {algorithm: "ML-KEM-768"})) as $gl_mlkem_enc |
+   (get_score("jdkEncapsulate"; {algorithm: "ML-KEM-768"})) as $jdk_mlkem_enc |
+   (get_score("glasslessDecapsulate"; {algorithm: "ML-KEM-768"})) as $gl_mlkem_dec |
+   (get_score("jdkDecapsulate"; {algorithm: "ML-KEM-768"})) as $jdk_mlkem_dec |
+   (get_score("glasslessKeyGen"; {algorithm: "ML-KEM-768"})) as $gl_mlkem_keygen |
+   (get_score("jdkKeyGen"; {algorithm: "ML-KEM-768"})) as $jdk_mlkem_keygen |
+
    "| Key Agreement | ECDH | \(speedup($gl_ecdh; $jdk_ecdh)) |",
    "| Key Agreement | X25519 | \(speedup($gl_x25519; $jdk_x25519)) |",
+   "| Key Encapsulation | ML-KEM-768 Encaps | \(speedup($gl_mlkem_enc; $jdk_mlkem_enc)) |",
+   "| Key Encapsulation | ML-KEM-768 Decaps | \(speedup($gl_mlkem_dec; $jdk_mlkem_dec)) |",
+   "| Key Generation | ML-KEM-768 | \(speedup($gl_mlkem_keygen; $jdk_mlkem_keygen)) |",
    "| Key Generation | Ed25519 | \(speedup($gl_ed25519_gen; $jdk_ed25519_gen)) |",
    "| Key Generation | EC P-256 | \(speedup($gl_ec256_gen; $jdk_ec256_gen)) |",
    "| Signature | Ed25519 Sign | \(speedup($gl_ed_sign; $jdk_ed_sign)) |",
@@ -269,7 +283,7 @@ cat >> "$OUTPUT_FILE" << 'FOOTER'
   - **GlaSSLess (OpenSSL)**: Excels at asymmetric cryptography; FFM call overhead affects small-data operations
   - **BC FIPS**: FIPS 140-2 certified; pure Java implementation with some native acceleration
   - **NSS**: Mozilla's Network Security Services via SunPKCS11; requires system NSS libraries
-- **Post-Quantum Cryptography** (ML-KEM, ML-DSA, SLH-DSA) requires OpenSSL 3.5+ and is currently only available in GlaSSLess.
+- **Post-Quantum Cryptography**: ML-KEM is available in both JDK 24+ and GlaSSLess (OpenSSL 3.5+). ML-DSA and SLH-DSA require OpenSSL 3.5+ and are currently only available in GlaSSLess.
 - For large data sizes (16KB+), performance typically converges between implementations.
 - Missing data ("-") indicates the benchmark was not run or the provider was unavailable.
 
