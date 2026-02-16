@@ -32,12 +32,42 @@ Hybrid KEMs combine a classical key exchange algorithm (X25519 or X448) with ML-
 
 ### Unsupported Variants
 
-The following hybrid KEMs are defined in standards but **not currently supported** because OpenSSL 3.5 does not provide raw key export for EC-based hybrid keys:
+The following hybrid KEMs are defined in standards but **not currently supported** in GlaSSLess:
 
-- SecP256r1MLKEM768 (P-256 + ML-KEM-768)
-- SecP384r1MLKEM1024 (P-384 + ML-KEM-1024)
+| Algorithm | Classical Component | PQC Component | Status |
+|-----------|---------------------|---------------|--------|
+| SecP256r1MLKEM768 | P-256 (secp256r1) | ML-KEM-768 | Blocked by OpenSSL |
+| SecP384r1MLKEM1024 | P-384 (secp384r1) | ML-KEM-1024 | Blocked by OpenSSL |
 
-These may be added in future OpenSSL releases.
+#### Technical Details
+
+OpenSSL 3.5.x supports these algorithms for **in-memory operations** but lacks key serialization support:
+
+| Feature | X25519MLKEM768 | SecP256r1MLKEM768 |
+|---------|----------------|-------------------|
+| Key generation | Yes | Yes |
+| Encapsulation | Yes | Yes |
+| Decapsulation | Yes | Yes |
+| `EVP_PKEY_get_raw_public_key` | **Yes** | No |
+| `EVP_PKEY_get_raw_private_key` | **Yes** | No |
+| DER/PEM encoding | No | No |
+| `EVP_PKEY_fromdata` | Yes | No |
+| `EVP_PKEY_dup` | Yes | No |
+
+Java's JCA model requires keys to be serializable via `Key.getEncoded()` and reconstructable via `KeyFactory`. Without OpenSSL serialization support, GlaSSLess cannot:
+
+1. Implement `getEncoded()` for public/private keys
+2. Support `KeyFactory.generatePublic()` / `generatePrivate()`
+3. Enable key persistence or transmission between JVMs
+
+The XDH-based hybrids (X25519MLKEM768, X448MLKEM1024) work because OpenSSL provides raw key export functions for them.
+
+#### Future Support
+
+EC-based hybrid KEMs will be added to GlaSSLess when OpenSSL adds proper key serialization support, expected in a future 3.5.x patch or 3.6 release. Track progress at:
+
+- [OpenSSL GitHub Issues](https://github.com/openssl/openssl/issues) - search for "hybrid KEM"
+- [OpenSSL 3.5 Release Notes](https://www.openssl.org/news/openssl-3.5-notes.html)
 
 ### Usage Examples
 
