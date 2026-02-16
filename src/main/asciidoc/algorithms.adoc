@@ -6,6 +6,28 @@
 
 GlaSSLess provides over 370 cryptographic algorithm implementations backed by OpenSSL.
 
+== Summary
+
+[cols="2,1"]
+|===
+|Category |Count
+
+|AlgorithmParameterGenerator |2
+|AlgorithmParameters |23
+|Cipher |143
+|KDF |14
+|KEM |6
+|KeyAgreement |5
+|KeyFactory |11
+|KeyGenerator |11
+|KeyPairGenerator |33
+|Mac |20
+|MessageDigest |18
+|SecretKeyFactory |35
+|SecureRandom |3
+|Signature |48
+|===
+
 == Message Digests (18)
 
 [cols="2,1"]
@@ -16,12 +38,14 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 |SHA-512/224, SHA-512/256 |Yes
 |SHA3-224, SHA3-256, SHA3-384, SHA3-512 |Yes
 |SHAKE128, SHAKE256 |Yes
-|BLAKE2b-512, BLAKE2s-256 |Yes
+|BLAKE2b-512, BLAKE2s-256 |No
 |MD5, SHA-1 |No
 |SM3, RIPEMD160 |No
 |===
 
 == Ciphers (143)
+
+=== Symmetric Ciphers
 
 [cols="1,2,2,1"]
 |===
@@ -35,7 +59,28 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 |ChaCha20 |256 |Stream |No
 |ChaCha20-Poly1305 |256 |AEAD |No
 |DESede (3DES) |168 |ECB, CBC |No
-|RSA |1024-8192 |ECB with PKCS1/OAEP |Yes
+|===
+
+=== Asymmetric Ciphers
+
+[cols="1,2,2,1"]
+|===
+|Algorithm |Key Sizes |Padding |FIPS Approved
+
+|RSA |1024-8192 |NoPadding, PKCS1, OAEP (SHA-1, SHA-256) |Yes
+|===
+
+=== Password-Based Encryption (PBE)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|PBEWithHmacSHA256AndAES_128, PBEWithHmacSHA256AndAES_256 |Yes
+|PBEWithHmacSHA384AndAES_128, PBEWithHmacSHA384AndAES_256 |Yes
+|PBEWithHmacSHA512AndAES_128, PBEWithHmacSHA512AndAES_256 |Yes
+|PBEWithHmacSHA224AndAES_128, PBEWithHmacSHA224AndAES_256 |Yes
+|PBEWithHmacSHA1AndAES_128, PBEWithHmacSHA1AndAES_256 |No
 |===
 
 == MACs (20)
@@ -48,26 +93,35 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 |HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512 |Yes
 |AESCMAC, AESGMAC |Yes
 |KMAC128, KMAC256 |Yes
-|HmacSHA1 |No
+|HmacPBESHA224, HmacPBESHA256, HmacPBESHA384, HmacPBESHA512 |Yes
+|HmacSHA1, HmacPBESHA1 |No
 |Poly1305, SipHash |No
 |===
 
-== Signatures (31+)
+== Signatures (48)
+
+=== Classical Signatures (33)
 
 [cols="2,1"]
 |===
 |Algorithm |FIPS Approved
 
 |SHA256withRSA, SHA384withRSA, SHA512withRSA |Yes
-|SHA256withRSAandMGF1 (RSA-PSS) |Yes
+|SHA224withRSA |Yes
+|SHA512/224withRSA, SHA512/256withRSA |Yes
+|SHA256withRSAandMGF1, SHA384withRSAandMGF1, SHA512withRSAandMGF1 (RSA-PSS) |Yes
+|SHA224withRSAandMGF1, SHA512/224withRSAandMGF1, SHA512/256withRSAandMGF1 |Yes
 |SHA256withECDSA, SHA384withECDSA, SHA512withECDSA |Yes
-|SHA3-256withECDSA, SHA3-384withECDSA, SHA3-512withECDSA |Yes
+|SHA224withECDSA |Yes
+|SHA3-224withECDSA, SHA3-256withECDSA, SHA3-384withECDSA, SHA3-512withECDSA |Yes
 |SHA256withDSA, SHA384withDSA, SHA512withDSA |Yes
+|SHA224withDSA |Yes
 |Ed25519, Ed448, EdDSA |Yes
-|SHA1withRSA, SHA1withECDSA, SHA1withDSA |No
+|SHA1withRSA, SHA1withRSAandMGF1 |No
+|SHA1withECDSA, SHA1withDSA |No
 |===
 
-== Post-Quantum Signatures (15)
+=== Post-Quantum Signatures (15)
 
 Requires OpenSSL 3.5+.
 
@@ -75,10 +129,10 @@ Requires OpenSSL 3.5+.
 |===
 |Algorithm |Security Level |FIPS Approved
 
-|ML-DSA-44 |128-bit |Yes (FIPS 204)
+|ML-DSA, ML-DSA-44 |128-bit |Yes (FIPS 204)
 |ML-DSA-65 |192-bit |Yes (FIPS 204)
 |ML-DSA-87 |256-bit |Yes (FIPS 204)
-|SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f |128-bit |Yes (FIPS 205)
+|SLH-DSA, SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f |128-bit |Yes (FIPS 205)
 |SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f |192-bit |Yes (FIPS 205)
 |SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f |256-bit |Yes (FIPS 205)
 |SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f |128-bit |Yes (FIPS 205)
@@ -86,7 +140,7 @@ Requires OpenSSL 3.5+.
 |SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f |256-bit |Yes (FIPS 205)
 |===
 
-== Key Encapsulation Mechanisms (5)
+== Key Encapsulation Mechanisms (6)
 
 Requires OpenSSL 3.5+.
 
@@ -94,6 +148,7 @@ Requires OpenSSL 3.5+.
 |===
 |Algorithm |Security Level |FIPS Approved
 
+|ML-KEM (generic) |Configurable |Yes (FIPS 203)
 |ML-KEM-512 |128-bit |Yes (FIPS 203)
 |ML-KEM-768 |192-bit |Yes (FIPS 203)
 |ML-KEM-1024 |256-bit |Yes (FIPS 203)
@@ -128,17 +183,114 @@ NOTE: **Hybrid KEMs** combine classical key exchange (X25519/X448) with ML-KEM f
 |X963KDF-SHA256, X963KDF-SHA384, X963KDF-SHA512 |Yes
 |===
 
-== Secret Key Factories (32)
+== KeyPairGenerator (33)
 
 [cols="2,1"]
 |===
 |Algorithm |FIPS Approved
 
+|RSA |Yes
+|EC |Yes
+|DSA |Yes
+|DH |Yes
+|Ed25519, Ed448, EdDSA |Yes
+|X25519, X448, XDH |Yes
+|ML-KEM, ML-KEM-512, ML-KEM-768, ML-KEM-1024 |Yes (FIPS 203)
+|X25519MLKEM768, X448MLKEM1024 |Yes
+|ML-DSA, ML-DSA-44, ML-DSA-65, ML-DSA-87 |Yes (FIPS 204)
+|SLH-DSA |Yes (FIPS 205)
+|SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f |Yes (FIPS 205)
+|SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f |Yes (FIPS 205)
+|SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f |Yes (FIPS 205)
+|SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f |Yes (FIPS 205)
+|SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f |Yes (FIPS 205)
+|SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f |Yes (FIPS 205)
+|===
+
+== KeyFactory (11)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|RSA |Yes
+|EC |Yes
+|DSA |Yes
+|DH |Yes
+|EdDSA |Yes
+|XDH |Yes
+|ML-KEM |Yes (FIPS 203)
+|ML-DSA |Yes (FIPS 204)
+|SLH-DSA |Yes (FIPS 205)
+|X25519MLKEM768, X448MLKEM1024 |Yes
+|===
+
+== KeyGenerator (11)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|AES |Yes
+|DESede |No
+|HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512 |Yes
+|HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512 |Yes
+|HmacSHA1 |No
+|===
+
+== SecretKeyFactory (35)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|AES, DESede |Yes (AES), No (DESede)
+|PBE |Yes
 |PBKDF2WithHmacSHA256, PBKDF2WithHmacSHA384, PBKDF2WithHmacSHA512 |Yes
-|PBKDF2WithHmacSHA3-256, PBKDF2WithHmacSHA3-384, PBKDF2WithHmacSHA3-512 |Yes
-|PBKDF2WithHmacSHA1 |No
+|PBKDF2WithHmacSHA224 |Yes
+|PBKDF2WithHmacSHA256And8BIT, PBKDF2WithHmacSHA384And8BIT, PBKDF2WithHmacSHA512And8BIT |Yes
+|PBKDF2WithHmacSHA224And8BIT |Yes
+|PBKDF2WithHmacSHA3-224, PBKDF2WithHmacSHA3-256, PBKDF2WithHmacSHA3-384, PBKDF2WithHmacSHA3-512 |Yes
+|PBEWithHmacSHA256AndAES_128, PBEWithHmacSHA256AndAES_256 |Yes
+|PBEWithHmacSHA384AndAES_128, PBEWithHmacSHA384AndAES_256 |Yes
+|PBEWithHmacSHA512AndAES_128, PBEWithHmacSHA512AndAES_256 |Yes
+|PBEWithHmacSHA512/224AndAES_128, PBEWithHmacSHA512/224AndAES_256 |Yes
+|PBEWithHmacSHA512/256AndAES_128, PBEWithHmacSHA512/256AndAES_256 |Yes
+|PBEWithHmacSHA224AndAES_128, PBEWithHmacSHA224AndAES_256 |Yes
+|PBKDF2WithHmacSHA1, PBKDF2WithHmacSHA1And8BIT |No
+|PBEWithHmacSHA1AndAES_128, PBEWithHmacSHA1AndAES_256 |No
 |SCRYPT |No
 |Argon2i, Argon2d, Argon2id |No
+|===
+
+== AlgorithmParameters (23)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|AES, GCM |Yes
+|EC, DH, DSA |Yes
+|RSASSA-PSS, OAEP |Yes
+|PBES2 |Yes
+|PBEWithHmacSHA256AndAES_128, PBEWithHmacSHA256AndAES_256 |Yes
+|PBEWithHmacSHA384AndAES_128, PBEWithHmacSHA384AndAES_256 |Yes
+|PBEWithHmacSHA512AndAES_128, PBEWithHmacSHA512AndAES_256 |Yes
+|PBEWithHmacSHA512/224AndAES_128, PBEWithHmacSHA512/224AndAES_256 |Yes
+|PBEWithHmacSHA512/256AndAES_128, PBEWithHmacSHA512/256AndAES_256 |Yes
+|PBEWithHmacSHA224AndAES_128, PBEWithHmacSHA224AndAES_256 |Yes
+|DESede |No
+|PBEWithHmacSHA1AndAES_128, PBEWithHmacSHA1AndAES_256 |No
+|===
+
+== AlgorithmParameterGenerator (2)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|DH |Yes
+|DSA |Yes
 |===
 
 == Secure Random (3)
