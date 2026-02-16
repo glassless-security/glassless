@@ -21,6 +21,7 @@ import javax.crypto.ShortBufferException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
+import net.glassless.provider.internal.NativeResourceCleaner;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 abstract class AbstractCipher extends CipherSpi {
@@ -30,6 +31,7 @@ abstract class AbstractCipher extends CipherSpi {
     private final int keySize;
     private final CipherMode mode;
     private final CipherPadding padding;
+    private final NativeResourceCleaner.ResourceHolder resourceHolder;
     private int gcmTagLenBits; // New field for GCM tag length in bits
 
     private MemorySegment evpCipherCtx;
@@ -45,6 +47,9 @@ abstract class AbstractCipher extends CipherSpi {
         this.padding = padding;
         this.arena = Arena.ofShared();
         this.gcmTagLenBits = 128; // Default to 128 bits for GCM
+        // Register cleanup for when this object is GC'd
+        this.resourceHolder = NativeResourceCleaner.createHolder(this);
+        this.resourceHolder.setArena(arena);
     }
 
     @Override
@@ -100,6 +105,9 @@ abstract class AbstractCipher extends CipherSpi {
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random)
             throws InvalidKeyException, InvalidAlgorithmParameterException {
+        // Clean up any previous cipher context
+        reset();
+
         this.opmode = opmode;
         this.key = key;
 
@@ -122,6 +130,8 @@ abstract class AbstractCipher extends CipherSpi {
             if (evpCipherCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_CIPHER_CTX");
             }
+            // Track context for cleanup on GC
+            resourceHolder.setEvpCipherCtx(evpCipherCtx);
 
             byte[] keyBytes = key.getEncoded();
             MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
@@ -343,6 +353,7 @@ abstract class AbstractCipher extends CipherSpi {
                 // Ignore
             }
             evpCipherCtx = null;
+            resourceHolder.clearEvpCipherCtx();
         }
     }
 }

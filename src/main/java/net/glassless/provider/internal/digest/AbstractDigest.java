@@ -3,47 +3,18 @@ package net.glassless.provider.internal.digest;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.lang.ref.Cleaner;
 import java.security.MessageDigestSpi;
 import java.security.ProviderException;
 import java.util.Objects;
 
+import net.glassless.provider.internal.NativeResourceCleaner;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 public abstract class AbstractDigest extends MessageDigestSpi implements Cloneable {
 
-   private static final Cleaner CLEANER = Cleaner.create();
-
    private final MemorySegment evpMdCtx;
    private final MemorySegment handle;
    private final Arena arena;
-
-   /**
-    * Weak reference cleanable that frees native resources when the digest is garbage collected.
-    */
-   private static class CleanupAction implements Runnable {
-      private final MemorySegment evpMdCtx;
-      private final Arena arena;
-
-      CleanupAction(MemorySegment evpMdCtx, Arena arena) {
-         this.evpMdCtx = evpMdCtx;
-         this.arena = arena;
-      }
-
-      @Override
-      public void run() {
-         try {
-            if (!evpMdCtx.equals(MemorySegment.NULL)) {
-               OpenSSLCrypto.EVP_MD_CTX_free(evpMdCtx);
-            }
-         } catch (Throwable e) {
-            // Ignore cleanup errors
-         }
-         if (arena != null) {
-            arena.close();
-         }
-      }
-   }
 
    protected AbstractDigest(String algorithmName) throws ProviderException {
       super();
@@ -61,7 +32,10 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
             throw new ProviderException("Failed to get " + algorithmName + " EVP_MD");
          }
          // Register cleanup action to free native resources when this object is GC'd
-         CLEANER.register(this, new CleanupAction(evpMdCtx, arena));
+         NativeResourceCleaner.builder()
+            .freeEvpMdCtx(evpMdCtx)
+            .closeArena(arena)
+            .registerFor(this);
          engineReset();
       } catch (ProviderException e) {
          throw e;

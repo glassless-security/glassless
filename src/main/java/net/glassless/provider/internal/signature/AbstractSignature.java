@@ -12,6 +12,7 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.SignatureSpi;
 
+import net.glassless.provider.internal.NativeResourceCleaner;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -21,6 +22,7 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     private final String digestAlgorithm;
     private final KeyType keyType;
+    private final NativeResourceCleaner.ResourceHolder resourceHolder;
 
     private Arena arena;
     private MemorySegment mdCtx;
@@ -32,6 +34,8 @@ public abstract class AbstractSignature extends SignatureSpi {
     protected AbstractSignature(String digestAlgorithm, KeyType keyType) {
         this.digestAlgorithm = digestAlgorithm;
         this.keyType = keyType;
+        // Register cleanup for when this object is GC'd
+        this.resourceHolder = NativeResourceCleaner.createHolder(this);
     }
 
     @Override
@@ -41,6 +45,8 @@ public abstract class AbstractSignature extends SignatureSpi {
 
         try {
             arena = Arena.ofShared();
+            resourceHolder.setArena(arena);
+
             byte[] keyBytes = publicKey.getEncoded();
             if (keyBytes == null) {
                 throw new InvalidKeyException("Key encoding not available");
@@ -50,6 +56,7 @@ public abstract class AbstractSignature extends SignatureSpi {
             if (evpPkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to load public key");
             }
+            resourceHolder.setEvpPkey(evpPkey);
 
             initVerify();
 
@@ -67,6 +74,8 @@ public abstract class AbstractSignature extends SignatureSpi {
 
         try {
             arena = Arena.ofShared();
+            resourceHolder.setArena(arena);
+
             byte[] keyBytes = privateKey.getEncoded();
             if (keyBytes == null) {
                 throw new InvalidKeyException("Key encoding not available");
@@ -77,6 +86,7 @@ public abstract class AbstractSignature extends SignatureSpi {
             if (evpPkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to load private key");
             }
+            resourceHolder.setEvpPkey(evpPkey);
 
             initSign();
 
@@ -92,6 +102,7 @@ public abstract class AbstractSignature extends SignatureSpi {
         if (mdCtx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
         }
+        resourceHolder.setEvpMdCtx(mdCtx);
 
         MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm, arena);
         if (digestHandle.equals(MemorySegment.NULL)) {
@@ -120,6 +131,7 @@ public abstract class AbstractSignature extends SignatureSpi {
         if (mdCtx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
         }
+        resourceHolder.setEvpMdCtx(mdCtx);
 
         MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm, arena);
         if (digestHandle.equals(MemorySegment.NULL)) {
@@ -272,6 +284,7 @@ public abstract class AbstractSignature extends SignatureSpi {
                 // Ignore
             }
             mdCtx = null;
+            resourceHolder.clearEvpMdCtx();
         }
         if (evpPkey != null) {
             try {
@@ -280,10 +293,12 @@ public abstract class AbstractSignature extends SignatureSpi {
                 // Ignore
             }
             evpPkey = null;
+            resourceHolder.clearEvpPkey();
         }
         if (arena != null) {
             arena.close();
             arena = null;
+            resourceHolder.setArena(null);
         }
         dataBuffer = null;
         pkeyCtxPtr = null;
