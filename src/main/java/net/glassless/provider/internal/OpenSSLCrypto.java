@@ -1314,7 +1314,7 @@ public class OpenSSLCrypto {
          throw new IllegalStateException("Failed to export raw public key");
       }
 
-      byte[] keyBytes = new byte[(int) lenPtr.get(ValueLayout.JAVA_LONG, 0)];
+      byte[] keyBytes = new byte[toIntSize(lenPtr.get(ValueLayout.JAVA_LONG, 0))];
       buffer.asByteBuffer().get(keyBytes);
       return keyBytes;
    }
@@ -1343,7 +1343,7 @@ public class OpenSSLCrypto {
          throw new IllegalStateException("Failed to export raw private key");
       }
 
-      byte[] keyBytes = new byte[(int) lenPtr.get(ValueLayout.JAVA_LONG, 0)];
+      byte[] keyBytes = new byte[toIntSize(lenPtr.get(ValueLayout.JAVA_LONG, 0))];
       buffer.asByteBuffer().get(keyBytes);
       return keyBytes;
    }
@@ -2315,6 +2315,22 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
 
       return paramIndex + 1;
+   }
+
+   /**
+    * Safely converts a size_t value (represented as long) to int.
+    * Throws ArithmeticException if the value overflows int range.
+    * This is used when allocating arrays from native size values.
+    *
+    * @param size the size value from native code (size_t as long)
+    * @return the size as int
+    * @throws ArithmeticException if size exceeds Integer.MAX_VALUE
+    */
+   public static int toIntSize(long size) {
+      if (size < 0 || size > Integer.MAX_VALUE) {
+         throw new ArithmeticException("Size value " + size + " exceeds int range");
+      }
+      return (int) size;
    }
 
    private static int addUIntParam(MemorySegment params, int paramIndex, String key, int value, Arena arena) {

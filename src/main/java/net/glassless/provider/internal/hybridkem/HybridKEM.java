@@ -144,10 +144,10 @@ public class HybridKEM implements KEMSpi {
                   }
 
                   // Extract results
-                  byte[] ciphertext = new byte[(int) wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0)];
+                  byte[] ciphertext = new byte[OpenSSLCrypto.toIntSize(wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0))];
                   wrappedBuffer.asByteBuffer().get(ciphertext);
 
-                  byte[] fullSecret = new byte[(int) secretLenPtr.get(ValueLayout.JAVA_LONG, 0)];
+                  byte[] fullSecret = new byte[OpenSSLCrypto.toIntSize(secretLenPtr.get(ValueLayout.JAVA_LONG, 0))];
                   secretBuffer.asByteBuffer().get(fullSecret);
 
                   // Create secret key from specified range
@@ -195,7 +195,7 @@ public class HybridKEM implements KEMSpi {
                               MemorySegment secretLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
                               if (OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, MemorySegment.NULL, wrappedLenPtr,
                                  MemorySegment.NULL, secretLenPtr) == 1) {
-                                 encapsulationSize = (int) wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0);
+                                 encapsulationSize = OpenSSLCrypto.toIntSize(wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0));
                               }
                            }
                         } finally {
@@ -284,7 +284,7 @@ public class HybridKEM implements KEMSpi {
                   }
 
                   // Extract result
-                  byte[] fullSecret = new byte[(int) secretLenPtr.get(ValueLayout.JAVA_LONG, 0)];
+                  byte[] fullSecret = new byte[OpenSSLCrypto.toIntSize(secretLenPtr.get(ValueLayout.JAVA_LONG, 0))];
                   secretBuffer.asByteBuffer().get(fullSecret);
 
                   // Create secret key from specified range
