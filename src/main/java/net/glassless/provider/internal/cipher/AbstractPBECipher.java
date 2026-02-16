@@ -152,12 +152,12 @@ abstract class AbstractPBECipher extends CipherSpi {
 
             // Initialize the underlying cipher
             evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(opensslCipherName, arena);
-            if (evpCipher == null || evpCipher.address() == 0) {
+            if (evpCipher.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to get cipher: " + opensslCipherName);
             }
 
             evpCipherCtx = OpenSSLCrypto.EVP_CIPHER_CTX_new();
-            if (evpCipherCtx == null || evpCipherCtx.address() == 0) {
+            if (evpCipherCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_CIPHER_CTX");
             }
 

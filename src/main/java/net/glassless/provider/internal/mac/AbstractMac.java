@@ -70,13 +70,13 @@ public abstract class AbstractMac extends MacSpi {
         try {
             // Fetch the MAC implementation
             evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, macAlgorithm, MemorySegment.NULL, arena);
-            if (evpMac == null || evpMac.address() == 0) {
+            if (evpMac.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to fetch MAC: " + macAlgorithm);
             }
 
             // Create MAC context
             evpMacCtx = OpenSSLCrypto.EVP_MAC_CTX_new(evpMac);
-            if (evpMacCtx == null || evpMacCtx.address() == 0) {
+            if (evpMacCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create MAC context");
             }
 

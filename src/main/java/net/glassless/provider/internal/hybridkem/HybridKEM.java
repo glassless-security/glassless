@@ -100,7 +100,7 @@ public class HybridKEM implements KEMSpi {
          try (Arena arena = Arena.ofConfined()) {
             // Load the public key using raw key format
             MemorySegment pkey = OpenSSLCrypto.loadRawPublicKey(opensslName, rawPublicKey, arena);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                throw new ProviderException("Failed to load public key");
             }
 
@@ -108,7 +108,7 @@ public class HybridKEM implements KEMSpi {
                // Create context for encapsulation
                MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
                   MemorySegment.NULL, pkey, MemorySegment.NULL);
-               if (ctx == null || ctx.address() == 0) {
+               if (ctx.equals(MemorySegment.NULL)) {
                   throw new ProviderException("Failed to create EVP_PKEY_CTX");
                }
 
@@ -184,11 +184,11 @@ public class HybridKEM implements KEMSpi {
             // Calculate by doing a dummy encapsulation to get the size
             try (Arena arena = Arena.ofConfined()) {
                MemorySegment pkey = OpenSSLCrypto.loadRawPublicKey(opensslName, rawPublicKey, arena);
-               if (pkey != null && pkey.address() != 0) {
+               if (!pkey.equals(MemorySegment.NULL)) {
                   try {
                      MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
                         MemorySegment.NULL, pkey, MemorySegment.NULL);
-                     if (ctx != null && ctx.address() != 0) {
+                     if (!ctx.equals(MemorySegment.NULL)) {
                         try {
                            if (OpenSSLCrypto.EVP_PKEY_encapsulate_init(ctx, MemorySegment.NULL) == 1) {
                               MemorySegment wrappedLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
@@ -242,7 +242,7 @@ public class HybridKEM implements KEMSpi {
          try (Arena arena = Arena.ofConfined()) {
             // Load the private key using raw key format
             MemorySegment pkey = OpenSSLCrypto.loadRawPrivateKey(opensslName, rawPrivateKey, arena);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                throw new DecapsulateException("Failed to load private key");
             }
 
@@ -250,7 +250,7 @@ public class HybridKEM implements KEMSpi {
                // Create context for decapsulation
                MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
                   MemorySegment.NULL, pkey, MemorySegment.NULL);
-               if (ctx == null || ctx.address() == 0) {
+               if (ctx.equals(MemorySegment.NULL)) {
                   throw new DecapsulateException("Failed to create EVP_PKEY_CTX");
                }
 

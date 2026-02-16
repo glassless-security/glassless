@@ -47,7 +47,7 @@ public abstract class AbstractSignature extends SignatureSpi {
             }
 
             evpPkey = OpenSSLCrypto.loadPublicKey(keyBytes, arena);
-            if (evpPkey == null || evpPkey.address() == 0) {
+            if (evpPkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to load public key");
             }
 
@@ -74,7 +74,7 @@ public abstract class AbstractSignature extends SignatureSpi {
 
             // Use type 0 for auto-detection
             evpPkey = OpenSSLCrypto.loadPrivateKey(0, keyBytes, arena);
-            if (evpPkey == null || evpPkey.address() == 0) {
+            if (evpPkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to load private key");
             }
 
@@ -89,12 +89,12 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     private void initSign() throws Throwable {
         mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-        if (mdCtx == null || mdCtx.address() == 0) {
+        if (mdCtx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
         }
 
         MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm, arena);
-        if (digestHandle == null || digestHandle.address() == 0) {
+        if (digestHandle.equals(MemorySegment.NULL)) {
             throw new ProviderException("Unknown digest algorithm: " + digestAlgorithm);
         }
 
@@ -117,12 +117,12 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     private void initVerify() throws Throwable {
         mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-        if (mdCtx == null || mdCtx.address() == 0) {
+        if (mdCtx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
         }
 
         MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm, arena);
-        if (digestHandle == null || digestHandle.address() == 0) {
+        if (digestHandle.equals(MemorySegment.NULL)) {
             throw new ProviderException("Unknown digest algorithm: " + digestAlgorithm);
         }
 

@@ -50,14 +50,14 @@ public class ScryptSecretKeyFactory extends SecretKeyFactorySpi {
             try {
                 // Fetch the SCRYPT KDF
                 MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "SCRYPT", MemorySegment.NULL, arena);
-                if (kdf == null || kdf.address() == 0) {
+                if (kdf.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Failed to fetch SCRYPT KDF");
                 }
 
                 try {
                     // Create KDF context
                     MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-                    if (ctx == null || ctx.address() == 0) {
+                    if (ctx.equals(MemorySegment.NULL)) {
                         throw new ProviderException("Failed to create SCRYPT context");
                     }
 

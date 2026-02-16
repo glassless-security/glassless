@@ -58,13 +58,13 @@ public abstract class AbstractHmac extends MacSpi {
         try {
             // Fetch the HMAC implementation
             evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
-            if (evpMac == null || evpMac.address() == 0) {
+            if (evpMac.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to fetch HMAC");
             }
 
             // Create MAC context
             evpMacCtx = OpenSSLCrypto.EVP_MAC_CTX_new(evpMac);
-            if (evpMacCtx == null || evpMacCtx.address() == 0) {
+            if (evpMacCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create MAC context");
             }
 

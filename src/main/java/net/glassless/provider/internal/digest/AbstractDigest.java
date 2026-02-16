@@ -20,11 +20,11 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
       try {
          arena = Arena.ofShared();
          evpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-         if (evpMdCtx.address() == 0) {
+         if (evpMdCtx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
          }
          handle = OpenSSLCrypto.getDigestHandle(algorithmName, arena);
-         if (handle.address() == 0) {
+         if (handle.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to get " + algorithmName + " EVP_MD");
          }
          engineReset();
@@ -82,7 +82,7 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
          digestLenPtr.set(ValueLayout.JAVA_INT, 0, digestSize);
 
          MemorySegment tempEvpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-         if (tempEvpMdCtx.address() == 0) {
+         if (tempEvpMdCtx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to duplicate EVP_MD_CTX for finalization");
          }
          int result = OpenSSLCrypto.EVP_DigestFinal_ex(evpMdCtx, digestBuffer, digestLenPtr);

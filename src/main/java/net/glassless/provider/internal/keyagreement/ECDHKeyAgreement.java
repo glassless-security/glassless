@@ -79,7 +79,7 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
             // Load the private key
             byte[] privateKeyBytes = privateKey.getEncoded();
             MemorySegment privKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyBytes, arena);
-            if (privKey == null || privKey.address() == 0) {
+            if (privKey.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to load private key");
             }
 
@@ -87,7 +87,7 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
                 // Load the peer's public key
                 byte[] publicKeyBytes = peerPublicKey.getEncoded();
                 MemorySegment pubKey = OpenSSLCrypto.loadPublicKey(publicKeyBytes, arena);
-                if (pubKey == null || pubKey.address() == 0) {
+                if (pubKey.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Failed to load peer public key");
                 }
 

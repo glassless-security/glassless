@@ -71,7 +71,7 @@ public class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi {
                 MemorySegment.NULL,
                 arena
             );
-            if (ctx == null || ctx.address() == 0) {
+            if (ctx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for DSA");
             }
 
@@ -102,7 +102,7 @@ public class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi {
                 }
 
                 MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey.address() == 0) {
+                if (pkey.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Generated parameter key is null");
                 }
 

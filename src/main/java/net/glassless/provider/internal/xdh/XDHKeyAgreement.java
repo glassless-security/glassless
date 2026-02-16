@@ -111,14 +111,14 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
         try (Arena arena = Arena.ofConfined()) {
             // Load the private key
             MemorySegment privateKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded, arena);
-            if (privateKey == null || privateKey.address() == 0) {
+            if (privateKey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to load private key");
             }
 
             try {
                 // Load the public key
                 MemorySegment publicKey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded, arena);
-                if (publicKey == null || publicKey.address() == 0) {
+                if (publicKey.equals(MemorySegment.NULL)) {
                     throw new InvalidKeyException("Failed to load public key");
                 }
 

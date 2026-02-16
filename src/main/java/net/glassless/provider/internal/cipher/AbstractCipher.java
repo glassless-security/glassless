@@ -114,12 +114,12 @@ abstract class AbstractCipher extends CipherSpi {
 
         try {
             evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(algorithmName, arena);
-            if (evpCipher == null || evpCipher.address() == 0) {
+            if (evpCipher.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to get cipher: " + algorithmName);
             }
 
             evpCipherCtx = OpenSSLCrypto.EVP_CIPHER_CTX_new();
-            if (evpCipherCtx == null || evpCipherCtx.address() == 0) {
+            if (evpCipherCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_CIPHER_CTX");
             }
 

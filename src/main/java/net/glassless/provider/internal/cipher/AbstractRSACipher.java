@@ -127,13 +127,13 @@ abstract class AbstractRSACipher extends CipherSpi {
                 throw new InvalidKeyException("Key must be a PublicKey or PrivateKey");
             }
 
-            if (evpPkey == null || evpPkey.address() == 0) {
+            if (evpPkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to load RSA key");
             }
 
             // Create EVP_PKEY_CTX
             evpPkeyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(MemorySegment.NULL, evpPkey, MemorySegment.NULL);
-            if (evpPkeyCtx == null || evpPkeyCtx.address() == 0) {
+            if (evpPkeyCtx.equals(MemorySegment.NULL)) {
                 throw new InvalidKeyException("Failed to create EVP_PKEY_CTX");
             }
 
@@ -158,7 +158,7 @@ abstract class AbstractRSACipher extends CipherSpi {
             // For OAEP, set the digest algorithms
             if (padding == RSAPadding.OAEPPADDING && oaepDigest != null) {
                 MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(oaepDigest, arena);
-                if (digestHandle == null || digestHandle.address() == 0) {
+                if (digestHandle.equals(MemorySegment.NULL)) {
                     throw new InvalidKeyException("Unknown OAEP digest: " + oaepDigest);
                 }
 

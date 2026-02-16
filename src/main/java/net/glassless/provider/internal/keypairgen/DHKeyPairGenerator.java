@@ -69,7 +69,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
         try (Arena arena = Arena.ofConfined()) {
             // Step 1: Generate DH parameters
             MemorySegment paramCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "DH", MemorySegment.NULL, arena);
-            if (paramCtx == null || paramCtx.address() == 0) {
+            if (paramCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for DH parameter generation");
             }
 
@@ -95,7 +95,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
                 }
 
                 dhParams = paramsPtr.get(ValueLayout.ADDRESS, 0);
-                if (dhParams == null || dhParams.address() == 0) {
+                if (dhParams.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Generated DH parameters are null");
                 }
             } finally {
@@ -105,7 +105,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
             // Step 2: Generate the key pair from parameters
             try {
                 MemorySegment keyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(MemorySegment.NULL, dhParams, MemorySegment.NULL);
-                if (keyCtx == null || keyCtx.address() == 0) {
+                if (keyCtx.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Failed to create EVP_PKEY_CTX for DH key generation");
                 }
 
@@ -124,7 +124,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
                     }
 
                     MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                    if (pkey == null || pkey.address() == 0) {
+                    if (pkey.equals(MemorySegment.NULL)) {
                         throw new ProviderException("Generated key is null");
                     }
 

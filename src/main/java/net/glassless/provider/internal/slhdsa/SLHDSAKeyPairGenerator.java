@@ -154,7 +154,7 @@ public class SLHDSAKeyPairGenerator extends KeyPairGeneratorSpi {
                 MemorySegment.NULL,
                 arena
             );
-            if (ctx == null || ctx.address() == 0) {
+            if (ctx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for " + algorithmName +
                     ". SLH-DSA requires OpenSSL 3.5+");
             }
@@ -174,7 +174,7 @@ public class SLHDSAKeyPairGenerator extends KeyPairGeneratorSpi {
                 }
 
                 MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey.address() == 0) {
+                if (pkey.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Generated key is null");
                 }
 

@@ -68,7 +68,7 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
         try (Arena arena = Arena.ofConfined()) {
             // Step 1: Generate DSA parameters
             MemorySegment paramCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "DSA", MemorySegment.NULL, arena);
-            if (paramCtx == null || paramCtx.address() == 0) {
+            if (paramCtx.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for DSA parameter generation");
             }
 
@@ -94,7 +94,7 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
                 }
 
                 dsaParams = paramsPtr.get(ValueLayout.ADDRESS, 0);
-                if (dsaParams == null || dsaParams.address() == 0) {
+                if (dsaParams.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Generated DSA parameters are null");
                 }
             } finally {
@@ -104,7 +104,7 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
             // Step 2: Generate the key pair from parameters
             try {
                 MemorySegment keyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(MemorySegment.NULL, dsaParams, MemorySegment.NULL);
-                if (keyCtx == null || keyCtx.address() == 0) {
+                if (keyCtx.equals(MemorySegment.NULL)) {
                     throw new ProviderException("Failed to create EVP_PKEY_CTX for DSA key generation");
                 }
 
@@ -123,7 +123,7 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
                     }
 
                     MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                    if (pkey == null || pkey.address() == 0) {
+                    if (pkey.equals(MemorySegment.NULL)) {
                         throw new ProviderException("Generated key is null");
                     }
 

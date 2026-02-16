@@ -62,14 +62,14 @@ public abstract class AbstractArgon2SecretKeyFactory extends SecretKeyFactorySpi
          try {
             // Fetch the Argon2 KDF
             MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, kdfName, MemorySegment.NULL, arena);
-            if (kdf == null || kdf.address() == 0) {
+            if (kdf.equals(MemorySegment.NULL)) {
                throw new ProviderException("Failed to fetch " + kdfName + " KDF. Requires OpenSSL 3.2+");
             }
 
             try {
                // Create KDF context
                MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-               if (ctx == null || ctx.address() == 0) {
+               if (ctx.equals(MemorySegment.NULL)) {
                   throw new ProviderException("Failed to create " + kdfName + " context");
                }
 

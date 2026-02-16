@@ -819,7 +819,7 @@ public class OpenSSLCrypto {
                                           String digestName, int keyLength, Arena arena) throws Throwable {
       // Get the digest handle
       MemorySegment digestHandle = getDigestHandle(digestName, arena);
-      if (digestHandle == null || digestHandle.address() == 0) {
+      if (digestHandle.equals(MemorySegment.NULL)) {
          throw new IllegalArgumentException("Unknown digest: " + digestName);
       }
 
@@ -877,7 +877,7 @@ public class OpenSSLCrypto {
                                           String digestName, int keyLength, Arena arena) throws Throwable {
       // Get the digest handle
       MemorySegment digestHandle = getDigestHandle(digestName, arena);
-      if (digestHandle == null || digestHandle.address() == 0) {
+      if (digestHandle.equals(MemorySegment.NULL)) {
          throw new IllegalArgumentException("Unknown digest: " + digestName);
       }
 
@@ -1236,7 +1236,7 @@ public class OpenSSLCrypto {
    public static byte[] exportPrivateKey(MemorySegment pkey, Arena arena) throws Throwable {
       // Convert to PKCS8 format
       MemorySegment p8 = EVP_PKEY2PKCS8(pkey);
-      if (p8 == null || p8.address() == 0) {
+      if (p8.equals(MemorySegment.NULL)) {
          throw new IllegalStateException("Failed to convert private key to PKCS8");
       }
 
@@ -1369,7 +1369,7 @@ public class OpenSSLCrypto {
       MemorySegment pkey = (MemorySegment) EVP_PKEY_new_raw_public_key_ex.invokeExact(
          MemorySegment.NULL, keytypeSegment, MemorySegment.NULL, keyBuffer, (long) keyBytes.length);
 
-      if (pkey == null || pkey.address() == 0) {
+      if (pkey.equals(MemorySegment.NULL)) {
          throw new IllegalStateException("Failed to load raw public key for " + keytype);
       }
 
@@ -1397,7 +1397,7 @@ public class OpenSSLCrypto {
       MemorySegment pkey = (MemorySegment) EVP_PKEY_new_raw_private_key_ex.invokeExact(
          MemorySegment.NULL, keytypeSegment, MemorySegment.NULL, keyBuffer, (long) keyBytes.length);
 
-      if (pkey == null || pkey.address() == 0) {
+      if (pkey.equals(MemorySegment.NULL)) {
          throw new IllegalStateException("Failed to load raw private key for " + keytype);
       }
 
@@ -1436,7 +1436,7 @@ public class OpenSSLCrypto {
    public static byte[] deriveSharedSecret(MemorySegment privateKey, MemorySegment publicKey, Arena arena) throws Throwable {
       // Create context from private key
       MemorySegment ctx = EVP_PKEY_CTX_new_from_pkey(MemorySegment.NULL, privateKey, MemorySegment.NULL);
-      if (ctx == null || ctx.address() == 0) {
+      if (ctx.equals(MemorySegment.NULL)) {
          throw new IllegalStateException("Failed to create EVP_PKEY_CTX for key agreement");
       }
 
@@ -1528,7 +1528,7 @@ public class OpenSSLCrypto {
       }
 
       MemorySegment bn = bnPtr.get(ValueLayout.ADDRESS, 0);
-      if (bn.address() == 0) {
+      if (bn.equals(MemorySegment.NULL)) {
          throw new IllegalStateException("BIGNUM is null for: " + paramName);
       }
 
@@ -1656,15 +1656,15 @@ public class OpenSSLCrypto {
          return switch (type.toUpperCase()) {
             case "MD", "DIGEST" -> {
                MemorySegment md = getDigestHandle(name, arena);
-               yield md != null && md.address() != 0;
+               yield !md.equals(MemorySegment.NULL);
             }
             case "CIPHER" -> {
                MemorySegment cipher = EVP_get_cipherbyname(name, arena);
-               yield cipher != null && cipher.address() != 0;
+               yield !cipher.equals(MemorySegment.NULL);
             }
             case "MAC" -> {
                MemorySegment mac = EVP_MAC_fetch(MemorySegment.NULL, name, MemorySegment.NULL, arena);
-               if (mac != null && mac.address() != 0) {
+               if (!mac.equals(MemorySegment.NULL)) {
                   EVP_MAC_free(mac);
                   yield true;
                }
@@ -1672,7 +1672,7 @@ public class OpenSSLCrypto {
             }
             case "KDF" -> {
                MemorySegment kdf = EVP_KDF_fetch(MemorySegment.NULL, name, MemorySegment.NULL, arena);
-               if (kdf != null && kdf.address() != 0) {
+               if (!kdf.equals(MemorySegment.NULL)) {
                   EVP_KDF_free(kdf);
                   yield true;
                }
@@ -1684,7 +1684,7 @@ public class OpenSSLCrypto {
                   yield false;
                }
                MemorySegment keymgmt = EVP_KEYMGMT_fetch(MemorySegment.NULL, name, MemorySegment.NULL, arena);
-               if (keymgmt != null && keymgmt.address() != 0) {
+               if (!keymgmt.equals(MemorySegment.NULL)) {
                   EVP_KEYMGMT_free(keymgmt);
                   yield true;
                }
@@ -1751,7 +1751,7 @@ public class OpenSSLCrypto {
    }
 
    public static void EVP_KEYMGMT_free(MemorySegment keymgmt) throws Throwable {
-      if (EVP_KEYMGMT_free != null && keymgmt != null && keymgmt.address() != 0) {
+      if (EVP_KEYMGMT_free != null && !keymgmt.equals(MemorySegment.NULL)) {
          EVP_KEYMGMT_free.invokeExact(keymgmt);
       }
    }

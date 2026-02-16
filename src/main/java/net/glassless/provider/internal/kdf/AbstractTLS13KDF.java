@@ -71,13 +71,13 @@ public abstract class AbstractTLS13KDF extends KDFSpi {
 
    private byte[] deriveTLS13KDF(TLS13KDFParameterSpec params, Arena arena) throws Throwable {
       MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "TLS13-KDF", MemorySegment.NULL, arena);
-      if (kdf == null || kdf.address() == 0) {
+      if (kdf.equals(MemorySegment.NULL)) {
          throw new ProviderException("Failed to fetch TLS13-KDF");
       }
 
       try {
          MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-         if (ctx == null || ctx.address() == 0) {
+         if (ctx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create TLS13-KDF context");
          }
 

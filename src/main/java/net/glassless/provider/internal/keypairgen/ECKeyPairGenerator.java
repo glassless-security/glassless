@@ -116,7 +116,7 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
       try (Arena arena = Arena.ofConfined()) {
          // Create EC key generation context
          MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "EC", MemorySegment.NULL, arena);
-         if (ctx == null || ctx.address() == 0) {
+         if (ctx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create EVP_PKEY_CTX for EC");
          }
 
@@ -141,7 +141,7 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
             }
 
             MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                throw new ProviderException("Generated key is null");
             }
 

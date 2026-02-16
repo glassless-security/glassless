@@ -126,14 +126,14 @@ public class SLHDSASignature extends SignatureSpi {
         try (Arena arena = Arena.ofConfined()) {
             // Load the private key
             MemorySegment pkey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                 throw new SignatureException("Failed to load private key");
             }
 
             try {
                 // Create message digest context for signing
                 MemorySegment mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-                if (mdCtx == null || mdCtx.address() == 0) {
+                if (mdCtx.equals(MemorySegment.NULL)) {
                     throw new SignatureException("Failed to create EVP_MD_CTX");
                 }
 
@@ -205,14 +205,14 @@ public class SLHDSASignature extends SignatureSpi {
         try (Arena arena = Arena.ofConfined()) {
             // Load the public key
             MemorySegment pkey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                 throw new SignatureException("Failed to load public key");
             }
 
             try {
                 // Create message digest context for verification
                 MemorySegment mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-                if (mdCtx == null || mdCtx.address() == 0) {
+                if (mdCtx.equals(MemorySegment.NULL)) {
                     throw new SignatureException("Failed to create EVP_MD_CTX");
                 }
 

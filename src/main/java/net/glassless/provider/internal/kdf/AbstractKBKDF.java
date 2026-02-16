@@ -68,13 +68,13 @@ public abstract class AbstractKBKDF extends KDFSpi {
 
    private byte[] deriveKBKDF(KBKDFParameterSpec params, Arena arena) throws Throwable {
       MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "KBKDF", MemorySegment.NULL, arena);
-      if (kdf == null || kdf.address() == 0) {
+      if (kdf.equals(MemorySegment.NULL)) {
          throw new ProviderException("Failed to fetch KBKDF");
       }
 
       try {
          MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-         if (ctx == null || ctx.address() == 0) {
+         if (ctx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create KBKDF context");
          }
 

@@ -84,7 +84,7 @@ public class MLKEMKeyFactory extends KeyFactorySpi {
         try (Arena arena = Arena.ofConfined()) {
             // Load the key with OpenSSL to validate
             MemorySegment pkey = OpenSSLCrypto.loadPublicKey(encoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeySpecException("Failed to parse ML-KEM public key");
             }
 
@@ -105,7 +105,7 @@ public class MLKEMKeyFactory extends KeyFactorySpi {
         try (Arena arena = Arena.ofConfined()) {
             // Load the key with OpenSSL to validate
             MemorySegment pkey = OpenSSLCrypto.loadPrivateKey(0, encoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            if (pkey.equals(MemorySegment.NULL)) {
                 throw new InvalidKeySpecException("Failed to parse ML-KEM private key");
             }
 

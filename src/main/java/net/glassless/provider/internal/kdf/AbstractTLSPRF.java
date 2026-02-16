@@ -66,13 +66,13 @@ public abstract class AbstractTLSPRF extends KDFSpi {
 
    private byte[] deriveTLSPRF(TLSPRFParameterSpec params, Arena arena) throws Throwable {
       MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "TLS1-PRF", MemorySegment.NULL, arena);
-      if (kdf == null || kdf.address() == 0) {
+      if (kdf.equals(MemorySegment.NULL)) {
          throw new ProviderException("Failed to fetch TLS1-PRF");
       }
 
       try {
          MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-         if (ctx == null || ctx.address() == 0) {
+         if (ctx.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to create TLS1-PRF context");
          }
 
