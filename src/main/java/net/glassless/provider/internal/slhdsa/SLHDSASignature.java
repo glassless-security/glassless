@@ -1,9 +1,6 @@
 package net.glassless.provider.internal.slhdsa;
 
 import java.io.ByteArrayOutputStream;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.PrivateKey;
@@ -123,63 +120,76 @@ public class SLHDSASignature extends SignatureSpi {
         byte[] data = dataBuffer.toByteArray();
         dataBuffer.reset();
 
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Load the private key
-            MemorySegment pkey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            int pkey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded);
+            if (pkey == 0) {
                 throw new SignatureException("Failed to load private key");
             }
 
             try {
                 // Create message digest context for signing
-                MemorySegment mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-                if (mdCtx == null || mdCtx.address() == 0) {
+                int mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
+                if (mdCtx == 0) {
                     throw new SignatureException("Failed to create EVP_MD_CTX");
                 }
 
                 try {
                     // Initialize signing - SLH-DSA uses NULL for digest (built into algorithm)
-                    int result = OpenSSLCrypto.EVP_DigestSignInit(mdCtx, MemorySegment.NULL,
-                        MemorySegment.NULL, MemorySegment.NULL, pkey);
+                    int result = OpenSSLCrypto.EVP_DigestSignInit(mdCtx, 0,
+                        0, 0, pkey);
                     if (result != 1) {
                         throw new SignatureException("EVP_DigestSignInit failed");
                     }
 
                     // Get required signature length
-                    MemorySegment sigLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
+                    int sigLenPtr = OpenSSLCrypto.malloc(4);
+                    try {
+                        OpenSSLCrypto.memory().writeI32(sigLenPtr, 0);
 
-                    // Prepare data segment
-                    MemorySegment dataSegment;
-                    if (data.length > 0) {
-                        dataSegment = arena.allocate(ValueLayout.JAVA_BYTE, data.length);
-                        dataSegment.asByteBuffer().put(data);
-                    } else {
-                        dataSegment = MemorySegment.NULL;
+                        // Prepare data
+                        int dataPtr;
+                        if (data.length > 0) {
+                            dataPtr = OpenSSLCrypto.malloc(data.length);
+                            OpenSSLCrypto.memory().write(dataPtr, data);
+                        } else {
+                            dataPtr = 0;
+                        }
+
+                        try {
+                            // Get required signature length
+                            result = OpenSSLCrypto.EVP_DigestSign(mdCtx, 0, sigLenPtr,
+                                dataPtr, data.length);
+                            if (result != 1) {
+                                throw new SignatureException("EVP_DigestSign (get length) failed");
+                            }
+
+                            int sigLen = OpenSSLCrypto.memory().readInt(sigLenPtr);
+                            int sigBuffer = OpenSSLCrypto.malloc(sigLen);
+                            try {
+                                // Perform the actual signing
+                                result = OpenSSLCrypto.EVP_DigestSign(mdCtx, sigBuffer, sigLenPtr,
+                                    dataPtr, data.length);
+                                if (result != 1) {
+                                    throw new SignatureException("EVP_DigestSign failed");
+                                }
+
+                                // Get actual signature length and extract
+                                int actualLen = OpenSSLCrypto.memory().readInt(sigLenPtr);
+                                byte[] signature = OpenSSLCrypto.memory().readBytes(sigBuffer, actualLen);
+
+                                return signature;
+                            } finally {
+                                OpenSSLCrypto.free(sigBuffer);
+                            }
+                        } finally {
+                            if (dataPtr != 0) {
+                                OpenSSLCrypto.free(dataPtr);
+                            }
+                        }
+                    } finally {
+                        OpenSSLCrypto.free(sigLenPtr);
                     }
-
-                    // Get required signature length
-                    result = OpenSSLCrypto.EVP_DigestSign(mdCtx, MemorySegment.NULL, sigLenPtr,
-                        dataSegment, data.length);
-                    if (result != 1) {
-                        throw new SignatureException("EVP_DigestSign (get length) failed");
-                    }
-
-                    long sigLen = sigLenPtr.get(ValueLayout.JAVA_LONG, 0);
-                    MemorySegment sigBuffer = arena.allocate(ValueLayout.JAVA_BYTE, sigLen);
-
-                    // Perform the actual signing
-                    result = OpenSSLCrypto.EVP_DigestSign(mdCtx, sigBuffer, sigLenPtr,
-                        dataSegment, data.length);
-                    if (result != 1) {
-                        throw new SignatureException("EVP_DigestSign failed");
-                    }
-
-                    // Get actual signature length and extract
-                    long actualLen = sigLenPtr.get(ValueLayout.JAVA_LONG, 0);
-                    byte[] signature = new byte[(int) actualLen];
-                    sigBuffer.asByteBuffer().get(signature);
-
-                    return signature;
                 } finally {
                     OpenSSLCrypto.EVP_MD_CTX_free(mdCtx);
                 }
@@ -202,46 +212,56 @@ public class SLHDSASignature extends SignatureSpi {
         byte[] data = dataBuffer.toByteArray();
         dataBuffer.reset();
 
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Load the public key
-            MemorySegment pkey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            int pkey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded);
+            if (pkey == 0) {
                 throw new SignatureException("Failed to load public key");
             }
 
             try {
                 // Create message digest context for verification
-                MemorySegment mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-                if (mdCtx == null || mdCtx.address() == 0) {
+                int mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
+                if (mdCtx == 0) {
                     throw new SignatureException("Failed to create EVP_MD_CTX");
                 }
 
                 try {
                     // Initialize verification - SLH-DSA uses NULL for digest
-                    int result = OpenSSLCrypto.EVP_DigestVerifyInit(mdCtx, MemorySegment.NULL,
-                        MemorySegment.NULL, MemorySegment.NULL, pkey);
+                    int result = OpenSSLCrypto.EVP_DigestVerifyInit(mdCtx, 0,
+                        0, 0, pkey);
                     if (result != 1) {
                         throw new SignatureException("EVP_DigestVerifyInit failed");
                     }
 
-                    // Prepare signature segment
-                    MemorySegment sigSegment = arena.allocate(ValueLayout.JAVA_BYTE, sigBytes.length);
-                    sigSegment.asByteBuffer().put(sigBytes);
+                    // Prepare signature
+                    int sigPtr = OpenSSLCrypto.malloc(sigBytes.length);
+                    try {
+                        OpenSSLCrypto.memory().write(sigPtr, sigBytes);
 
-                    // Prepare data segment
-                    MemorySegment dataSegment;
-                    if (data.length > 0) {
-                        dataSegment = arena.allocate(ValueLayout.JAVA_BYTE, data.length);
-                        dataSegment.asByteBuffer().put(data);
-                    } else {
-                        dataSegment = MemorySegment.NULL;
+                        // Prepare data
+                        int dataPtr;
+                        if (data.length > 0) {
+                            dataPtr = OpenSSLCrypto.malloc(data.length);
+                            OpenSSLCrypto.memory().write(dataPtr, data);
+                        } else {
+                            dataPtr = 0;
+                        }
+
+                        try {
+                            // Single-shot verification
+                            result = OpenSSLCrypto.EVP_DigestVerify(mdCtx, sigPtr, sigBytes.length,
+                                dataPtr, data.length);
+
+                            return result == 1;
+                        } finally {
+                            if (dataPtr != 0) {
+                                OpenSSLCrypto.free(dataPtr);
+                            }
+                        }
+                    } finally {
+                        OpenSSLCrypto.free(sigPtr);
                     }
-
-                    // Single-shot verification
-                    result = OpenSSLCrypto.EVP_DigestVerify(mdCtx, sigSegment, sigBytes.length,
-                        dataSegment, data.length);
-
-                    return result == 1;
                 } finally {
                     OpenSSLCrypto.EVP_MD_CTX_free(mdCtx);
                 }

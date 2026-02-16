@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.kdf;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
@@ -60,8 +57,8 @@ public abstract class AbstractTLS13KDF extends KDFSpi {
             "TLS13KDFParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
 
-      try (Arena arena = Arena.ofConfined()) {
-         return deriveTLS13KDF(tlsParams, arena);
+      try {
+         return deriveTLS13KDF(tlsParams);
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {
@@ -69,39 +66,37 @@ public abstract class AbstractTLS13KDF extends KDFSpi {
       }
    }
 
-   private byte[] deriveTLS13KDF(TLS13KDFParameterSpec params, Arena arena) throws Throwable {
-      MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "TLS13-KDF", MemorySegment.NULL, arena);
-      if (kdf == null || kdf.address() == 0) {
+   private byte[] deriveTLS13KDF(TLS13KDFParameterSpec params) throws Throwable {
+      int kdf = OpenSSLCrypto.EVP_KDF_fetch(0, "TLS13-KDF", 0);
+      if (kdf == 0) {
          throw new ProviderException("Failed to fetch TLS13-KDF");
       }
 
       try {
-         MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-         if (ctx == null || ctx.address() == 0) {
+         int ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
+         if (ctx == 0) {
             throw new ProviderException("Failed to create TLS13-KDF context");
          }
 
          try {
             int length = params.getKeyLength();
-            MemorySegment osslParams = OpenSSLCrypto.createTLS13KDFParams(
+            int osslParams = OpenSSLCrypto.createTLS13KDFParams(
                digestName,
                params.getModeString(),
                params.getKey(),
                params.getSalt(),
                params.getPrefix(),
                params.getLabel(),
-               params.getData(),
-               arena);
+               params.getData());
 
-            MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, length);
+            int output = OpenSSLCrypto.malloc(length);
 
             int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, length, osslParams);
             if (result != 1) {
                throw new ProviderException("TLS 1.3 KDF derivation failed");
             }
 
-            byte[] derived = new byte[length];
-            output.asByteBuffer().get(derived);
+            byte[] derived = OpenSSLCrypto.memory().readBytes(output, length);
             return derived;
          } finally {
             OpenSSLCrypto.EVP_KDF_CTX_free(ctx);

@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.keypairgen;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 import java.security.KeyFactory;
@@ -65,14 +62,14 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
     @Override
     public KeyPair generateKeyPair() {
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Step 1: Generate DSA parameters
-            MemorySegment paramCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "DSA", MemorySegment.NULL, arena);
-            if (paramCtx == null || paramCtx.address() == 0) {
+            int paramCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(0, "DSA", 0);
+            if (paramCtx == 0) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for DSA parameter generation");
             }
 
-            MemorySegment dsaParams;
+            int dsaParams;
             try {
                 // Initialize for parameter generation
                 int result = OpenSSLCrypto.EVP_PKEY_paramgen_init(paramCtx);
@@ -87,14 +84,17 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
                 }
 
                 // Generate parameters
-                MemorySegment paramsPtr = arena.allocate(ValueLayout.ADDRESS);
+                int paramsPtr = OpenSSLCrypto.malloc(4);
+                OpenSSLCrypto.memory().writeI32(paramsPtr, 0);
                 result = OpenSSLCrypto.EVP_PKEY_paramgen(paramCtx, paramsPtr);
                 if (result <= 0) {
+                    OpenSSLCrypto.free(paramsPtr);
                     throw new ProviderException("EVP_PKEY_paramgen failed");
                 }
 
-                dsaParams = paramsPtr.get(ValueLayout.ADDRESS, 0);
-                if (dsaParams == null || dsaParams.address() == 0) {
+                dsaParams = OpenSSLCrypto.memory().readInt(paramsPtr);
+                OpenSSLCrypto.free(paramsPtr);
+                if (dsaParams == 0) {
                     throw new ProviderException("Generated DSA parameters are null");
                 }
             } finally {
@@ -103,8 +103,8 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
             // Step 2: Generate the key pair from parameters
             try {
-                MemorySegment keyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(MemorySegment.NULL, dsaParams, MemorySegment.NULL);
-                if (keyCtx == null || keyCtx.address() == 0) {
+                int keyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(0, dsaParams, 0);
+                if (keyCtx == 0) {
                     throw new ProviderException("Failed to create EVP_PKEY_CTX for DSA key generation");
                 }
 
@@ -116,24 +116,27 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
                     }
 
                     // Generate the key pair
-                    MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+                    int pkeyPtr = OpenSSLCrypto.malloc(4);
+                    OpenSSLCrypto.memory().writeI32(pkeyPtr, 0);
                     result = OpenSSLCrypto.EVP_PKEY_keygen(keyCtx, pkeyPtr);
                     if (result <= 0) {
+                        OpenSSLCrypto.free(pkeyPtr);
                         throw new ProviderException("EVP_PKEY_keygen failed");
                     }
 
-                    MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                    if (pkey == null || pkey.address() == 0) {
+                    int pkey = OpenSSLCrypto.memory().readInt(pkeyPtr);
+                    OpenSSLCrypto.free(pkeyPtr);
+                    if (pkey == 0) {
                         throw new ProviderException("Generated key is null");
                     }
 
                     try {
                         // Export private key to DER format (PKCS#8)
-                        byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey, arena);
+                        byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey);
                         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 
                         // Export public key to DER format (SubjectPublicKeyInfo / X.509)
-                        byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey, arena);
+                        byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey);
                         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
 
                         // Use standard KeyFactory to create the key objects

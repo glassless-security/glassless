@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.kdf;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
@@ -55,8 +52,8 @@ public abstract class AbstractX963KDF extends KDFSpi {
             "X963KDFParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
 
-      try (Arena arena = Arena.ofConfined()) {
-         return deriveX963(x963Params, arena);
+      try {
+         return deriveX963(x963Params);
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {
@@ -64,15 +61,15 @@ public abstract class AbstractX963KDF extends KDFSpi {
       }
    }
 
-   private byte[] deriveX963(X963KDFParameterSpec params, Arena arena) throws Throwable {
-      MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "X963KDF", MemorySegment.NULL, arena);
-      if (kdf == null || kdf.address() == 0) {
+   private byte[] deriveX963(X963KDFParameterSpec params) throws Throwable {
+      int kdf = OpenSSLCrypto.EVP_KDF_fetch(0, "X963KDF", 0);
+      if (kdf == 0) {
          throw new ProviderException("Failed to fetch X963KDF");
       }
 
       try {
-         MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-         if (ctx == null || ctx.address() == 0) {
+         int ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
+         if (ctx == 0) {
             throw new ProviderException("Failed to create X963KDF context");
          }
 
@@ -81,16 +78,15 @@ public abstract class AbstractX963KDF extends KDFSpi {
             byte[] info = params.getSharedInfo();
             int length = params.getKeyLength();
 
-            MemorySegment osslParams = OpenSSLCrypto.createX963KDFParams(digestName, secret, info, arena);
-            MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, length);
+            int osslParams = OpenSSLCrypto.createX963KDFParams(digestName, secret, info);
+            int output = OpenSSLCrypto.malloc(length);
 
             int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, length, osslParams);
             if (result != 1) {
                throw new ProviderException("X963KDF derivation failed");
             }
 
-            byte[] derived = new byte[length];
-            output.asByteBuffer().get(derived);
+            byte[] derived = OpenSSLCrypto.memory().readBytes(output, length);
             return derived;
          } finally {
             OpenSSLCrypto.EVP_KDF_CTX_free(ctx);

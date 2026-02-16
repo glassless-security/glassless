@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.ProviderException;
@@ -55,33 +52,33 @@ public abstract class AbstractArgon2SecretKeyFactory extends SecretKeyFactorySpi
       byte[] ad = argon2Spec.getAssociatedData();
       byte[] secret = argon2Spec.getSecret();
 
-      try (Arena arena = Arena.ofConfined()) {
-         // Convert password to bytes (UTF-8)
-         byte[] passwordBytes = new String(password).getBytes(StandardCharsets.UTF_8);
+      // Convert password to bytes (UTF-8)
+      byte[] passwordBytes = new String(password).getBytes(StandardCharsets.UTF_8);
+
+      try {
+         // Fetch the Argon2 KDF
+         int kdf = OpenSSLCrypto.EVP_KDF_fetch(0, kdfName, 0);
+         if (kdf == 0) {
+            throw new ProviderException("Failed to fetch " + kdfName + " KDF. Requires OpenSSL 3.2+");
+         }
 
          try {
-            // Fetch the Argon2 KDF
-            MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, kdfName, MemorySegment.NULL, arena);
-            if (kdf == null || kdf.address() == 0) {
-               throw new ProviderException("Failed to fetch " + kdfName + " KDF. Requires OpenSSL 3.2+");
+            // Create KDF context
+            int ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
+            if (ctx == 0) {
+               throw new ProviderException("Failed to create " + kdfName + " context");
             }
 
             try {
-               // Create KDF context
-               MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-               if (ctx == null || ctx.address() == 0) {
-                  throw new ProviderException("Failed to create " + kdfName + " context");
-               }
+               // Create Argon2 parameters
+               int osslParams = OpenSSLCrypto.createArgon2Params(
+                  passwordBytes, salt, iterations, memoryKB, parallelism, ad, secret
+               );
+
+               // Allocate output buffer
+               int output = OpenSSLCrypto.malloc(keyLengthBytes);
 
                try {
-                  // Create Argon2 parameters
-                  MemorySegment osslParams = OpenSSLCrypto.createArgon2Params(
-                     passwordBytes, salt, iterations, memoryKB, parallelism, ad, secret, arena
-                  );
-
-                  // Allocate output buffer
-                  MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, keyLengthBytes);
-
                   // Derive the key
                   int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, keyLengthBytes, osslParams);
                   if (result != 1) {
@@ -89,24 +86,26 @@ public abstract class AbstractArgon2SecretKeyFactory extends SecretKeyFactorySpi
                   }
 
                   // Extract the derived key
-                  byte[] derivedKey = new byte[keyLengthBytes];
-                  output.asByteBuffer().get(derivedKey);
+                  byte[] derivedKey = OpenSSLCrypto.memory().readBytes(output, keyLengthBytes);
 
                   return new SecretKeySpec(derivedKey, algorithm);
                } finally {
-                  OpenSSLCrypto.EVP_KDF_CTX_free(ctx);
+                  OpenSSLCrypto.free(output);
+                  OpenSSLCrypto.free(osslParams);
                }
             } finally {
-               OpenSSLCrypto.EVP_KDF_free(kdf);
+               OpenSSLCrypto.EVP_KDF_CTX_free(ctx);
             }
          } finally {
-            // Clear sensitive data
-            Arrays.fill(passwordBytes, (byte) 0);
+            OpenSSLCrypto.EVP_KDF_free(kdf);
          }
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {
          throw new ProviderException("Error deriving key with " + kdfName, e);
+      } finally {
+         // Clear sensitive data
+         Arrays.fill(passwordBytes, (byte) 0);
       }
    }
 

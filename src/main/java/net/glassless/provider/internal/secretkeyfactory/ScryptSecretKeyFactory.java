@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.ProviderException;
@@ -43,33 +40,33 @@ public class ScryptSecretKeyFactory extends SecretKeyFactorySpi {
         int keyLengthBits = scryptSpec.getKeyLength();
         int keyLengthBytes = keyLengthBits / 8;
 
-        try (Arena arena = Arena.ofConfined()) {
-            // Convert password to bytes (UTF-8)
-            byte[] passwordBytes = new String(password).getBytes(StandardCharsets.UTF_8);
+        // Convert password to bytes (UTF-8)
+        byte[] passwordBytes = new String(password).getBytes(StandardCharsets.UTF_8);
+
+        try {
+            // Fetch the SCRYPT KDF
+            int kdf = OpenSSLCrypto.EVP_KDF_fetch(0, "SCRYPT", 0);
+            if (kdf == 0) {
+                throw new ProviderException("Failed to fetch SCRYPT KDF");
+            }
 
             try {
-                // Fetch the SCRYPT KDF
-                MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "SCRYPT", MemorySegment.NULL, arena);
-                if (kdf == null || kdf.address() == 0) {
-                    throw new ProviderException("Failed to fetch SCRYPT KDF");
+                // Create KDF context
+                int ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
+                if (ctx == 0) {
+                    throw new ProviderException("Failed to create SCRYPT context");
                 }
 
                 try {
-                    // Create KDF context
-                    MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-                    if (ctx == null || ctx.address() == 0) {
-                        throw new ProviderException("Failed to create SCRYPT context");
-                    }
+                    // Create SCRYPT parameters
+                    int osslParams = OpenSSLCrypto.createScryptParams(
+                        passwordBytes, salt, n, r, p
+                    );
+
+                    // Allocate output buffer
+                    int output = OpenSSLCrypto.malloc(keyLengthBytes);
 
                     try {
-                        // Create SCRYPT parameters
-                        MemorySegment osslParams = OpenSSLCrypto.createScryptParams(
-                            passwordBytes, salt, n, r, p, arena
-                        );
-
-                        // Allocate output buffer
-                        MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, keyLengthBytes);
-
                         // Derive the key
                         int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, keyLengthBytes, osslParams);
                         if (result != 1) {
@@ -77,24 +74,26 @@ public class ScryptSecretKeyFactory extends SecretKeyFactorySpi {
                         }
 
                         // Extract the derived key
-                        byte[] derivedKey = new byte[keyLengthBytes];
-                        output.asByteBuffer().get(derivedKey);
+                        byte[] derivedKey = OpenSSLCrypto.memory().readBytes(output, keyLengthBytes);
 
                         return new SecretKeySpec(derivedKey, ALGORITHM);
                     } finally {
-                        OpenSSLCrypto.EVP_KDF_CTX_free(ctx);
+                        OpenSSLCrypto.free(output);
+                        OpenSSLCrypto.free(osslParams);
                     }
                 } finally {
-                    OpenSSLCrypto.EVP_KDF_free(kdf);
+                    OpenSSLCrypto.EVP_KDF_CTX_free(ctx);
                 }
             } finally {
-                // Clear sensitive data
-                Arrays.fill(passwordBytes, (byte) 0);
+                OpenSSLCrypto.EVP_KDF_free(kdf);
             }
         } catch (ProviderException e) {
             throw e;
         } catch (Throwable e) {
             throw new ProviderException("Error deriving key with SCRYPT", e);
+        } finally {
+            // Clear sensitive data
+            Arrays.fill(passwordBytes, (byte) 0);
         }
     }
 

@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.kdf;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
@@ -55,8 +52,8 @@ public abstract class AbstractTLSPRF extends KDFSpi {
             "TLSPRFParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
 
-      try (Arena arena = Arena.ofConfined()) {
-         return deriveTLSPRF(tlsParams, arena);
+      try {
+         return deriveTLSPRF(tlsParams);
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {
@@ -64,15 +61,15 @@ public abstract class AbstractTLSPRF extends KDFSpi {
       }
    }
 
-   private byte[] deriveTLSPRF(TLSPRFParameterSpec params, Arena arena) throws Throwable {
-      MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "TLS1-PRF", MemorySegment.NULL, arena);
-      if (kdf == null || kdf.address() == 0) {
+   private byte[] deriveTLSPRF(TLSPRFParameterSpec params) throws Throwable {
+      int kdf = OpenSSLCrypto.EVP_KDF_fetch(0, "TLS1-PRF", 0);
+      if (kdf == 0) {
          throw new ProviderException("Failed to fetch TLS1-PRF");
       }
 
       try {
-         MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-         if (ctx == null || ctx.address() == 0) {
+         int ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
+         if (ctx == 0) {
             throw new ProviderException("Failed to create TLS1-PRF context");
          }
 
@@ -81,17 +78,16 @@ public abstract class AbstractTLSPRF extends KDFSpi {
             byte[] labelAndSeed = params.getLabelAndSeed();
             int length = params.getKeyLength();
 
-            MemorySegment osslParams = OpenSSLCrypto.createTLSPRFParams(
-               digestName, secret, labelAndSeed, arena);
-            MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, length);
+            int osslParams = OpenSSLCrypto.createTLSPRFParams(
+               digestName, secret, labelAndSeed);
+            int output = OpenSSLCrypto.malloc(length);
 
             int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, length, osslParams);
             if (result != 1) {
                throw new ProviderException("TLS-PRF derivation failed");
             }
 
-            byte[] derived = new byte[length];
-            output.asByteBuffer().get(derived);
+            byte[] derived = OpenSSLCrypto.memory().readBytes(output, length);
             return derived;
          } finally {
             OpenSSLCrypto.EVP_KDF_CTX_free(ctx);

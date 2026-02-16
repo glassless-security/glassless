@@ -1,7 +1,5 @@
 package net.glassless.provider.internal.slhdsa;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactorySpi;
@@ -81,9 +79,9 @@ public class SLHDSAKeyFactory extends KeyFactorySpi {
     }
 
     private PublicKey generatePublicFromEncoded(byte[] encoded) throws InvalidKeySpecException {
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment pkey = OpenSSLCrypto.loadPublicKey(encoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+        try {
+            int pkey = OpenSSLCrypto.loadPublicKey(encoded);
+            if (pkey == 0) {
                 throw new InvalidKeySpecException("Failed to parse SLH-DSA public key");
             }
 
@@ -101,9 +99,9 @@ public class SLHDSAKeyFactory extends KeyFactorySpi {
     }
 
     private PrivateKey generatePrivateFromEncoded(byte[] encoded) throws InvalidKeySpecException {
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment pkey = OpenSSLCrypto.loadPrivateKey(0, encoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+        try {
+            int pkey = OpenSSLCrypto.loadPrivateKey(0, encoded);
+            if (pkey == 0) {
                 throw new InvalidKeySpecException("Failed to parse SLH-DSA private key");
             }
 

@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.mac;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -22,17 +19,15 @@ public abstract class AbstractMac extends MacSpi {
 
     private final String macAlgorithm;
     private final int macLength;
-    private final Arena arena;
 
-    private MemorySegment evpMac;
-    private MemorySegment evpMacCtx;
+    private int evpMac;
+    private int evpMacCtx;
     private byte[] keyBytes;
     private boolean initialized = false;
 
     protected AbstractMac(String macAlgorithm, int macLength) {
         this.macAlgorithm = macAlgorithm;
         this.macLength = macLength;
-        this.arena = Arena.ofShared();
     }
 
     @Override
@@ -43,11 +38,13 @@ public abstract class AbstractMac extends MacSpi {
     /**
      * Creates the OSSL_PARAM array for MAC initialization.
      * Subclasses can override to add algorithm-specific parameters.
+     * Returns a wasm pointer to the OSSL_PARAM array.
      */
-    protected MemorySegment createParams(Arena arena) {
+    protected int createParams() {
         // Default: no additional parameters (end marker only)
-        MemorySegment params = arena.allocate(OpenSSLCrypto.OSSL_PARAM_SIZE);
-        params.set(ValueLayout.ADDRESS, 0, MemorySegment.NULL);
+        int paramSize = OpenSSLCrypto.glasslessSizeofOSSLPARAM();
+        int params = OpenSSLCrypto.malloc(paramSize);
+        OpenSSLCrypto.memory().writeI32(params, 0);
         return params;
     }
 
@@ -69,26 +66,26 @@ public abstract class AbstractMac extends MacSpi {
 
         try {
             // Fetch the MAC implementation
-            evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, macAlgorithm, MemorySegment.NULL, arena);
-            if (evpMac == null || evpMac.address() == 0) {
+            evpMac = OpenSSLCrypto.EVP_MAC_fetch(0, macAlgorithm, 0);
+            if (evpMac == 0) {
                 throw new ProviderException("Failed to fetch MAC: " + macAlgorithm);
             }
 
             // Create MAC context
             evpMacCtx = OpenSSLCrypto.EVP_MAC_CTX_new(evpMac);
-            if (evpMacCtx == null || evpMacCtx.address() == 0) {
+            if (evpMacCtx == 0) {
                 throw new ProviderException("Failed to create MAC context");
             }
 
             // Create params for the MAC
-            MemorySegment paramsSegment = createParams(arena);
+            int paramsPtr = createParams();
 
             // Allocate key segment
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-            keySegment.asByteBuffer().put(keyBytes);
+            int keyPtr = OpenSSLCrypto.malloc(keyBytes.length);
+            OpenSSLCrypto.memory().write(keyPtr, keyBytes);
 
             // Initialize the MAC
-            int result = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
+            int result = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keyPtr, keyBytes.length, paramsPtr);
             if (result != 1) {
                 throw new InvalidKeyException("Failed to initialize MAC: " + macAlgorithm);
             }
@@ -117,16 +114,20 @@ public abstract class AbstractMac extends MacSpi {
             return;
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
-            inputSegment.asByteBuffer().put(input, offset, len);
+        int inputPtr = OpenSSLCrypto.malloc(len);
+        try {
+            OpenSSLCrypto.memory().write(inputPtr, input, offset, len);
 
-            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputSegment, len);
+            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputPtr, len);
             if (result != 1) {
                 throw new ProviderException("MAC update failed");
             }
+        } catch (ProviderException e) {
+            throw e;
         } catch (Throwable e) {
             throw new ProviderException("Error updating MAC", e);
+        } finally {
+            OpenSSLCrypto.free(inputPtr);
         }
     }
 
@@ -136,25 +137,24 @@ public abstract class AbstractMac extends MacSpi {
             throw new IllegalStateException("MAC not initialized");
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
-            // Allocate output buffer
-            MemorySegment outSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, macLength);
-            MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_LONG);
-
-            int result = OpenSSLCrypto.EVP_MAC_final(evpMacCtx, outSegment, outLenSegment, macLength);
+        int outPtr = OpenSSLCrypto.malloc(macLength);
+        int outLenPtr = OpenSSLCrypto.malloc(4);
+        try {
+            int result = OpenSSLCrypto.EVP_MAC_final(evpMacCtx, outPtr, outLenPtr, macLength);
             if (result != 1) {
                 throw new ProviderException("MAC final failed");
             }
 
-            long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-            byte[] mac = new byte[(int) outLen];
-            outSegment.asByteBuffer().get(mac);
+            int outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+            byte[] mac = OpenSSLCrypto.memory().readBytes(outPtr, outLen);
 
             return mac;
 
         } catch (Throwable e) {
             throw new ProviderException("Error finalizing MAC", e);
         } finally {
+            OpenSSLCrypto.free(outPtr);
+            OpenSSLCrypto.free(outLenPtr);
             // Reset for potential reuse
             engineReset();
         }
@@ -162,14 +162,14 @@ public abstract class AbstractMac extends MacSpi {
 
     @Override
     protected void engineReset() {
-        if (evpMacCtx != null && keyBytes != null) {
+        if (evpMacCtx != 0 && keyBytes != null) {
             try {
                 // Re-initialize the context for reuse
-                MemorySegment paramsSegment = createParams(arena);
-                MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-                keySegment.asByteBuffer().put(keyBytes);
+                int paramsPtr = createParams();
+                int keyPtr = OpenSSLCrypto.malloc(keyBytes.length);
+                OpenSSLCrypto.memory().write(keyPtr, keyBytes);
 
-                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
+                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keyPtr, keyBytes.length, paramsPtr);
             } catch (Throwable e) {
                 // Ignore reset errors
             }

@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.hybridkem;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
@@ -97,69 +94,80 @@ public class HybridKEM implements KEMSpi {
             throw new IllegalArgumentException("Invalid range: from=" + from + ", to=" + to);
          }
 
-         try (Arena arena = Arena.ofConfined()) {
+         try {
             // Load the public key using raw key format
-            MemorySegment pkey = OpenSSLCrypto.loadRawPublicKey(opensslName, rawPublicKey, arena);
-            if (pkey == null || pkey.address() == 0) {
+            int pkey = OpenSSLCrypto.loadRawPublicKey(opensslName, rawPublicKey);
+            if (pkey == 0) {
                throw new ProviderException("Failed to load public key");
             }
 
             try {
                // Create context for encapsulation
-               MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
-                  MemorySegment.NULL, pkey, MemorySegment.NULL);
-               if (ctx == null || ctx.address() == 0) {
+               int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
+                  0, pkey, 0);
+               if (ctx == 0) {
                   throw new ProviderException("Failed to create EVP_PKEY_CTX");
                }
 
                try {
                   // Initialize for encapsulation
-                  int result = OpenSSLCrypto.EVP_PKEY_encapsulate_init(ctx, MemorySegment.NULL);
+                  int result = OpenSSLCrypto.EVP_PKEY_encapsulate_init(ctx, 0);
                   if (result != 1) {
                      throw new ProviderException("EVP_PKEY_encapsulate_init failed");
                   }
 
                   // Get required sizes
-                  MemorySegment wrappedLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
-                  MemorySegment secretLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
+                  int wrappedLenPtr = OpenSSLCrypto.malloc(4);
+                  int secretLenPtr = OpenSSLCrypto.malloc(4);
+                  try {
+                     OpenSSLCrypto.memory().writeI32(wrappedLenPtr, 0);
+                     OpenSSLCrypto.memory().writeI32(secretLenPtr, 0);
 
-                  result = OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, MemorySegment.NULL, wrappedLenPtr,
-                     MemorySegment.NULL, secretLenPtr);
-                  if (result != 1) {
-                     throw new ProviderException("EVP_PKEY_encapsulate (get size) failed");
+                     result = OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, 0, wrappedLenPtr,
+                        0, secretLenPtr);
+                     if (result != 1) {
+                        throw new ProviderException("EVP_PKEY_encapsulate (get size) failed");
+                     }
+
+                     int wrappedLen = OpenSSLCrypto.memory().readInt(wrappedLenPtr);
+                     int secretLen = OpenSSLCrypto.memory().readInt(secretLenPtr);
+
+                     // Allocate buffers
+                     int wrappedBuffer = OpenSSLCrypto.malloc(wrappedLen);
+                     int secretBuffer = OpenSSLCrypto.malloc(secretLen);
+                     try {
+                        // Perform encapsulation
+                        result = OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, wrappedBuffer, wrappedLenPtr,
+                           secretBuffer, secretLenPtr);
+                        if (result != 1) {
+                           throw new ProviderException("EVP_PKEY_encapsulate failed");
+                        }
+
+                        // Extract results
+                        int actualWrappedLen = OpenSSLCrypto.memory().readInt(wrappedLenPtr);
+                        byte[] ciphertext = OpenSSLCrypto.memory().readBytes(wrappedBuffer, actualWrappedLen);
+
+                        int actualSecretLen = OpenSSLCrypto.memory().readInt(secretLenPtr);
+                        byte[] fullSecret = OpenSSLCrypto.memory().readBytes(secretBuffer, actualSecretLen);
+
+                        // Create secret key from specified range
+                        byte[] keyBytes = new byte[to - from];
+                        System.arraycopy(fullSecret, from, keyBytes, 0, keyBytes.length);
+                        String keyAlgorithm = algorithm != null ? algorithm : "Generic";
+                        SecretKey secretKey = new SecretKeySpec(keyBytes, keyAlgorithm);
+
+                        // Store encapsulation size
+                        encapsulationSize = ciphertext.length;
+
+                        return new KEM.Encapsulated(secretKey, ciphertext, null);
+                     } finally {
+                        OpenSSLCrypto.free(wrappedBuffer);
+                        OpenSSLCrypto.free(secretBuffer);
+                     }
+                  } finally {
+                     OpenSSLCrypto.free(wrappedLenPtr);
+                     OpenSSLCrypto.free(secretLenPtr);
                   }
-
-                  long wrappedLen = wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0);
-                  long secretLen = secretLenPtr.get(ValueLayout.JAVA_LONG, 0);
-
-                  // Allocate buffers
-                  MemorySegment wrappedBuffer = arena.allocate(ValueLayout.JAVA_BYTE, wrappedLen);
-                  MemorySegment secretBuffer = arena.allocate(ValueLayout.JAVA_BYTE, secretLen);
-
-                  // Perform encapsulation
-                  result = OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, wrappedBuffer, wrappedLenPtr,
-                     secretBuffer, secretLenPtr);
-                  if (result != 1) {
-                     throw new ProviderException("EVP_PKEY_encapsulate failed");
-                  }
-
-                  // Extract results
-                  byte[] ciphertext = new byte[(int) wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0)];
-                  wrappedBuffer.asByteBuffer().get(ciphertext);
-
-                  byte[] fullSecret = new byte[(int) secretLenPtr.get(ValueLayout.JAVA_LONG, 0)];
-                  secretBuffer.asByteBuffer().get(fullSecret);
-
-                  // Create secret key from specified range
-                  byte[] keyBytes = new byte[to - from];
-                  System.arraycopy(fullSecret, from, keyBytes, 0, keyBytes.length);
-                  String keyAlgorithm = algorithm != null ? algorithm : "Generic";
-                  SecretKey secretKey = new SecretKeySpec(keyBytes, keyAlgorithm);
-
-                  // Store encapsulation size
-                  encapsulationSize = ciphertext.length;
-
-                  return new KEM.Encapsulated(secretKey, ciphertext, null);
                } finally {
                   OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
                }
@@ -182,20 +190,27 @@ public class HybridKEM implements KEMSpi {
       public int engineEncapsulationSize() {
          if (encapsulationSize < 0) {
             // Calculate by doing a dummy encapsulation to get the size
-            try (Arena arena = Arena.ofConfined()) {
-               MemorySegment pkey = OpenSSLCrypto.loadRawPublicKey(opensslName, rawPublicKey, arena);
-               if (pkey != null && pkey.address() != 0) {
+            try {
+               int pkey = OpenSSLCrypto.loadRawPublicKey(opensslName, rawPublicKey);
+               if (pkey != 0) {
                   try {
-                     MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
-                        MemorySegment.NULL, pkey, MemorySegment.NULL);
-                     if (ctx != null && ctx.address() != 0) {
+                     int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
+                        0, pkey, 0);
+                     if (ctx != 0) {
                         try {
-                           if (OpenSSLCrypto.EVP_PKEY_encapsulate_init(ctx, MemorySegment.NULL) == 1) {
-                              MemorySegment wrappedLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
-                              MemorySegment secretLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
-                              if (OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, MemorySegment.NULL, wrappedLenPtr,
-                                 MemorySegment.NULL, secretLenPtr) == 1) {
-                                 encapsulationSize = (int) wrappedLenPtr.get(ValueLayout.JAVA_LONG, 0);
+                           if (OpenSSLCrypto.EVP_PKEY_encapsulate_init(ctx, 0) == 1) {
+                              int wrappedLenPtr = OpenSSLCrypto.malloc(4);
+                              int secretLenPtr = OpenSSLCrypto.malloc(4);
+                              try {
+                                 OpenSSLCrypto.memory().writeI32(wrappedLenPtr, 0);
+                                 OpenSSLCrypto.memory().writeI32(secretLenPtr, 0);
+                                 if (OpenSSLCrypto.EVP_PKEY_encapsulate(ctx, 0, wrappedLenPtr,
+                                    0, secretLenPtr) == 1) {
+                                    encapsulationSize = OpenSSLCrypto.memory().readInt(wrappedLenPtr);
+                                 }
+                              } finally {
+                                 OpenSSLCrypto.free(wrappedLenPtr);
+                                 OpenSSLCrypto.free(secretLenPtr);
                               }
                            }
                         } finally {
@@ -239,59 +254,71 @@ public class HybridKEM implements KEMSpi {
             throw new IllegalArgumentException("Invalid range: from=" + from + ", to=" + to);
          }
 
-         try (Arena arena = Arena.ofConfined()) {
+         try {
             // Load the private key using raw key format
-            MemorySegment pkey = OpenSSLCrypto.loadRawPrivateKey(opensslName, rawPrivateKey, arena);
-            if (pkey == null || pkey.address() == 0) {
+            int pkey = OpenSSLCrypto.loadRawPrivateKey(opensslName, rawPrivateKey);
+            if (pkey == 0) {
                throw new DecapsulateException("Failed to load private key");
             }
 
             try {
                // Create context for decapsulation
-               MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
-                  MemorySegment.NULL, pkey, MemorySegment.NULL);
-               if (ctx == null || ctx.address() == 0) {
+               int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(
+                  0, pkey, 0);
+               if (ctx == 0) {
                   throw new DecapsulateException("Failed to create EVP_PKEY_CTX");
                }
 
                try {
                   // Initialize for decapsulation
-                  int result = OpenSSLCrypto.EVP_PKEY_decapsulate_init(ctx, MemorySegment.NULL);
+                  int result = OpenSSLCrypto.EVP_PKEY_decapsulate_init(ctx, 0);
                   if (result != 1) {
                      throw new DecapsulateException("EVP_PKEY_decapsulate_init failed");
                   }
 
                   // Prepare encapsulation buffer
-                  MemorySegment wrappedBuffer = arena.allocate(ValueLayout.JAVA_BYTE, encapsulation.length);
-                  wrappedBuffer.asByteBuffer().put(encapsulation);
+                  int wrappedBuffer = OpenSSLCrypto.malloc(encapsulation.length);
+                  try {
+                     OpenSSLCrypto.memory().write(wrappedBuffer, encapsulation);
 
-                  // Get required size
-                  MemorySegment secretLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
-                  result = OpenSSLCrypto.EVP_PKEY_decapsulate(ctx, MemorySegment.NULL, secretLenPtr,
-                     wrappedBuffer, encapsulation.length);
-                  if (result != 1) {
-                     throw new DecapsulateException("EVP_PKEY_decapsulate (get size) failed");
+                     // Get required size
+                     int secretLenPtr = OpenSSLCrypto.malloc(4);
+                     try {
+                        OpenSSLCrypto.memory().writeI32(secretLenPtr, 0);
+                        result = OpenSSLCrypto.EVP_PKEY_decapsulate(ctx, 0, secretLenPtr,
+                           wrappedBuffer, encapsulation.length);
+                        if (result != 1) {
+                           throw new DecapsulateException("EVP_PKEY_decapsulate (get size) failed");
+                        }
+
+                        int secretLen = OpenSSLCrypto.memory().readInt(secretLenPtr);
+                        int secretBuffer = OpenSSLCrypto.malloc(secretLen);
+                        try {
+                           // Perform decapsulation
+                           result = OpenSSLCrypto.EVP_PKEY_decapsulate(ctx, secretBuffer, secretLenPtr,
+                              wrappedBuffer, encapsulation.length);
+                           if (result != 1) {
+                              throw new DecapsulateException("EVP_PKEY_decapsulate failed");
+                           }
+
+                           // Extract result
+                           int actualSecretLen = OpenSSLCrypto.memory().readInt(secretLenPtr);
+                           byte[] fullSecret = OpenSSLCrypto.memory().readBytes(secretBuffer, actualSecretLen);
+
+                           // Create secret key from specified range
+                           byte[] keyBytes = new byte[to - from];
+                           System.arraycopy(fullSecret, from, keyBytes, 0, keyBytes.length);
+                           String keyAlgorithm = algorithm != null ? algorithm : "Generic";
+                           return new SecretKeySpec(keyBytes, keyAlgorithm);
+                        } finally {
+                           OpenSSLCrypto.free(secretBuffer);
+                        }
+                     } finally {
+                        OpenSSLCrypto.free(secretLenPtr);
+                     }
+                  } finally {
+                     OpenSSLCrypto.free(wrappedBuffer);
                   }
-
-                  long secretLen = secretLenPtr.get(ValueLayout.JAVA_LONG, 0);
-                  MemorySegment secretBuffer = arena.allocate(ValueLayout.JAVA_BYTE, secretLen);
-
-                  // Perform decapsulation
-                  result = OpenSSLCrypto.EVP_PKEY_decapsulate(ctx, secretBuffer, secretLenPtr,
-                     wrappedBuffer, encapsulation.length);
-                  if (result != 1) {
-                     throw new DecapsulateException("EVP_PKEY_decapsulate failed");
-                  }
-
-                  // Extract result
-                  byte[] fullSecret = new byte[(int) secretLenPtr.get(ValueLayout.JAVA_LONG, 0)];
-                  secretBuffer.asByteBuffer().get(fullSecret);
-
-                  // Create secret key from specified range
-                  byte[] keyBytes = new byte[to - from];
-                  System.arraycopy(fullSecret, from, keyBytes, 0, keyBytes.length);
-                  String keyAlgorithm = algorithm != null ? algorithm : "Generic";
-                  return new SecretKeySpec(keyBytes, keyAlgorithm);
                } finally {
                   OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
                }

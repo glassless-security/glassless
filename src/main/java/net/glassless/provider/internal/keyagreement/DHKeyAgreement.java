@@ -1,7 +1,5 @@
 package net.glassless.provider.internal.keyagreement;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -75,31 +73,29 @@ public class DHKeyAgreement extends KeyAgreementSpi {
     }
 
     private void deriveSharedSecret() throws Throwable {
-        try (Arena arena = Arena.ofConfined()) {
-            // Load the private key
-            byte[] privateKeyBytes = privateKey.getEncoded();
-            MemorySegment privKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyBytes, arena);
-            if (privKey == null || privKey.address() == 0) {
-                throw new ProviderException("Failed to load private key");
+        // Load the private key
+        byte[] privateKeyBytes = privateKey.getEncoded();
+        int privKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyBytes);
+        if (privKey == 0) {
+            throw new ProviderException("Failed to load private key");
+        }
+
+        try {
+            // Load the peer's public key
+            byte[] publicKeyBytes = peerPublicKey.getEncoded();
+            int pubKey = OpenSSLCrypto.loadPublicKey(publicKeyBytes);
+            if (pubKey == 0) {
+                throw new ProviderException("Failed to load peer public key");
             }
 
             try {
-                // Load the peer's public key
-                byte[] publicKeyBytes = peerPublicKey.getEncoded();
-                MemorySegment pubKey = OpenSSLCrypto.loadPublicKey(publicKeyBytes, arena);
-                if (pubKey == null || pubKey.address() == 0) {
-                    throw new ProviderException("Failed to load peer public key");
-                }
-
-                try {
-                    // Derive the shared secret
-                    this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privKey, pubKey, arena);
-                } finally {
-                    OpenSSLCrypto.EVP_PKEY_free(pubKey);
-                }
+                // Derive the shared secret
+                this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privKey, pubKey);
             } finally {
-                OpenSSLCrypto.EVP_PKEY_free(privKey);
+                OpenSSLCrypto.EVP_PKEY_free(pubKey);
             }
+        } finally {
+            OpenSSLCrypto.EVP_PKEY_free(privKey);
         }
     }
 

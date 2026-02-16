@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.algparamgen;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.math.BigInteger;
 import java.security.AlgorithmParameterGeneratorSpi;
 import java.security.AlgorithmParameters;
@@ -56,15 +53,14 @@ public class DHParameterGenerator extends AlgorithmParameterGeneratorSpi {
 
     @Override
     protected AlgorithmParameters engineGenerateParameters() {
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Create EVP_PKEY_CTX for DH parameter generation
-            MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
-                MemorySegment.NULL,
+            int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
+                0,
                 "DH",
-                MemorySegment.NULL,
-                arena
+                0
             );
-            if (ctx == null || ctx.address() == 0) {
+            if (ctx == 0) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for DH");
             }
 
@@ -87,22 +83,25 @@ public class DHParameterGenerator extends AlgorithmParameterGeneratorSpi {
                     throw new ProviderException("Failed to set DH generator");
                 }
 
-                // Generate parameters
-                MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+                // Generate parameters using pointer-to-pointer pattern
+                int pkeyPtr = OpenSSLCrypto.malloc(4);
+                OpenSSLCrypto.memory().writeI32(pkeyPtr, 0);
                 result = OpenSSLCrypto.EVP_PKEY_paramgen(ctx, pkeyPtr);
                 if (result != 1) {
+                    OpenSSLCrypto.free(pkeyPtr);
                     throw new ProviderException("EVP_PKEY_paramgen failed");
                 }
 
-                MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey.address() == 0) {
+                int pkey = OpenSSLCrypto.memory().readInt(pkeyPtr);
+                OpenSSLCrypto.free(pkeyPtr);
+                if (pkey == 0) {
                     throw new ProviderException("Generated parameter key is null");
                 }
 
                 try {
                     // Extract p and g from the generated parameters
-                    BigInteger p = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "p", arena);
-                    BigInteger g = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "g", arena);
+                    BigInteger p = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "p");
+                    BigInteger g = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "g");
 
                     // Create DHParameterSpec
                     DHParameterSpec dhSpec;

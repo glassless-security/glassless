@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.cipher;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -29,19 +26,17 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 abstract class AbstractRSACipher extends CipherSpi {
 
-    private final Arena arena;
     private final RSAPadding padding;
     private final String oaepDigest; // For OAEP padding, null otherwise
 
-    private MemorySegment evpPkey;
-    private MemorySegment evpPkeyCtx;
+    private int evpPkey;
+    private int evpPkeyCtx;
     private int opmode;
     private int keySize; // in bytes
 
     protected AbstractRSACipher(RSAPadding padding, String oaepDigest) {
         this.padding = padding;
         this.oaepDigest = oaepDigest;
-        this.arena = Arena.ofShared();
     }
 
     @Override
@@ -110,30 +105,22 @@ abstract class AbstractRSACipher extends CipherSpi {
                 throw new InvalidKeyException("Key encoding not available");
             }
 
-            // Create memory segment for key bytes
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-            keySegment.asByteBuffer().put(keyBytes);
-
-            // Create a pointer to the key data (OpenSSL modifies the pointer)
-            MemorySegment keyPtrSegment = arena.allocate(ValueLayout.ADDRESS);
-            keyPtrSegment.set(ValueLayout.ADDRESS, 0, keySegment);
-
-            // Load the key using d2i_PrivateKey or d2i_PUBKEY
+            // Load the key using loadPrivateKey or loadPublicKey
             if (key instanceof PrivateKey) {
-                evpPkey = OpenSSLCrypto.d2i_PrivateKey(OpenSSLCrypto.EVP_PKEY_RSA, MemorySegment.NULL, keyPtrSegment, keyBytes.length);
+                evpPkey = OpenSSLCrypto.loadPrivateKey(OpenSSLCrypto.EVP_PKEY_RSA, keyBytes);
             } else if (key instanceof PublicKey) {
-                evpPkey = OpenSSLCrypto.d2i_PUBKEY(MemorySegment.NULL, keyPtrSegment, keyBytes.length);
+                evpPkey = OpenSSLCrypto.loadPublicKey(keyBytes);
             } else {
                 throw new InvalidKeyException("Key must be a PublicKey or PrivateKey");
             }
 
-            if (evpPkey == null || evpPkey.address() == 0) {
+            if (evpPkey == 0) {
                 throw new InvalidKeyException("Failed to load RSA key");
             }
 
             // Create EVP_PKEY_CTX
-            evpPkeyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(MemorySegment.NULL, evpPkey, MemorySegment.NULL);
-            if (evpPkeyCtx == null || evpPkeyCtx.address() == 0) {
+            evpPkeyCtx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_pkey(0, evpPkey, 0);
+            if (evpPkeyCtx == 0) {
                 throw new InvalidKeyException("Failed to create EVP_PKEY_CTX");
             }
 
@@ -157,8 +144,8 @@ abstract class AbstractRSACipher extends CipherSpi {
 
             // For OAEP, set the digest algorithms
             if (padding == RSAPadding.OAEPPADDING && oaepDigest != null) {
-                MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(oaepDigest, arena);
-                if (digestHandle == null || digestHandle.address() == 0) {
+                int digestHandle = OpenSSLCrypto.getDigestHandle(oaepDigest);
+                if (digestHandle == 0) {
                     throw new InvalidKeyException("Unknown OAEP digest: " + oaepDigest);
                 }
 
@@ -205,64 +192,68 @@ abstract class AbstractRSACipher extends CipherSpi {
             throw new IllegalBlockSizeException("No input data");
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
+        int inputPtr = 0;
+        int outLenPtr = 0;
+        int outputPtr = 0;
+        try {
             // Allocate input buffer
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, inputLen);
-            inputSegment.asByteBuffer().put(input, inputOffset, inputLen);
+            inputPtr = OpenSSLCrypto.malloc(inputLen);
+            OpenSSLCrypto.memory().write(inputPtr, input, inputOffset, inputLen);
 
-            // Allocate output length segment
-            MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_LONG);
+            // Allocate output length segment (wasm32: use int, 4 bytes)
+            outLenPtr = OpenSSLCrypto.malloc(4);
 
             int result;
 
             if (opmode == Cipher.ENCRYPT_MODE || opmode == Cipher.WRAP_MODE) {
                 // First call to get output size
-                result = OpenSSLCrypto.EVP_PKEY_encrypt(evpPkeyCtx, MemorySegment.NULL, outLenSegment, inputSegment, inputLen);
+                result = OpenSSLCrypto.EVP_PKEY_encrypt(evpPkeyCtx, 0, outLenPtr, inputPtr, inputLen);
                 if (result <= 0) {
                     throw new BadPaddingException("RSA encryption failed (size query)");
                 }
 
-                long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-                MemorySegment outputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, outLen);
+                int outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+                outputPtr = OpenSSLCrypto.malloc(outLen);
 
                 // Actual encryption
-                result = OpenSSLCrypto.EVP_PKEY_encrypt(evpPkeyCtx, outputSegment, outLenSegment, inputSegment, inputLen);
+                result = OpenSSLCrypto.EVP_PKEY_encrypt(evpPkeyCtx, outputPtr, outLenPtr, inputPtr, inputLen);
                 if (result <= 0) {
                     throw new BadPaddingException("RSA encryption failed");
                 }
 
-                outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-                byte[] output = new byte[(int) outLen];
-                outputSegment.asByteBuffer().get(output);
+                outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+                byte[] output = OpenSSLCrypto.memory().readBytes(outputPtr, outLen);
                 return output;
 
             } else {
                 // First call to get output size
-                result = OpenSSLCrypto.EVP_PKEY_decrypt(evpPkeyCtx, MemorySegment.NULL, outLenSegment, inputSegment, inputLen);
+                result = OpenSSLCrypto.EVP_PKEY_decrypt(evpPkeyCtx, 0, outLenPtr, inputPtr, inputLen);
                 if (result <= 0) {
                     throw new BadPaddingException("RSA decryption failed (size query)");
                 }
 
-                long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-                MemorySegment outputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, outLen);
+                int outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+                outputPtr = OpenSSLCrypto.malloc(outLen);
 
                 // Actual decryption
-                result = OpenSSLCrypto.EVP_PKEY_decrypt(evpPkeyCtx, outputSegment, outLenSegment, inputSegment, inputLen);
+                result = OpenSSLCrypto.EVP_PKEY_decrypt(evpPkeyCtx, outputPtr, outLenPtr, inputPtr, inputLen);
                 if (result <= 0) {
                     throw new BadPaddingException("RSA decryption failed");
                 }
 
-                outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-                byte[] output = new byte[(int) outLen];
-                outputSegment.asByteBuffer().get(output);
+                outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+                byte[] output = OpenSSLCrypto.memory().readBytes(outputPtr, outLen);
                 return output;
             }
 
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
+        } catch (BadPaddingException e) {
             throw e;
         } catch (Throwable e) {
             throw new ProviderException("Error in RSA operation", e);
         } finally {
+            OpenSSLCrypto.free(inputPtr);
+            OpenSSLCrypto.free(outLenPtr);
+            OpenSSLCrypto.free(outputPtr);
             reset();
         }
     }
@@ -279,21 +270,21 @@ abstract class AbstractRSACipher extends CipherSpi {
     }
 
     private void reset() {
-        if (evpPkeyCtx != null) {
+        if (evpPkeyCtx != 0) {
             try {
                 OpenSSLCrypto.EVP_PKEY_CTX_free(evpPkeyCtx);
             } catch (Throwable e) {
                 // Ignore
             }
-            evpPkeyCtx = null;
+            evpPkeyCtx = 0;
         }
-        if (evpPkey != null) {
+        if (evpPkey != 0) {
             try {
                 OpenSSLCrypto.EVP_PKEY_free(evpPkey);
             } catch (Throwable e) {
                 // Ignore
             }
-            evpPkey = null;
+            evpPkey = 0;
         }
     }
 }

@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.cipher;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -25,15 +22,14 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 abstract class AbstractCipher extends CipherSpi {
 
-    private final Arena arena;
     private final String algorithmName;
     private final int keySize;
     private final CipherMode mode;
     private final CipherPadding padding;
     private int gcmTagLenBits; // New field for GCM tag length in bits
 
-    private MemorySegment evpCipherCtx;
-    private MemorySegment evpCipher;
+    private int evpCipherCtx;
+    private int evpCipher;
     private int opmode;
     private byte[] iv;
     private Key key;
@@ -43,7 +39,6 @@ abstract class AbstractCipher extends CipherSpi {
         this.keySize = keySize;
         this.mode = mode;
         this.padding = padding;
-        this.arena = Arena.ofShared();
         this.gcmTagLenBits = 128; // Default to 128 bits for GCM
     }
 
@@ -112,34 +107,33 @@ abstract class AbstractCipher extends CipherSpi {
             throw new InvalidAlgorithmParameterException("Unsupported AlgorithmParameterSpec: " + params.getClass().getName());
         }
 
+        int keyPtr = 0;
+        int ivPtr = 0;
         try {
-            evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(algorithmName, arena);
-            if (evpCipher == null || evpCipher.address() == 0) {
+            evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(algorithmName);
+            if (evpCipher == 0) {
                 throw new ProviderException("Failed to get cipher: " + algorithmName);
             }
 
             evpCipherCtx = OpenSSLCrypto.EVP_CIPHER_CTX_new();
-            if (evpCipherCtx == null || evpCipherCtx.address() == 0) {
+            if (evpCipherCtx == 0) {
                 throw new ProviderException("Failed to create EVP_CIPHER_CTX");
             }
 
             byte[] keyBytes = key.getEncoded();
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-            keySegment.asByteBuffer().put(keyBytes);
+            keyPtr = OpenSSLCrypto.malloc(keyBytes.length);
+            OpenSSLCrypto.memory().write(keyPtr, keyBytes);
 
-            MemorySegment ivSegment;
             if (iv != null) {
-                ivSegment = arena.allocate(ValueLayout.JAVA_BYTE, iv.length);
-                ivSegment.asByteBuffer().put(iv);
-            } else {
-                ivSegment = MemorySegment.NULL;
+                ivPtr = OpenSSLCrypto.malloc(iv.length);
+                OpenSSLCrypto.memory().write(ivPtr, iv);
             }
 
             int result;
             if (opmode == Cipher.ENCRYPT_MODE) {
-                result = OpenSSLCrypto.EVP_EncryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
+                result = OpenSSLCrypto.EVP_EncryptInit_ex(evpCipherCtx, evpCipher, 0, keyPtr, ivPtr);
             } else {
-                result = OpenSSLCrypto.EVP_DecryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
+                result = OpenSSLCrypto.EVP_DecryptInit_ex(evpCipherCtx, evpCipher, 0, keyPtr, ivPtr);
             }
 
             if (result != 1) {
@@ -158,6 +152,9 @@ abstract class AbstractCipher extends CipherSpi {
 
         } catch (Throwable e) {
             throw new ProviderException("Error initializing cipher", e);
+        } finally {
+            OpenSSLCrypto.free(keyPtr);
+            OpenSSLCrypto.free(ivPtr);
         }
     }
 
@@ -191,41 +188,55 @@ abstract class AbstractCipher extends CipherSpi {
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
             throws ShortBufferException {
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, inputLen);
-            inputSegment.asByteBuffer().put(input, inputOffset, inputLen);
+        int inputPtr = 0;
+        int outputPtr = 0;
+        int outLenPtr = 0;
+        try {
+            inputPtr = OpenSSLCrypto.malloc(inputLen);
+            OpenSSLCrypto.memory().write(inputPtr, input, inputOffset, inputLen);
 
-            MemorySegment outputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, output.length - outputOffset);
-            MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT); // Corrected: Allocate space for an int
+            outputPtr = OpenSSLCrypto.malloc(output.length - outputOffset);
+            outLenPtr = OpenSSLCrypto.malloc(4);
 
             int result;
             if (opmode == Cipher.ENCRYPT_MODE) {
-                result = OpenSSLCrypto.EVP_EncryptUpdate(evpCipherCtx, outputSegment, outLenSegment, inputSegment, inputLen);
+                result = OpenSSLCrypto.EVP_EncryptUpdate(evpCipherCtx, outputPtr, outLenPtr, inputPtr, inputLen);
             } else {
-                result = OpenSSLCrypto.EVP_DecryptUpdate(evpCipherCtx, outputSegment, outLenSegment, inputSegment, inputLen);
+                result = OpenSSLCrypto.EVP_DecryptUpdate(evpCipherCtx, outputPtr, outLenPtr, inputPtr, inputLen);
             }
 
             if (result != 1) {
                 throw new ProviderException("Cipher update failed");
             }
 
-            int written = outLenSegment.get(ValueLayout.JAVA_INT, 0);
-            outputSegment.asByteBuffer().get(output, outputOffset, written);
+            int written = OpenSSLCrypto.memory().readInt(outLenPtr);
+            byte[] tmp = OpenSSLCrypto.memory().readBytes(outputPtr, written);
+            System.arraycopy(tmp, 0, output, outputOffset, written);
             return written;
         } catch (Throwable e) {
             throw new ProviderException("Error updating cipher", e);
+        } finally {
+            OpenSSLCrypto.free(inputPtr);
+            OpenSSLCrypto.free(outputPtr);
+            OpenSSLCrypto.free(outLenPtr);
         }
     }
 
     @Override
     protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen)
             throws IllegalBlockSizeException, BadPaddingException {
-        try (Arena confinedArena = Arena.ofConfined()) {
+        int inputTagPtr = 0;
+        int currentUpdateOutputPtr = 0;
+        int currentOutLenPtr = 0;
+        int inputPtr = 0;
+        int finalOutputPtr = 0;
+        int finalOutLenPtr = 0;
+        int tagPtr = 0;
+        try {
             int tagLength = gcmTagLenBits / 8; // Convert bits to bytes
 
             // Step 1: Process any remaining input that came with this engineDoFinal call
             int currentUpdateOutputLen = 0;
-            MemorySegment currentUpdateOutputSegment = MemorySegment.NULL;
 
             if (input != null && inputLen > 0) {
                 int actualInputLen = inputLen;
@@ -237,9 +248,9 @@ abstract class AbstractCipher extends CipherSpi {
                         throw new BadPaddingException("GCM input too short to contain tag");
                     }
                     // Extract tag from the end of input
-                    MemorySegment inputTagSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, tagLength);
-                    inputTagSegment.asByteBuffer().put(input, inputOffset + inputLen - tagLength, tagLength);
-                    OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x11, tagLength, inputTagSegment); // 0x11 is EVP_CTRL_GCM_SET_TAG
+                    inputTagPtr = OpenSSLCrypto.malloc(tagLength);
+                    OpenSSLCrypto.memory().write(inputTagPtr, input, inputOffset + inputLen - tagLength, tagLength);
+                    OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x11, tagLength, inputTagPtr); // 0x11 is EVP_CTRL_GCM_SET_TAG
 
                     // Adjust input length to exclude the tag
                     actualInputLen = inputLen - tagLength;
@@ -247,49 +258,47 @@ abstract class AbstractCipher extends CipherSpi {
 
                 // Determine conservative output size for this update operation
                 int conservativeOutputSize = actualInputLen + engineGetBlockSize();
-                currentUpdateOutputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, conservativeOutputSize);
-                MemorySegment currentOutLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT);
+                currentUpdateOutputPtr = OpenSSLCrypto.malloc(conservativeOutputSize);
+                currentOutLenPtr = OpenSSLCrypto.malloc(4);
 
-                MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, actualInputLen);
-                inputSegment.asByteBuffer().put(input, inputOffset, actualInputLen);
+                inputPtr = OpenSSLCrypto.malloc(actualInputLen);
+                OpenSSLCrypto.memory().write(inputPtr, input, inputOffset, actualInputLen);
 
                 int result;
                 if (opmode == Cipher.ENCRYPT_MODE) {
-                    result = OpenSSLCrypto.EVP_EncryptUpdate(evpCipherCtx, currentUpdateOutputSegment, currentOutLenSegment, inputSegment, actualInputLen);
+                    result = OpenSSLCrypto.EVP_EncryptUpdate(evpCipherCtx, currentUpdateOutputPtr, currentOutLenPtr, inputPtr, actualInputLen);
                 } else {
-                    result = OpenSSLCrypto.EVP_DecryptUpdate(evpCipherCtx, currentUpdateOutputSegment, currentOutLenSegment, inputSegment, actualInputLen);
+                    result = OpenSSLCrypto.EVP_DecryptUpdate(evpCipherCtx, currentUpdateOutputPtr, currentOutLenPtr, inputPtr, actualInputLen);
                 }
                 if (result != 1) {
                     throw new ProviderException("Cipher update failed in engineDoFinal");
                 }
-                currentUpdateOutputLen = currentOutLenSegment.get(ValueLayout.JAVA_INT, 0);
+                currentUpdateOutputLen = OpenSSLCrypto.memory().readInt(currentOutLenPtr);
             }
 
             // Step 2: Finalize the cipher operation with EVP_Final_ex
             int finalCiphertextLen = 0;
-            MemorySegment tagSegment = MemorySegment.NULL;
-
 
             int finalOutputSegmentSize = engineGetOutputSize(0); // Max possible for final, like one block
-            MemorySegment finalOutputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, finalOutputSegmentSize);
-            MemorySegment finalOutLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT);
+            finalOutputPtr = OpenSSLCrypto.malloc(finalOutputSegmentSize);
+            finalOutLenPtr = OpenSSLCrypto.malloc(4);
 
             int result;
             if (opmode == Cipher.ENCRYPT_MODE) {
-                result = OpenSSLCrypto.EVP_EncryptFinal_ex(evpCipherCtx, finalOutputSegment, finalOutLenSegment);
-                finalCiphertextLen = finalOutLenSegment.get(ValueLayout.JAVA_INT, 0);
+                result = OpenSSLCrypto.EVP_EncryptFinal_ex(evpCipherCtx, finalOutputPtr, finalOutLenPtr);
+                finalCiphertextLen = OpenSSLCrypto.memory().readInt(finalOutLenPtr);
 
                 if (result == 1 && (mode == CipherMode.GCM || mode == CipherMode.CCM || mode == CipherMode.POLY1305)) {
                     // Retrieve AEAD tag (GCM, CCM or Poly1305)
-                    tagSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, tagLength);
-                    int getTagResult = OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x10, tagLength, tagSegment); // 0x10 is EVP_CTRL_GCM_GET_TAG
+                    tagPtr = OpenSSLCrypto.malloc(tagLength);
+                    int getTagResult = OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x10, tagLength, tagPtr); // 0x10 is EVP_CTRL_GCM_GET_TAG
                     if (getTagResult != 1) {
                         throw new ProviderException("Failed to get GCM tag");
                     }
                 }
             } else { // Decrypt mode
-                result = OpenSSLCrypto.EVP_DecryptFinal_ex(evpCipherCtx, finalOutputSegment, finalOutLenSegment);
-                finalCiphertextLen = finalOutLenSegment.get(ValueLayout.JAVA_INT, 0);
+                result = OpenSSLCrypto.EVP_DecryptFinal_ex(evpCipherCtx, finalOutputPtr, finalOutLenPtr);
+                finalCiphertextLen = OpenSSLCrypto.memory().readInt(finalOutLenPtr);
             }
 
             if (result != 1) {
@@ -301,9 +310,9 @@ abstract class AbstractCipher extends CipherSpi {
             }
 
             // Step 3: Combine all outputs
-            byte[] outputFromCurrentUpdate = (currentUpdateOutputLen > 0) ? currentUpdateOutputSegment.asSlice(0, currentUpdateOutputLen).toArray(ValueLayout.JAVA_BYTE) : new byte[0];
-            byte[] outputFromFinal = (finalCiphertextLen > 0) ? finalOutputSegment.asSlice(0, finalCiphertextLen).toArray(ValueLayout.JAVA_BYTE) : new byte[0];
-            byte[] gcmTagBytes = (tagSegment != MemorySegment.NULL) ? tagSegment.toArray(ValueLayout.JAVA_BYTE) : new byte[0];
+            byte[] outputFromCurrentUpdate = (currentUpdateOutputLen > 0) ? OpenSSLCrypto.memory().readBytes(currentUpdateOutputPtr, currentUpdateOutputLen) : new byte[0];
+            byte[] outputFromFinal = (finalCiphertextLen > 0) ? OpenSSLCrypto.memory().readBytes(finalOutputPtr, finalCiphertextLen) : new byte[0];
+            byte[] gcmTagBytes = (tagPtr != 0) ? OpenSSLCrypto.memory().readBytes(tagPtr, tagLength) : new byte[0];
 
             int totalOutputArrayLen = outputFromCurrentUpdate.length + outputFromFinal.length + gcmTagBytes.length;
             byte[] finalOutput = new byte[totalOutputArrayLen];
@@ -320,6 +329,13 @@ abstract class AbstractCipher extends CipherSpi {
         } catch (Throwable e) {
             throw new ProviderException("Error finalizing cipher", e);
         } finally {
+            OpenSSLCrypto.free(inputTagPtr);
+            OpenSSLCrypto.free(currentUpdateOutputPtr);
+            OpenSSLCrypto.free(currentOutLenPtr);
+            OpenSSLCrypto.free(inputPtr);
+            OpenSSLCrypto.free(finalOutputPtr);
+            OpenSSLCrypto.free(finalOutLenPtr);
+            OpenSSLCrypto.free(tagPtr);
              reset();
         }
     }
@@ -336,13 +352,13 @@ abstract class AbstractCipher extends CipherSpi {
     }
 
     private void reset() {
-        if (evpCipherCtx != null) {
+        if (evpCipherCtx != 0) {
             try {
                 OpenSSLCrypto.EVP_CIPHER_CTX_free(evpCipherCtx);
             } catch (Throwable e) {
                 // Ignore
             }
-            evpCipherCtx = null;
+            evpCipherCtx = 0;
         }
     }
 }

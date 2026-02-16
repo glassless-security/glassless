@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.mac;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -21,17 +18,15 @@ public abstract class AbstractHmac extends MacSpi {
 
     private final String digestName;
     private final int macLength;
-    private final Arena arena;
 
-    private MemorySegment evpMac;
-    private MemorySegment evpMacCtx;
+    private int evpMac;
+    private int evpMacCtx;
     private byte[] keyBytes;
     private boolean initialized = false;
 
     protected AbstractHmac(String digestName, int macLength) {
         this.digestName = digestName;
         this.macLength = macLength;
-        this.arena = Arena.ofShared();
     }
 
     @Override
@@ -57,26 +52,26 @@ public abstract class AbstractHmac extends MacSpi {
 
         try {
             // Fetch the HMAC implementation
-            evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
-            if (evpMac == null || evpMac.address() == 0) {
+            evpMac = OpenSSLCrypto.EVP_MAC_fetch(0, "HMAC", 0);
+            if (evpMac == 0) {
                 throw new ProviderException("Failed to fetch HMAC");
             }
 
             // Create MAC context
             evpMacCtx = OpenSSLCrypto.EVP_MAC_CTX_new(evpMac);
-            if (evpMacCtx == null || evpMacCtx.address() == 0) {
+            if (evpMacCtx == 0) {
                 throw new ProviderException("Failed to create MAC context");
             }
 
             // Create params for the digest
-            MemorySegment paramsSegment = OpenSSLCrypto.createDigestParams(digestName, arena);
+            int paramsPtr = OpenSSLCrypto.createDigestParams(digestName);
 
             // Allocate key segment
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-            keySegment.asByteBuffer().put(keyBytes);
+            int keyPtr = OpenSSLCrypto.malloc(keyBytes.length);
+            OpenSSLCrypto.memory().write(keyPtr, keyBytes);
 
             // Initialize the MAC
-            int result = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
+            int result = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keyPtr, keyBytes.length, paramsPtr);
             if (result != 1) {
                 throw new InvalidKeyException("Failed to initialize HMAC");
             }
@@ -105,16 +100,20 @@ public abstract class AbstractHmac extends MacSpi {
             return;
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
-            inputSegment.asByteBuffer().put(input, offset, len);
+        int inputPtr = OpenSSLCrypto.malloc(len);
+        try {
+            OpenSSLCrypto.memory().write(inputPtr, input, offset, len);
 
-            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputSegment, len);
+            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputPtr, len);
             if (result != 1) {
                 throw new ProviderException("HMAC update failed");
             }
+        } catch (ProviderException e) {
+            throw e;
         } catch (Throwable e) {
             throw new ProviderException("Error updating HMAC", e);
+        } finally {
+            OpenSSLCrypto.free(inputPtr);
         }
     }
 
@@ -124,25 +123,24 @@ public abstract class AbstractHmac extends MacSpi {
             throw new IllegalStateException("MAC not initialized");
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
-            // Allocate output buffer
-            MemorySegment outSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, macLength);
-            MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_LONG);
-
-            int result = OpenSSLCrypto.EVP_MAC_final(evpMacCtx, outSegment, outLenSegment, macLength);
+        int outPtr = OpenSSLCrypto.malloc(macLength);
+        int outLenPtr = OpenSSLCrypto.malloc(4);
+        try {
+            int result = OpenSSLCrypto.EVP_MAC_final(evpMacCtx, outPtr, outLenPtr, macLength);
             if (result != 1) {
                 throw new ProviderException("HMAC final failed");
             }
 
-            long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-            byte[] mac = new byte[(int) outLen];
-            outSegment.asByteBuffer().get(mac);
+            int outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+            byte[] mac = OpenSSLCrypto.memory().readBytes(outPtr, outLen);
 
             return mac;
 
         } catch (Throwable e) {
             throw new ProviderException("Error finalizing HMAC", e);
         } finally {
+            OpenSSLCrypto.free(outPtr);
+            OpenSSLCrypto.free(outLenPtr);
             // Reset for potential reuse
             engineReset();
         }
@@ -150,14 +148,14 @@ public abstract class AbstractHmac extends MacSpi {
 
     @Override
     protected void engineReset() {
-        if (evpMacCtx != null && keyBytes != null) {
+        if (evpMacCtx != 0 && keyBytes != null) {
             try {
                 // Re-initialize the context for reuse
-                MemorySegment paramsSegment = OpenSSLCrypto.createDigestParams(digestName, arena);
-                MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-                keySegment.asByteBuffer().put(keyBytes);
+                int paramsPtr = OpenSSLCrypto.createDigestParams(digestName);
+                int keyPtr = OpenSSLCrypto.malloc(keyBytes.length);
+                OpenSSLCrypto.memory().write(keyPtr, keyBytes);
 
-                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
+                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keyPtr, keyBytes.length, paramsPtr);
             } catch (Throwable e) {
                 // Ignore reset errors
             }

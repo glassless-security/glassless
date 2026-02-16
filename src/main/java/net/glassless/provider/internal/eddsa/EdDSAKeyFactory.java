@@ -1,7 +1,5 @@
 package net.glassless.provider.internal.eddsa;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -100,10 +98,10 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
     }
 
     private PublicKey generatePublicFromEncoded(byte[] encoded) throws InvalidKeySpecException {
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Load the key with OpenSSL to validate and extract info
-            MemorySegment pkey = OpenSSLCrypto.loadPublicKey(encoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            int pkey = OpenSSLCrypto.loadPublicKey(encoded);
+            if (pkey == 0) {
                 throw new InvalidKeySpecException("Failed to parse EdDSA public key");
             }
 
@@ -131,10 +129,10 @@ public class EdDSAKeyFactory extends KeyFactorySpi {
     }
 
     private PrivateKey generatePrivateFromEncoded(byte[] encoded) throws InvalidKeySpecException {
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Load the key with OpenSSL to validate
-            MemorySegment pkey = OpenSSLCrypto.loadPrivateKey(0, encoded, arena);
-            if (pkey == null || pkey.address() == 0) {
+            int pkey = OpenSSLCrypto.loadPrivateKey(0, encoded);
+            if (pkey == 0) {
                 throw new InvalidKeySpecException("Failed to parse EdDSA private key");
             }
 

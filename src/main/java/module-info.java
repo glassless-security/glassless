@@ -1,4 +1,10 @@
 module net.glassless.provider {
+   requires com.dylibso.chicory.runtime;
+   requires com.dylibso.chicory.wasm;
+   requires com.dylibso.chicory.annotations;
+   requires static java.compiler;
+   requires com.dylibso.chicory.wasi;
+
    exports net.glassless.provider;
    opens net.glassless.provider.internal.cipher to java.base;
    opens net.glassless.provider.internal.digest to java.base;

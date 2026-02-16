@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.kdf;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
@@ -57,8 +54,8 @@ public abstract class AbstractHKDF extends KDFSpi {
                 "HKDFParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
         }
 
-       try (Arena arena = Arena.ofConfined()) {
-            return deriveHKDF(hkdfParams, arena);
+        try {
+            return deriveHKDF(hkdfParams);
         } catch (ProviderException e) {
             throw e;
         } catch (Throwable e) {
@@ -66,17 +63,17 @@ public abstract class AbstractHKDF extends KDFSpi {
         }
     }
 
-    private byte[] deriveHKDF(HKDFParameterSpec params, Arena arena) throws Throwable {
+    private byte[] deriveHKDF(HKDFParameterSpec params) throws Throwable {
         // Fetch the HKDF KDF
-        MemorySegment kdf = OpenSSLCrypto.EVP_KDF_fetch(MemorySegment.NULL, "HKDF", MemorySegment.NULL, arena);
-        if (kdf == null || kdf.address() == 0) {
+        int kdf = OpenSSLCrypto.EVP_KDF_fetch(0, "HKDF", 0);
+        if (kdf == 0) {
             throw new ProviderException("Failed to fetch HKDF KDF");
         }
 
         try {
             // Create KDF context
-            MemorySegment ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
-            if (ctx == null || ctx.address() == 0) {
+            int ctx = OpenSSLCrypto.EVP_KDF_CTX_new(kdf);
+            if (ctx == 0) {
                 throw new ProviderException("Failed to create HKDF context");
             }
 
@@ -85,13 +82,13 @@ public abstract class AbstractHKDF extends KDFSpi {
                return switch (params) {
                   case HKDFParameterSpec.Extract extract ->
                      // Extract only
-                     deriveExtract(ctx, extract, arena);
+                     deriveExtract(ctx, extract);
                   case HKDFParameterSpec.Expand expand ->
                      // Expand only
-                     deriveExpand(ctx, expand, arena);
+                     deriveExpand(ctx, expand);
                   case HKDFParameterSpec.ExtractThenExpand extractExpand ->
                      // Extract and Expand
-                     deriveExtractExpand(ctx, extractExpand, arena);
+                     deriveExtractExpand(ctx, extractExpand);
                   default -> throw new InvalidAlgorithmParameterException(
                      "Unsupported HKDFParameterSpec type: " + params.getClass().getName());
                };
@@ -103,7 +100,7 @@ public abstract class AbstractHKDF extends KDFSpi {
         }
     }
 
-    private byte[] deriveExtract(MemorySegment ctx, HKDFParameterSpec.Extract params, Arena arena) throws Throwable {
+    private byte[] deriveExtract(int ctx, HKDFParameterSpec.Extract params) throws Throwable {
         // Get IKM from extracting all IKM values
         byte[] ikm = concatenateKeys(params.ikms());
         byte[] salt = concatenateKeys(params.salts());
@@ -112,29 +109,27 @@ public abstract class AbstractHKDF extends KDFSpi {
         }
 
         // Build OSSL_PARAM array for extract
-        MemorySegment osslParams = OpenSSLCrypto.createHKDFParams(
+        int osslParams = OpenSSLCrypto.createHKDFParams(
             digestName,
             OpenSSLCrypto.HKDF_MODE_EXTRACT_ONLY,
             salt,
             ikm,
-            null,  // No info for extract
-            arena
+            null  // No info for extract
         );
 
         // PRK output length is the hash length
-        MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, hashLength);
+        int output = OpenSSLCrypto.malloc(hashLength);
 
         int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, hashLength, osslParams);
         if (result != 1) {
             throw new ProviderException("HKDF extract failed");
         }
 
-        byte[] prk = new byte[hashLength];
-        output.asByteBuffer().get(prk);
+        byte[] prk = OpenSSLCrypto.memory().readBytes(output, hashLength);
         return prk;
     }
 
-    private byte[] deriveExpand(MemorySegment ctx, HKDFParameterSpec.Expand params, Arena arena) throws Throwable {
+    private byte[] deriveExpand(int ctx, HKDFParameterSpec.Expand params) throws Throwable {
         // Get PRK from the SecretKey
         SecretKey prkKey = params.prk();
         byte[] prk = prkKey.getEncoded();
@@ -143,29 +138,27 @@ public abstract class AbstractHKDF extends KDFSpi {
         int length = params.length();
 
         // Build OSSL_PARAM array for expand
-        MemorySegment osslParams = OpenSSLCrypto.createHKDFParams(
+        int osslParams = OpenSSLCrypto.createHKDFParams(
             digestName,
             OpenSSLCrypto.HKDF_MODE_EXPAND_ONLY,
             null,  // No salt for expand
             prk,   // Use PRK as key
-            info,
-            arena
+            info
         );
 
         // Derive the output
-        MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, length);
+        int output = OpenSSLCrypto.malloc(length);
 
         int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, length, osslParams);
         if (result != 1) {
             throw new ProviderException("HKDF expand failed");
         }
 
-        byte[] derived = new byte[length];
-        output.asByteBuffer().get(derived);
+        byte[] derived = OpenSSLCrypto.memory().readBytes(output, length);
         return derived;
     }
 
-    private byte[] deriveExtractExpand(MemorySegment ctx, HKDFParameterSpec.ExtractThenExpand params, Arena arena) throws Throwable {
+    private byte[] deriveExtractExpand(int ctx, HKDFParameterSpec.ExtractThenExpand params) throws Throwable {
         // Get IKM, salt, info
         byte[] ikm = concatenateKeys(params.ikms());
         byte[] salt = concatenateKeys(params.salts());
@@ -177,25 +170,23 @@ public abstract class AbstractHKDF extends KDFSpi {
         int length = params.length();
 
         // Build OSSL_PARAM array for extract+expand
-        MemorySegment osslParams = OpenSSLCrypto.createHKDFParams(
+        int osslParams = OpenSSLCrypto.createHKDFParams(
             digestName,
             OpenSSLCrypto.HKDF_MODE_EXTRACT_AND_EXPAND,
             salt,
             ikm,
-            info,
-            arena
+            info
         );
 
         // Derive the output
-        MemorySegment output = arena.allocate(ValueLayout.JAVA_BYTE, length);
+        int output = OpenSSLCrypto.malloc(length);
 
         int result = OpenSSLCrypto.EVP_KDF_derive(ctx, output, length, osslParams);
         if (result != 1) {
             throw new ProviderException("HKDF extract+expand failed");
         }
 
-        byte[] derived = new byte[length];
-        output.asByteBuffer().get(derived);
+        byte[] derived = OpenSSLCrypto.memory().readBytes(output, length);
         return derived;
     }
 
