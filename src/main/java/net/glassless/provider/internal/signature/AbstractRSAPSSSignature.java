@@ -1,7 +1,5 @@
 package net.glassless.provider.internal.signature;
 
-import java.lang.foreign.MemorySegment;
-
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -15,7 +13,7 @@ public abstract class AbstractRSAPSSSignature extends AbstractSignature {
     }
 
     @Override
-    protected void configureContext(MemorySegment pkeyCtx) throws Throwable {
+    protected void configureContext(int pkeyCtx) throws Throwable {
         // Set RSA padding to PSS
         int result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, OpenSSLCrypto.RSA_PKCS1_PSS_PADDING);
         if (result <= 0) {

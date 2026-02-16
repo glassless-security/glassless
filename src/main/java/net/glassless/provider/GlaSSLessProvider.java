@@ -23,7 +23,7 @@ import net.glassless.provider.internal.signature.*;
 import net.glassless.provider.internal.slhdsa.*;
 
 /**
- * OpenSSL-based JCA Provider using Java's Foreign Function &amp; Memory API.
+ * OpenSSL-based JCA Provider using Chicory WASM.
  *
  * <p>When FIPS mode is detected (via {@link FIPSStatus}), only FIPS 140-2/140-3
  * approved algorithms are registered. Non-approved algorithms such as MD5,
@@ -60,7 +60,7 @@ public class GlaSSLessProvider extends Provider {
    }
 
    public GlaSSLessProvider() {
-      super(PROVIDER_NAME, getProviderVersion(), "OpenSSL Native Provider using FFM API");
+      super(PROVIDER_NAME, getProviderVersion(), "OpenSSL Native Provider using Chicory WASM");
 
       this.fipsMode = FIPSStatus.isFIPSEnabled();
 

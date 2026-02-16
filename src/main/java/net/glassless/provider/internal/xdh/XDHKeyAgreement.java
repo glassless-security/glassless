@@ -1,7 +1,5 @@
 package net.glassless.provider.internal.xdh;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -108,23 +106,23 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
         }
 
         // Derive the shared secret
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Load the private key
-            MemorySegment privateKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded, arena);
-            if (privateKey == null || privateKey.address() == 0) {
+            int privateKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded);
+            if (privateKey == 0) {
                 throw new InvalidKeyException("Failed to load private key");
             }
 
             try {
                 // Load the public key
-                MemorySegment publicKey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded, arena);
-                if (publicKey == null || publicKey.address() == 0) {
+                int publicKey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded);
+                if (publicKey == 0) {
                     throw new InvalidKeyException("Failed to load public key");
                 }
 
                 try {
                     // Derive the shared secret
-                    this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privateKey, publicKey, arena);
+                    this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privateKey, publicKey);
                 } finally {
                     OpenSSLCrypto.EVP_PKEY_free(publicKey);
                 }

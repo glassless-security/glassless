@@ -7,7 +7,7 @@
    <version>0.4-SNAPSHOT</version>
    <packaging>jar</packaging>
    <name>GlaSSLess Provider</name>
-   <description>A JCA security provider that delegates cryptographic operations to OpenSSL via the Foreign Function and Memory API</description>
+   <description>A JCA security provider that delegates cryptographic operations to OpenSSL via Chicory WASM</description>
    <url>https://github.com/glassless-security/glassless</url>
    <inceptionYear>2026</inceptionYear>
 
@@ -48,6 +48,7 @@
       <bc-fips.version>2.1.2</bc-fips.version>
       <jmh.version>1.37</jmh.version>
       <junit.version>6.0.2</junit.version>
+      <chicory.version>1.6.1</chicory.version>
 
       <!-- Plugin versions -->
       <version.central-publishing-maven-plugin>0.10.0</version.central-publishing-maven-plugin>
@@ -63,9 +64,27 @@
       <version.spotless-maven-plugin>2.44.4</version.spotless-maven-plugin>
       <version.asciidoctor-maven-plugin>3.1.1</version.asciidoctor-maven-plugin>
       <version.maven-assembly-plugin>3.7.1</version.maven-assembly-plugin>
+      <version.templating-maven-plugin>3.1.0</version.templating-maven-plugin>
+      <version.maven-antrun-plugin>3.2.0</version.maven-antrun-plugin>
    </properties>
 
    <dependencies>
+      <dependency>
+         <groupId>com.dylibso.chicory</groupId>
+         <artifactId>runtime</artifactId>
+         <version>${chicory.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.dylibso.chicory</groupId>
+         <artifactId>wasi</artifactId>
+         <version>${chicory.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.dylibso.chicory</groupId>
+         <artifactId>annotations</artifactId>
+         <version>${chicory.version}</version>
+      </dependency>
+
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-api</artifactId>
@@ -145,6 +164,11 @@
                      <artifactId>jmh-generator-annprocess</artifactId>
                      <version>${jmh.version}</version>
                   </path>
+                  <path>
+                     <groupId>com.dylibso.chicory</groupId>
+                     <artifactId>annotations-processor</artifactId>
+                     <version>${chicory.version}</version>
+                  </path>
                </annotationProcessorPaths>
             </configuration>
          </plugin>
@@ -153,7 +177,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${version.maven-surefire-plugin}</version>
             <configuration>
-               <argLine>--enable-native-access=ALL-UNNAMED --add-opens java.base/sun.security.x509=ALL-UNNAMED --add-opens java.base/sun.security.tools.keytool=ALL-UNNAMED --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.tools.keytool=ALL-UNNAMED</argLine>
+               <argLine>--add-opens java.base/sun.security.x509=ALL-UNNAMED --add-opens java.base/sun.security.tools.keytool=ALL-UNNAMED --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.tools.keytool=ALL-UNNAMED</argLine>
             </configuration>
          </plugin>
          <plugin>
@@ -295,6 +319,65 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>com.dylibso.chicory</groupId>
+            <artifactId>chicory-compiler-maven-plugin</artifactId>
+            <version>${chicory.version}</version>
+            <executions>
+               <execution>
+                  <id>compile-openssl</id>
+                  <goals>
+                     <goal>compile</goal>
+                  </goals>
+                  <configuration>
+                     <name>net.glassless.provider.internal.OpenSSLModule</name>
+                     <wasmFile>${project.basedir}/wasm-lib/libcrypto.wasm</wasmFile>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>${version.maven-antrun-plugin}</version>
+            <executions>
+               <execution>
+                  <id>normalize-wasm-path</id>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <phase>initialize</phase>
+                  <configuration>
+                     <target>
+                        <property location="${project.basedir}/wasm-lib/libcrypto.wasm" name="wasm.resource.path.raw"/>
+                        <makeurl file="${wasm.resource.path.raw}" property="wasm.resource.url.temp"/>
+                        <loadresource property="wasm.resource.url">
+                           <propertyresource name="wasm.resource.url.temp"/>
+                           <filterchain>
+                              <tokenfilter>
+                                 <replaceregex pattern="^file:/" replace="file:///"/>
+                              </tokenfilter>
+                           </filterchain>
+                        </loadresource>
+                     </target>
+                     <exportAntProperties>true</exportAntProperties>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>templating-maven-plugin</artifactId>
+            <version>${version.templating-maven-plugin}</version>
+            <executions>
+               <execution>
+                  <id>filtering-java-templates</id>
+                  <goals>
+                     <goal>filter-sources</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
@@ -377,7 +460,6 @@
                      <executable>java</executable>
                      <classpathScope>test</classpathScope>
                      <arguments>
-                        <argument>--enable-native-access=ALL-UNNAMED</argument>
                         <argument>-classpath</argument>
                         <classpath/>
                         <argument>org.openjdk.jmh.Main</argument>

@@ -1,6 +1,5 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
-import java.lang.foreign.Arena;
 import java.security.InvalidKeyException;
 import java.security.ProviderException;
 import java.security.spec.InvalidKeySpecException;
@@ -60,30 +59,26 @@ public abstract class AbstractPBES2SecretKeyFactory extends SecretKeyFactorySpi 
         // The keySpec keyLength is ignored - we use the cipher's required key size
         int keyLength = keyLengthBits;
 
-        try (Arena arena = Arena.ofConfined()) {
-            // Convert password to UTF-8 bytes
-            byte[] passwordBytes = new String(password).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        // Convert password to UTF-8 bytes
+        byte[] passwordBytes = new String(password).getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
-            try {
-                // Derive the key using PBKDF2
-                byte[] derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(
-                    passwordBytes,
-                    salt,
-                    iterationCount,
-                    digestName,
-                    keyLength / 8,
-                    arena
-                );
+        try {
+            // Derive the key using PBKDF2
+            byte[] derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(
+                passwordBytes,
+                salt,
+                iterationCount,
+                digestName,
+                keyLength / 8
+            );
 
-                // Return the key with the PBE algorithm name
-                return new PBES2SecretKey(derivedKey, algorithm);
-            } finally {
-                // Clear sensitive data
-                java.util.Arrays.fill(passwordBytes, (byte) 0);
-            }
-
+            // Return the key with the PBE algorithm name
+            return new PBES2SecretKey(derivedKey, algorithm);
         } catch (Throwable e) {
             throw new ProviderException("Error deriving key with PBES2", e);
+        } finally {
+            // Clear sensitive data
+            java.util.Arrays.fill(passwordBytes, (byte) 0);
         }
     }
 

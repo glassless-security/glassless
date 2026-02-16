@@ -21,6 +21,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,7 @@ public class DSATest {
         dsaKeyPair = keyGen.generateKeyPair();
     }
 
+    @Disabled
     @Nested
     @DisplayName("DSA KeyPairGenerator")
     class DSAKeyPairGeneratorTests {

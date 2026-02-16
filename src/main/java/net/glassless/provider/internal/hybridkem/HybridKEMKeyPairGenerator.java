@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.hybridkem;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 import java.security.KeyPair;
@@ -93,15 +90,14 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
 
    @Override
    public KeyPair generateKeyPair() {
-      try (Arena arena = Arena.ofConfined()) {
+      try {
          // Create EVP_PKEY_CTX for hybrid KEM key generation
-         MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
-            MemorySegment.NULL,
+         int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
+            0,
             algorithmName,
-            MemorySegment.NULL,
-            arena
+            0
          );
-         if (ctx == null || ctx.address() == 0) {
+         if (ctx == 0) {
             throw new ProviderException("Failed to create EVP_PKEY_CTX for " + algorithmName +
                ". Hybrid KEMs require OpenSSL 3.5+");
          }
@@ -114,31 +110,36 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
             }
 
             // Generate the key pair
-            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-            result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
-            if (result != 1) {
-               throw new ProviderException("EVP_PKEY_keygen failed for " + algorithmName);
-            }
-
-            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-            if (pkey.address() == 0) {
-               throw new ProviderException("Generated key is null");
-            }
-
+            int pkeyPtr = OpenSSLCrypto.malloc(4);
             try {
-               // Export keys in raw format (hybrid KEMs don't have standard ASN.1 encoders)
-               byte[] rawPublicKey = OpenSSLCrypto.exportRawPublicKey(pkey, arena);
-               byte[] rawPrivateKey = OpenSSLCrypto.exportRawPrivateKey(pkey, arena);
+               OpenSSLCrypto.memory().writeI32(pkeyPtr, 0);
+               result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
+               if (result != 1) {
+                  throw new ProviderException("EVP_PKEY_keygen failed for " + algorithmName);
+               }
 
-               // Create key objects with raw key bytes
-               GlaSSLessHybridKEMPublicKey publicKey = new GlaSSLessHybridKEMPublicKey(
-                  jcaAlgorithm, algorithmName, rawPublicKey);
-               GlaSSLessHybridKEMPrivateKey privateKey = new GlaSSLessHybridKEMPrivateKey(
-                  jcaAlgorithm, algorithmName, rawPrivateKey);
+               int pkey = OpenSSLCrypto.memory().readInt(pkeyPtr);
+               if (pkey == 0) {
+                  throw new ProviderException("Generated key is null");
+               }
 
-               return new KeyPair(publicKey, privateKey);
+               try {
+                  // Export keys in raw format (hybrid KEMs don't have standard ASN.1 encoders)
+                  byte[] rawPublicKey = OpenSSLCrypto.exportRawPublicKey(pkey);
+                  byte[] rawPrivateKey = OpenSSLCrypto.exportRawPrivateKey(pkey);
+
+                  // Create key objects with raw key bytes
+                  GlaSSLessHybridKEMPublicKey publicKey = new GlaSSLessHybridKEMPublicKey(
+                     jcaAlgorithm, algorithmName, rawPublicKey);
+                  GlaSSLessHybridKEMPrivateKey privateKey = new GlaSSLessHybridKEMPrivateKey(
+                     jcaAlgorithm, algorithmName, rawPrivateKey);
+
+                  return new KeyPair(publicKey, privateKey);
+               } finally {
+                  OpenSSLCrypto.EVP_PKEY_free(pkey);
+               }
             } finally {
-               OpenSSLCrypto.EVP_PKEY_free(pkey);
+               OpenSSLCrypto.free(pkeyPtr);
             }
          } finally {
             OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);

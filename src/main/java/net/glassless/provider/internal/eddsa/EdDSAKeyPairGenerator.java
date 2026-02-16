@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.eddsa;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
@@ -62,15 +59,14 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
     public KeyPair generateKeyPair() {
         String algorithmName = params.getName().toUpperCase();  // ED25519 or ED448
 
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Create EVP_PKEY_CTX for EdDSA key generation
-            MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
-                MemorySegment.NULL,
+            int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
+                0,
                 algorithmName,
-                MemorySegment.NULL,
-                arena
+                0
             );
-            if (ctx == null || ctx.address() == 0) {
+            if (ctx == 0) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for " + algorithmName);
             }
 
@@ -82,36 +78,41 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
                 }
 
                 // Generate the key pair
-                MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-                result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
-                if (result != 1) {
-                    throw new ProviderException("EVP_PKEY_keygen failed for " + algorithmName);
-                }
-
-                MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey.address() == 0) {
-                    throw new ProviderException("Generated key is null");
-                }
-
+                int pkeyPtr = OpenSSLCrypto.malloc(4);
                 try {
-                    // Export keys in DER format
-                    byte[] publicKeyEncoded = OpenSSLCrypto.exportPublicKey(pkey, arena);
-                    byte[] privateKeyEncoded = OpenSSLCrypto.exportPrivateKey(pkey, arena);
+                    OpenSSLCrypto.memory().writeI32(pkeyPtr, 0);
+                    result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
+                    if (result != 1) {
+                        throw new ProviderException("EVP_PKEY_keygen failed for " + algorithmName);
+                    }
 
-                    // Extract raw key bytes for EdECPoint
-                    byte[] rawPublicKey = extractRawPublicKey(publicKeyEncoded, algorithmName);
-                    byte[] rawPrivateKey = extractRawPrivateKey(privateKeyEncoded, algorithmName);
+                    int pkey = OpenSSLCrypto.memory().readInt(pkeyPtr);
+                    if (pkey == 0) {
+                        throw new ProviderException("Generated key is null");
+                    }
 
-                    // Create EdECPoint from raw public key
-                    EdECPoint point = createEdECPoint(rawPublicKey);
+                    try {
+                        // Export keys in DER format
+                        byte[] publicKeyEncoded = OpenSSLCrypto.exportPublicKey(pkey);
+                        byte[] privateKeyEncoded = OpenSSLCrypto.exportPrivateKey(pkey);
 
-                    // Create key objects
-                    GlaSSLessEdECPublicKey publicKey = new GlaSSLessEdECPublicKey(params, point, publicKeyEncoded);
-                    GlaSSLessEdECPrivateKey privateKey = new GlaSSLessEdECPrivateKey(params, rawPrivateKey, privateKeyEncoded);
+                        // Extract raw key bytes for EdECPoint
+                        byte[] rawPublicKey = extractRawPublicKey(publicKeyEncoded, algorithmName);
+                        byte[] rawPrivateKey = extractRawPrivateKey(privateKeyEncoded, algorithmName);
 
-                    return new KeyPair(publicKey, privateKey);
+                        // Create EdECPoint from raw public key
+                        EdECPoint point = createEdECPoint(rawPublicKey);
+
+                        // Create key objects
+                        GlaSSLessEdECPublicKey publicKey = new GlaSSLessEdECPublicKey(params, point, publicKeyEncoded);
+                        GlaSSLessEdECPrivateKey privateKey = new GlaSSLessEdECPrivateKey(params, rawPrivateKey, privateKeyEncoded);
+
+                        return new KeyPair(publicKey, privateKey);
+                    } finally {
+                        OpenSSLCrypto.EVP_PKEY_free(pkey);
+                    }
                 } finally {
-                    OpenSSLCrypto.EVP_PKEY_free(pkey);
+                    OpenSSLCrypto.free(pkeyPtr);
                 }
             } finally {
                 OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);

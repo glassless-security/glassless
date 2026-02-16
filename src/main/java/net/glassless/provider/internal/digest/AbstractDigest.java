@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.digest;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.MessageDigestSpi;
 import java.security.ProviderException;
 import java.util.Objects;
@@ -11,20 +8,18 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 public abstract class AbstractDigest extends MessageDigestSpi implements Cloneable {
 
-   private final MemorySegment evpMdCtx;
-   private final MemorySegment handle;
-   private final Arena arena;
+   private final int evpMdCtx;
+   private final int handle;
 
    protected AbstractDigest(String algorithmName) throws ProviderException {
       super();
       try {
-         arena = Arena.ofShared();
          evpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-         if (evpMdCtx.address() == 0) {
+         if (evpMdCtx == 0) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
          }
-         handle = OpenSSLCrypto.getDigestHandle(algorithmName, arena);
-         if (handle.address() == 0) {
+         handle = OpenSSLCrypto.getDigestHandle(algorithmName);
+         if (handle == 0) {
             throw new ProviderException("Failed to get " + algorithmName + " EVP_MD");
          }
          engineReset();
@@ -35,15 +30,20 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
 
    @Override
    protected void engineUpdate(byte input) {
+      int inputPtr = 0;
       try {
-         MemorySegment inputSegment = arena.allocate(1);
-         inputSegment.set(java.lang.foreign.ValueLayout.JAVA_BYTE, 0, input);
-         int result = OpenSSLCrypto.EVP_DigestUpdate(evpMdCtx, inputSegment, 1);
+         inputPtr = OpenSSLCrypto.malloc(1);
+         OpenSSLCrypto.memory().writeByte(inputPtr, input);
+         int result = OpenSSLCrypto.EVP_DigestUpdate(evpMdCtx, inputPtr, 1);
          if (result != 1) {
             throw new ProviderException("EVP_DigestUpdate failed for single byte");
          }
+      } catch (ProviderException e) {
+         throw e;
       } catch (Throwable e) {
          throw new ProviderException("Error updating digest with single byte", e);
+      } finally {
+         OpenSSLCrypto.free(inputPtr);
       }
    }
 
@@ -57,43 +57,55 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
          return;
       }
 
+      int inputPtr = 0;
       try {
-         MemorySegment inputSegment = arena.allocate(java.lang.foreign.ValueLayout.JAVA_BYTE, len);
-         inputSegment.asByteBuffer().put(input, offset, len);
-         int result = OpenSSLCrypto.EVP_DigestUpdate(evpMdCtx, inputSegment, len);
+         inputPtr = OpenSSLCrypto.malloc(len);
+         OpenSSLCrypto.memory().write(inputPtr, input, offset, len);
+         int result = OpenSSLCrypto.EVP_DigestUpdate(evpMdCtx, inputPtr, len);
          if (result != 1) {
             throw new ProviderException("EVP_DigestUpdate failed");
          }
+      } catch (ProviderException e) {
+         throw e;
       } catch (Throwable e) {
          throw new ProviderException("Error updating digest", e);
+      } finally {
+         OpenSSLCrypto.free(inputPtr);
       }
    }
 
    @Override
    protected byte[] engineDigest() {
-      try (Arena confinedArena = Arena.ofConfined()) {
+      int digestBuffer = 0;
+      int digestLenPtr = 0;
+      try {
          int digestSize = OpenSSLCrypto.EVP_MD_size(handle);
          if (digestSize <= 0) {
             throw new ProviderException("Invalid digest size: " + digestSize);
          }
 
-         MemorySegment digestBuffer = confinedArena.allocate(ValueLayout.JAVA_BYTE, digestSize);
-         MemorySegment digestLenPtr = confinedArena.allocate(ValueLayout.JAVA_INT);
-         digestLenPtr.set(ValueLayout.JAVA_INT, 0, digestSize);
+         digestBuffer = OpenSSLCrypto.malloc(digestSize);
+         digestLenPtr = OpenSSLCrypto.malloc(4);
+         OpenSSLCrypto.memory().writeI32(digestLenPtr, digestSize);
 
-         MemorySegment tempEvpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-         if (tempEvpMdCtx.address() == 0) {
+         int tempEvpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
+         if (tempEvpMdCtx == 0) {
             throw new ProviderException("Failed to duplicate EVP_MD_CTX for finalization");
          }
          int result = OpenSSLCrypto.EVP_DigestFinal_ex(evpMdCtx, digestBuffer, digestLenPtr);
          if (result != 1) {
             throw new ProviderException("EVP_DigestFinal_ex failed");
          }
-         byte[] digest = digestBuffer.asSlice(0, digestSize).toArray(ValueLayout.JAVA_BYTE);
+         byte[] digest = OpenSSLCrypto.memory().readBytes(digestBuffer, digestSize);
          engineReset();
          return digest;
+      } catch (ProviderException e) {
+         throw e;
       } catch (Throwable e) {
          throw new ProviderException("Error calculating digest", e);
+      } finally {
+         OpenSSLCrypto.free(digestBuffer);
+         OpenSSLCrypto.free(digestLenPtr);
       }
    }
 

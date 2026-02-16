@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.keypairgen;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 import java.security.KeyFactory;
@@ -57,10 +54,10 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
     @Override
     public KeyPair generateKeyPair() {
-        try (Arena arena = Arena.ofConfined()) {
+        try {
             // Create RSA key generation context
-            MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "RSA", MemorySegment.NULL, arena);
-            if (ctx == null || ctx.address() == 0) {
+            int ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(0, "RSA", 0);
+            if (ctx == 0) {
                 throw new ProviderException("Failed to create EVP_PKEY_CTX for RSA");
             }
 
@@ -78,24 +75,27 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
                 }
 
                 // Generate the key pair
-                MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+                int pkeyPtr = OpenSSLCrypto.malloc(4);
+                OpenSSLCrypto.memory().writeI32(pkeyPtr, 0);
                 result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
                 if (result <= 0) {
+                    OpenSSLCrypto.free(pkeyPtr);
                     throw new ProviderException("EVP_PKEY_keygen failed");
                 }
 
-                MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey == null || pkey.address() == 0) {
+                int pkey = OpenSSLCrypto.memory().readInt(pkeyPtr);
+                OpenSSLCrypto.free(pkeyPtr);
+                if (pkey == 0) {
                     throw new ProviderException("Generated key is null");
                 }
 
                 try {
                     // Export private key to DER format (PKCS#8)
-                    byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey, arena);
+                    byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey);
                     PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 
                     // Export public key to DER format (SubjectPublicKeyInfo / X.509)
-                    byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey, arena);
+                    byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey);
                     X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
 
                     // Use standard KeyFactory to create the key objects

@@ -1,9 +1,6 @@
 package net.glassless.provider.internal.signature;
 
 import java.io.ByteArrayOutputStream;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.PrivateKey;
@@ -22,10 +19,9 @@ public abstract class AbstractSignature extends SignatureSpi {
     private final String digestAlgorithm;
     private final KeyType keyType;
 
-    private Arena arena;
-    private MemorySegment mdCtx;
-    private MemorySegment evpPkey;
-    private MemorySegment pkeyCtxPtr;
+    private int mdCtx;
+    private int evpPkey;
+    private int pkeyCtxPtr;
     private boolean signing;
     private ByteArrayOutputStream dataBuffer;
 
@@ -40,14 +36,13 @@ public abstract class AbstractSignature extends SignatureSpi {
         this.signing = false;
 
         try {
-            arena = Arena.ofShared();
             byte[] keyBytes = publicKey.getEncoded();
             if (keyBytes == null) {
                 throw new InvalidKeyException("Key encoding not available");
             }
 
-            evpPkey = OpenSSLCrypto.loadPublicKey(keyBytes, arena);
-            if (evpPkey == null || evpPkey.address() == 0) {
+            evpPkey = OpenSSLCrypto.loadPublicKey(keyBytes);
+            if (evpPkey == 0) {
                 throw new InvalidKeyException("Failed to load public key");
             }
 
@@ -66,15 +61,14 @@ public abstract class AbstractSignature extends SignatureSpi {
         this.signing = true;
 
         try {
-            arena = Arena.ofShared();
             byte[] keyBytes = privateKey.getEncoded();
             if (keyBytes == null) {
                 throw new InvalidKeyException("Key encoding not available");
             }
 
             // Use type 0 for auto-detection
-            evpPkey = OpenSSLCrypto.loadPrivateKey(0, keyBytes, arena);
-            if (evpPkey == null || evpPkey.address() == 0) {
+            evpPkey = OpenSSLCrypto.loadPrivateKey(0, keyBytes);
+            if (evpPkey == 0) {
                 throw new InvalidKeyException("Failed to load private key");
             }
 
@@ -89,25 +83,25 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     private void initSign() throws Throwable {
         mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-        if (mdCtx == null || mdCtx.address() == 0) {
+        if (mdCtx == 0) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
         }
 
-        MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm, arena);
-        if (digestHandle == null || digestHandle.address() == 0) {
+        int digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm);
+        if (digestHandle == 0) {
             throw new ProviderException("Unknown digest algorithm: " + digestAlgorithm);
         }
 
-        // Allocate pointer for EVP_PKEY_CTX (output parameter)
-        pkeyCtxPtr = arena.allocate(ValueLayout.ADDRESS);
+        // Allocate pointer for EVP_PKEY_CTX (output parameter) - wasm32 pointer is 4 bytes
+        pkeyCtxPtr = OpenSSLCrypto.malloc(4);
 
-        int result = OpenSSLCrypto.EVP_DigestSignInit(mdCtx, pkeyCtxPtr, digestHandle, MemorySegment.NULL, evpPkey);
+        int result = OpenSSLCrypto.EVP_DigestSignInit(mdCtx, pkeyCtxPtr, digestHandle, 0, evpPkey);
         if (result != 1) {
             throw new ProviderException("EVP_DigestSignInit failed");
         }
 
         // Get the actual EVP_PKEY_CTX for configuring padding etc.
-        MemorySegment pkeyCtx = pkeyCtxPtr.get(ValueLayout.ADDRESS, 0);
+        int pkeyCtx = OpenSSLCrypto.memory().readInt(pkeyCtxPtr);
 
         // Configure algorithm-specific parameters
         configureContext(pkeyCtx);
@@ -117,25 +111,25 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     private void initVerify() throws Throwable {
         mdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
-        if (mdCtx == null || mdCtx.address() == 0) {
+        if (mdCtx == 0) {
             throw new ProviderException("Failed to create EVP_MD_CTX");
         }
 
-        MemorySegment digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm, arena);
-        if (digestHandle == null || digestHandle.address() == 0) {
+        int digestHandle = OpenSSLCrypto.getDigestHandle(digestAlgorithm);
+        if (digestHandle == 0) {
             throw new ProviderException("Unknown digest algorithm: " + digestAlgorithm);
         }
 
-        // Allocate pointer for EVP_PKEY_CTX (output parameter)
-        pkeyCtxPtr = arena.allocate(ValueLayout.ADDRESS);
+        // Allocate pointer for EVP_PKEY_CTX (output parameter) - wasm32 pointer is 4 bytes
+        pkeyCtxPtr = OpenSSLCrypto.malloc(4);
 
-        int result = OpenSSLCrypto.EVP_DigestVerifyInit(mdCtx, pkeyCtxPtr, digestHandle, MemorySegment.NULL, evpPkey);
+        int result = OpenSSLCrypto.EVP_DigestVerifyInit(mdCtx, pkeyCtxPtr, digestHandle, 0, evpPkey);
         if (result != 1) {
             throw new ProviderException("EVP_DigestVerifyInit failed");
         }
 
         // Get the actual EVP_PKEY_CTX for configuring padding etc.
-        MemorySegment pkeyCtx = pkeyCtxPtr.get(ValueLayout.ADDRESS, 0);
+        int pkeyCtx = OpenSSLCrypto.memory().readInt(pkeyCtxPtr);
 
         // Configure algorithm-specific parameters
         configureContext(pkeyCtx);
@@ -147,7 +141,7 @@ public abstract class AbstractSignature extends SignatureSpi {
      * Configure algorithm-specific parameters on the EVP_PKEY_CTX.
      * Subclasses can override to set padding, salt length, etc.
      */
-    protected void configureContext(MemorySegment pkeyCtx) throws Throwable {
+    protected void configureContext(int pkeyCtx) throws Throwable {
         // Default: no additional configuration
     }
 
@@ -169,41 +163,44 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     @Override
     protected byte[] engineSign() throws SignatureException {
-        if (!signing || mdCtx == null) {
+        if (!signing || mdCtx == 0) {
             throw new SignatureException("Signature not initialized for signing");
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
+        int dataPtr = 0;
+        int sigLenPtr = 0;
+        int sigPtr = 0;
+
+        try {
             // Update with buffered data
             byte[] data = dataBuffer.toByteArray();
             if (data.length > 0) {
-                MemorySegment dataSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, data.length);
-                dataSegment.asByteBuffer().put(data);
-                int result = OpenSSLCrypto.EVP_DigestSignUpdate(mdCtx, dataSegment, data.length);
+                dataPtr = OpenSSLCrypto.malloc(data.length);
+                OpenSSLCrypto.memory().write(dataPtr, data);
+                int result = OpenSSLCrypto.EVP_DigestSignUpdate(mdCtx, dataPtr, data.length);
                 if (result != 1) {
                     throw new SignatureException("EVP_DigestSignUpdate failed");
                 }
             }
 
-            // Get signature length first
-            MemorySegment sigLenSegment = confinedArena.allocate(ValueLayout.JAVA_LONG);
-            int result = OpenSSLCrypto.EVP_DigestSignFinal(mdCtx, MemorySegment.NULL, sigLenSegment);
+            // Get signature length first (size_t is 4 bytes in wasm32)
+            sigLenPtr = OpenSSLCrypto.malloc(4);
+            int result = OpenSSLCrypto.EVP_DigestSignFinal(mdCtx, 0, sigLenPtr);
             if (result != 1) {
                 throw new SignatureException("EVP_DigestSignFinal failed (size query)");
             }
 
-            long sigLen = sigLenSegment.get(ValueLayout.JAVA_LONG, 0);
-            MemorySegment sigSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, sigLen);
+            int sigLen = OpenSSLCrypto.memory().readInt(sigLenPtr);
+            sigPtr = OpenSSLCrypto.malloc(sigLen);
 
             // Get actual signature
-            result = OpenSSLCrypto.EVP_DigestSignFinal(mdCtx, sigSegment, sigLenSegment);
+            result = OpenSSLCrypto.EVP_DigestSignFinal(mdCtx, sigPtr, sigLenPtr);
             if (result != 1) {
                 throw new SignatureException("EVP_DigestSignFinal failed");
             }
 
-            sigLen = sigLenSegment.get(ValueLayout.JAVA_LONG, 0);
-            byte[] signature = new byte[(int) sigLen];
-            sigSegment.asByteBuffer().get(signature);
+            sigLen = OpenSSLCrypto.memory().readInt(sigLenPtr);
+            byte[] signature = OpenSSLCrypto.memory().readBytes(sigPtr, sigLen);
 
             return signature;
 
@@ -212,33 +209,39 @@ public abstract class AbstractSignature extends SignatureSpi {
         } catch (Throwable e) {
             throw new ProviderException("Error signing data", e);
         } finally {
+            OpenSSLCrypto.free(dataPtr);
+            OpenSSLCrypto.free(sigLenPtr);
+            OpenSSLCrypto.free(sigPtr);
             reset();
         }
     }
 
     @Override
     protected boolean engineVerify(byte[] sigBytes) throws SignatureException {
-        if (signing || mdCtx == null) {
+        if (signing || mdCtx == 0) {
             throw new SignatureException("Signature not initialized for verification");
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
+        int dataPtr = 0;
+        int sigPtr = 0;
+
+        try {
             // Update with buffered data
             byte[] data = dataBuffer.toByteArray();
             if (data.length > 0) {
-                MemorySegment dataSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, data.length);
-                dataSegment.asByteBuffer().put(data);
-                int result = OpenSSLCrypto.EVP_DigestVerifyUpdate(mdCtx, dataSegment, data.length);
+                dataPtr = OpenSSLCrypto.malloc(data.length);
+                OpenSSLCrypto.memory().write(dataPtr, data);
+                int result = OpenSSLCrypto.EVP_DigestVerifyUpdate(mdCtx, dataPtr, data.length);
                 if (result != 1) {
                     throw new SignatureException("EVP_DigestVerifyUpdate failed");
                 }
             }
 
             // Verify signature
-            MemorySegment sigSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, sigBytes.length);
-            sigSegment.asByteBuffer().put(sigBytes);
+            sigPtr = OpenSSLCrypto.malloc(sigBytes.length);
+            OpenSSLCrypto.memory().write(sigPtr, sigBytes);
 
-            int result = OpenSSLCrypto.EVP_DigestVerifyFinal(mdCtx, sigSegment, sigBytes.length);
+            int result = OpenSSLCrypto.EVP_DigestVerifyFinal(mdCtx, sigPtr, sigBytes.length);
 
             // result == 1 means success, 0 means verification failed, < 0 means error
             return result == 1;
@@ -248,6 +251,8 @@ public abstract class AbstractSignature extends SignatureSpi {
         } catch (Throwable e) {
             throw new ProviderException("Error verifying signature", e);
         } finally {
+            OpenSSLCrypto.free(dataPtr);
+            OpenSSLCrypto.free(sigPtr);
             reset();
         }
     }
@@ -265,28 +270,27 @@ public abstract class AbstractSignature extends SignatureSpi {
     }
 
     private void reset() {
-        if (mdCtx != null) {
+        if (mdCtx != 0) {
             try {
                 OpenSSLCrypto.EVP_MD_CTX_free(mdCtx);
             } catch (Throwable e) {
                 // Ignore
             }
-            mdCtx = null;
+            mdCtx = 0;
         }
-        if (evpPkey != null) {
+        if (evpPkey != 0) {
             try {
                 OpenSSLCrypto.EVP_PKEY_free(evpPkey);
             } catch (Throwable e) {
                 // Ignore
             }
-            evpPkey = null;
+            evpPkey = 0;
         }
-        if (arena != null) {
-            arena.close();
-            arena = null;
+        if (pkeyCtxPtr != 0) {
+            OpenSSLCrypto.free(pkeyCtxPtr);
+            pkeyCtxPtr = 0;
         }
         dataBuffer = null;
-        pkeyCtxPtr = null;
     }
 
     /**

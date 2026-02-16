@@ -1,6 +1,5 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
-import java.lang.foreign.Arena;
 import java.security.InvalidKeyException;
 import java.security.ProviderException;
 import java.security.spec.InvalidKeySpecException;
@@ -72,29 +71,25 @@ public abstract class AbstractPBKDF2SecretKeyFactory extends SecretKeyFactorySpi
             keyLength = defaultKeyLength;
         }
 
-        try (Arena arena = Arena.ofConfined()) {
-            // Convert password to bytes based on encoding scheme
-            byte[] passwordBytes = encodePassword(password);
+        // Convert password to bytes based on encoding scheme
+        byte[] passwordBytes = encodePassword(password);
 
-            try {
-                // Derive the key using PBKDF2
-                byte[] derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(
-                    passwordBytes,
-                    salt,
-                    iterationCount,
-                    digestName,
-                    keyLength / 8,
-                    arena
-                );
+        try {
+            // Derive the key using PBKDF2
+            byte[] derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(
+                passwordBytes,
+                salt,
+                iterationCount,
+                digestName,
+                keyLength / 8
+            );
 
-                return new SecretKeySpec(derivedKey, algorithm);
-            } finally {
-                // Clear sensitive data
-                java.util.Arrays.fill(passwordBytes, (byte) 0);
-            }
-
+            return new SecretKeySpec(derivedKey, algorithm);
         } catch (Throwable e) {
             throw new ProviderException("Error deriving key with PBKDF2", e);
+        } finally {
+            // Clear sensitive data
+            java.util.Arrays.fill(passwordBytes, (byte) 0);
         }
     }
 

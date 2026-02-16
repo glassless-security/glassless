@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.mac;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -26,10 +23,9 @@ public abstract class AbstractHmacPBE extends MacSpi {
     private final String kdfDigestName; // Digest used for PBKDF2
     private final int macLength;
     private final int derivedKeyLength;
-    private final Arena arena;
 
-    private MemorySegment evpMac;
-    private MemorySegment evpMacCtx;
+    private int evpMac;
+    private int evpMacCtx;
     private byte[] derivedKey;
     private boolean initialized = false;
 
@@ -38,7 +34,6 @@ public abstract class AbstractHmacPBE extends MacSpi {
         this.kdfDigestName = kdfDigestName;
         this.macLength = macLength;
         this.derivedKeyLength = derivedKeyLength;
-        this.arena = Arena.ofShared();
     }
 
     @Override
@@ -78,36 +73,36 @@ public abstract class AbstractHmacPBE extends MacSpi {
 
         try {
             // Derive the key using PBKDF2
-            derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(password, salt, iterationCount, kdfDigestName, derivedKeyLength, arena);
+            derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(password, salt, iterationCount, kdfDigestName, derivedKeyLength);
 
             // Fetch the HMAC implementation
-            evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
-            if (evpMac == null || evpMac.address() == 0) {
+            evpMac = OpenSSLCrypto.EVP_MAC_fetch(0, "HMAC", 0);
+            if (evpMac == 0) {
                 throw new ProviderException("Failed to fetch HMAC");
             }
 
             // Create MAC context
             evpMacCtx = OpenSSLCrypto.EVP_MAC_CTX_new(evpMac);
-            if (evpMacCtx == null || evpMacCtx.address() == 0) {
+            if (evpMacCtx == 0) {
                 throw new ProviderException("Failed to create MAC context");
             }
 
             // Create params for the digest
-            MemorySegment paramsSegment = OpenSSLCrypto.createDigestParams(digestName, arena);
+            int paramsPtr = OpenSSLCrypto.createDigestParams(digestName);
 
             // Allocate key segment
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, derivedKey.length);
-            keySegment.asByteBuffer().put(derivedKey);
+            int keyPtr = OpenSSLCrypto.malloc(derivedKey.length);
+            OpenSSLCrypto.memory().write(keyPtr, derivedKey);
 
             // Initialize the MAC
-            int result = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, derivedKey.length, paramsSegment);
+            int result = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keyPtr, derivedKey.length, paramsPtr);
             if (result != 1) {
                 throw new InvalidKeyException("Failed to initialize HMAC");
             }
 
             initialized = true;
 
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+        } catch (InvalidKeyException e) {
             throw e;
         } catch (Throwable e) {
             throw new ProviderException("Error initializing PBE HMAC", e);
@@ -129,16 +124,20 @@ public abstract class AbstractHmacPBE extends MacSpi {
             return;
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
-            inputSegment.asByteBuffer().put(input, offset, len);
+        int inputPtr = OpenSSLCrypto.malloc(len);
+        try {
+            OpenSSLCrypto.memory().write(inputPtr, input, offset, len);
 
-            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputSegment, len);
+            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputPtr, len);
             if (result != 1) {
                 throw new ProviderException("HMAC update failed");
             }
+        } catch (ProviderException e) {
+            throw e;
         } catch (Throwable e) {
             throw new ProviderException("Error updating HMAC", e);
+        } finally {
+            OpenSSLCrypto.free(inputPtr);
         }
     }
 
@@ -148,39 +147,38 @@ public abstract class AbstractHmacPBE extends MacSpi {
             throw new IllegalStateException("MAC not initialized");
         }
 
-        try (Arena confinedArena = Arena.ofConfined()) {
-            // Allocate output buffer
-            MemorySegment outSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, macLength);
-            MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_LONG);
-
-            int result = OpenSSLCrypto.EVP_MAC_final(evpMacCtx, outSegment, outLenSegment, macLength);
+        int outPtr = OpenSSLCrypto.malloc(macLength);
+        int outLenPtr = OpenSSLCrypto.malloc(4);
+        try {
+            int result = OpenSSLCrypto.EVP_MAC_final(evpMacCtx, outPtr, outLenPtr, macLength);
             if (result != 1) {
                 throw new ProviderException("HMAC final failed");
             }
 
-            long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
-            byte[] mac = new byte[(int) outLen];
-            outSegment.asByteBuffer().get(mac);
+            int outLen = OpenSSLCrypto.memory().readInt(outLenPtr);
+            byte[] mac = OpenSSLCrypto.memory().readBytes(outPtr, outLen);
 
             return mac;
 
         } catch (Throwable e) {
             throw new ProviderException("Error finalizing HMAC", e);
         } finally {
+            OpenSSLCrypto.free(outPtr);
+            OpenSSLCrypto.free(outLenPtr);
             engineReset();
         }
     }
 
     @Override
     protected void engineReset() {
-        if (evpMacCtx != null && derivedKey != null) {
+        if (evpMacCtx != 0 && derivedKey != null) {
             try {
                 // Re-initialize the context for reuse
-                MemorySegment paramsSegment = OpenSSLCrypto.createDigestParams(digestName, arena);
-                MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, derivedKey.length);
-                keySegment.asByteBuffer().put(derivedKey);
+                int paramsPtr = OpenSSLCrypto.createDigestParams(digestName);
+                int keyPtr = OpenSSLCrypto.malloc(derivedKey.length);
+                OpenSSLCrypto.memory().write(keyPtr, derivedKey);
 
-                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, derivedKey.length, paramsSegment);
+                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keyPtr, derivedKey.length, paramsPtr);
             } catch (Throwable e) {
                 // Ignore reset errors
             }
