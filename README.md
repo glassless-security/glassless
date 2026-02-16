@@ -62,6 +62,15 @@ MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
 byte[] hash = md.digest("Hello, World!".getBytes());
 ```
 
+## FIPS Mode
+
+GlaSSLess automatically detects OpenSSL FIPS mode and excludes non-approved algorithms:
+
+```java
+GlaSSLessProvider provider = new GlaSSLessProvider();
+System.out.println("FIPS Mode: " + provider.isFIPSMode());
+```
+
 ## Documentation
 
 Comprehensive documentation is available in the `docs` classifier JAR and in `src/main/asciidoc/`:
@@ -74,13 +83,6 @@ Comprehensive documentation is available in the `docs` classifier JAR and in `sr
 | [Post-Quantum Cryptography](src/main/asciidoc/pqc.adoc) | ML-KEM, ML-DSA, SLH-DSA, and hybrid KEMs |
 | [Performance](src/main/asciidoc/performance.adoc) | Benchmark results and optimization guidance |
 | [Development](src/main/asciidoc/development.adoc) | Contributing and architecture guide |
-
-### Building Documentation
-
-```bash
-mvn generate-resources
-# HTML documentation generated in target/generated-docs/
-```
 
 ## Supported Algorithms
 
@@ -139,15 +141,6 @@ mvn test
 mvn test -Pbenchmarks
 ```
 
-## FIPS Mode
-
-GlaSSLess automatically detects OpenSSL FIPS mode and excludes non-approved algorithms:
-
-```java
-GlaSSLessProvider provider = new GlaSSLessProvider();
-System.out.println("FIPS Mode: " + provider.isFIPSMode());
-```
-
 ## License
 
 Apache License, Version 2.0. See [LICENSE.md](LICENSE.md).
@@ -155,11 +148,3 @@ Apache License, Version 2.0. See [LICENSE.md](LICENSE.md).
 ## Contributing
 
 Contributions welcome! See [Development Guide](src/main/asciidoc/development.adoc) for guidelines.
-
-```bash
-# Format code
-mvn spotless:apply
-
-# Run tests
-mvn test
-```
