@@ -16,7 +16,7 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 - **Native OpenSSL Performance**: Leverages OpenSSL's optimized implementations
 - **No Native Compilation**: Uses Java's FFM API (no JNI required)
 - **FIPS Mode Support**: Automatically detects and respects OpenSSL FIPS mode
-- **Comprehensive Algorithm Coverage**: 275+ algorithm implementations
+- **Comprehensive Algorithm Coverage**: 370+ algorithm implementations
 - **Post-Quantum Cryptography**: ML-KEM, ML-DSA, SLH-DSA, and hybrid key exchange (OpenSSL 3.5+)
 - **Drop-in Replacement**: Standard JCA provider interface
 
@@ -79,14 +79,14 @@ Comprehensive documentation is available in the `docs` classifier JAR and in `sr
 |----------|-------------|
 | [Installation Guide](src/main/asciidoc/installation.adoc) | Setup, configuration, and provider registration |
 | [Usage Guide](src/main/asciidoc/usage.adoc) | Code examples for all supported operations |
-| [Supported Algorithms](src/main/asciidoc/algorithms.adoc) | Complete list of 275+ algorithms |
+| [Supported Algorithms](src/main/asciidoc/algorithms.adoc) | Complete list of 370+ algorithms |
 | [Post-Quantum Cryptography](src/main/asciidoc/pqc.adoc) | ML-KEM, ML-DSA, SLH-DSA, and hybrid KEMs |
 | [Performance](src/main/asciidoc/performance.adoc) | Benchmark results and optimization guidance |
 | [Development](src/main/asciidoc/development.adoc) | Contributing and architecture guide |
 
 ## Supported Algorithms
 
-GlaSSLess provides 275+ cryptographic algorithms:
+GlaSSLess provides 370+ cryptographic algorithms:
 
 | Category | Count | Examples |
 |----------|-------|----------|
