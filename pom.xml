@@ -61,7 +61,7 @@
       <version.maven-surefire-plugin>3.5.4</version.maven-surefire-plugin>
       <version.reproducible-build-maven-plugin>0.17</version.reproducible-build-maven-plugin>
       <version.spotless-maven-plugin>2.44.4</version.spotless-maven-plugin>
-      <version.asciidoctor-maven-plugin>3.1.1</version.asciidoctor-maven-plugin>
+      <version.asciidoctor-maven-plugin>3.2.0</version.asciidoctor-maven-plugin>
       <version.maven-assembly-plugin>3.7.1</version.maven-assembly-plugin>
    </properties>
 
