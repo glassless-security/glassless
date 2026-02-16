@@ -1,5 +1,6 @@
 package net.glassless.provider;
 
+import java.lang.foreign.ValueLayout;
 import java.security.Provider;
 import java.security.Security;
 import java.util.List;
@@ -62,6 +63,12 @@ public class GlaSSLessProvider extends Provider {
    public GlaSSLessProvider() {
       super(PROVIDER_NAME, getProviderVersion(), "OpenSSL Native Provider using FFM API");
 
+      // This provider requires a 64-bit platform because it assumes size_t maps to JAVA_LONG
+      if (!is64BitPlatform()) {
+         throw new UnsupportedOperationException(
+            "GlaSSLess requires a 64-bit platform (size_t must be 64 bits)");
+      }
+
       this.fipsMode = FIPSStatus.isFIPSEnabled();
 
       registerMessageDigestServices();
@@ -90,11 +97,24 @@ public class GlaSSLessProvider extends Provider {
    }
 
    /**
+    * Checks if this is a 64-bit platform.
+    * The provider requires 64-bit because it assumes size_t maps to JAVA_LONG.
+    *
+    * @return true if running on a 64-bit platform
+    */
+   public static boolean is64BitPlatform() {
+      return ValueLayout.ADDRESS.byteSize() == 8;
+   }
+
+   /**
     * Checks if OpenSSL is available on this system.
     *
-    * @return true if OpenSSL 3.0+ is available and can be loaded
+    * @return true if OpenSSL 3.0+ is available and can be loaded on a 64-bit platform
     */
    public static boolean isOpenSSLAvailable() {
+      if (!is64BitPlatform()) {
+         return false;
+      }
       try {
          // Attempt to load OpenSSL and get the version string
          // This will trigger the static initializer in OpenSSLCrypto
