@@ -61,6 +61,8 @@
       <version.maven-surefire-plugin>3.5.4</version.maven-surefire-plugin>
       <version.reproducible-build-maven-plugin>0.17</version.reproducible-build-maven-plugin>
       <version.spotless-maven-plugin>2.44.4</version.spotless-maven-plugin>
+      <version.asciidoctor-maven-plugin>3.1.1</version.asciidoctor-maven-plugin>
+      <version.maven-assembly-plugin>3.7.1</version.maven-assembly-plugin>
    </properties>
 
    <dependencies>
@@ -239,6 +241,57 @@
                      <goal>check</goal>
                   </goals>
                   <phase>verify</phase>
+               </execution>
+            </executions>
+         </plugin>
+         <!-- AsciiDoc documentation -->
+         <plugin>
+            <groupId>org.asciidoctor</groupId>
+            <artifactId>asciidoctor-maven-plugin</artifactId>
+            <version>${version.asciidoctor-maven-plugin}</version>
+            <executions>
+               <execution>
+                  <id>generate-docs</id>
+                  <goals>
+                     <goal>process-asciidoc</goal>
+                  </goals>
+                  <phase>generate-resources</phase>
+                  <configuration>
+                     <sourceDirectory>src/main/asciidoc</sourceDirectory>
+                     <outputDirectory>${project.build.directory}/generated-docs</outputDirectory>
+                     <backend>html5</backend>
+                     <attributes>
+                        <toc>left</toc>
+                        <toclevels>3</toclevels>
+                        <icons>font</icons>
+                        <source-highlighter>highlight.js</source-highlighter>
+                        <sectanchors>true</sectanchors>
+                        <sectlinks>true</sectlinks>
+                        <idprefix/>
+                        <idseparator>-</idseparator>
+                        <project-version>${project.version}</project-version>
+                     </attributes>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <!-- Package documentation as JAR with classifier -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>${version.maven-assembly-plugin}</version>
+            <executions>
+               <execution>
+                  <id>docs-jar</id>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/assembly/docs.xml</descriptor>
+                     </descriptors>
+                  </configuration>
                </execution>
             </executions>
          </plugin>

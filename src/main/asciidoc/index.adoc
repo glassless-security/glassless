@@ -1,0 +1,101 @@
+= GlaSSLess Documentation
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+:sectanchors:
+:sectlinks:
+
+GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system-installed OpenSSL library to provide a comprehensive suite of cryptographic algorithms. It uses Java's Foreign Function & Memory (FFM) API for native interoperability, requiring no JNI code or native compilation.
+
+== Features
+
+* **Native OpenSSL Performance**: Leverages OpenSSL's optimized implementations
+* **No Native Compilation**: Uses Java's FFM API (no JNI required)
+* **FIPS Mode Support**: Automatically detects and respects OpenSSL FIPS mode
+* **Comprehensive Algorithm Coverage**: 275+ algorithm implementations
+* **Post-Quantum Cryptography**: ML-KEM, ML-DSA, SLH-DSA, and hybrid key exchange (OpenSSL 3.5+)
+* **Drop-in Replacement**: Standard JCA provider interface
+
+== Requirements
+
+* **Java**: 25 or later (with `--enable-native-access` flag)
+* **OpenSSL**: 3.0 or later (`libcrypto.so.3`)
+
+=== OpenSSL Version Compatibility
+
+[cols="1,1,2"]
+|===
+|OpenSSL Version |Status |Notes
+
+|3.0.x |Supported |Base algorithms
+|3.1.x |Supported |Full support
+|3.2.x |Supported |Adds Argon2 KDFs
+|3.3.x |Supported |Latest features
+|3.5.x |Supported |Adds Post-Quantum Cryptography (ML-KEM, ML-DSA, SLH-DSA)
+|===
+
+== Documentation
+
+* <<installation.adoc#,Installation Guide>>
+* <<usage.adoc#,Usage Guide>>
+* <<algorithms.adoc#,Supported Algorithms>>
+* <<pqc.adoc#,Post-Quantum Cryptography>>
+* <<performance.adoc#,Performance>>
+* <<development.adoc#,Development>>
+
+== Quick Start
+
+=== Maven Dependency
+
+[source,xml,subs="attributes+"]
+----
+<dependency>
+   <groupId>net.glassless</groupId>
+   <artifactId>glassless-provider</artifactId>
+   <version>{project-version}</version>
+</dependency>
+----
+
+=== JVM Arguments
+
+The provider requires native access permissions:
+
+[source,bash]
+----
+java --enable-native-access=ALL-UNNAMED -jar your-app.jar
+----
+
+=== Register the Provider
+
+[source,java]
+----
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+// Add provider programmatically
+Security.addProvider(new GlaSSLessProvider());
+
+// Or insert at highest priority
+Security.insertProviderAt(new GlaSSLessProvider(), 1);
+----
+
+=== Basic Example
+
+[source,java]
+----
+import java.security.MessageDigest;
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+byte[] hash = md.digest("Hello, World!".getBytes());
+----
+
+== License
+
+This project is licensed under the Apache License, Version 2.0.
+
+See link:https://www.apache.org/licenses/LICENSE-2.0[Apache License 2.0] for the full license text.

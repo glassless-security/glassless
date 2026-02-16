@@ -1,0 +1,249 @@
+= Development Guide
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+This guide covers development practices for contributing to GlaSSLess.
+
+== Building from Source
+
+[source,bash]
+----
+# Clone the repository
+git clone https://github.com/glassless-security/glassless.git
+cd glassless
+
+# Build with Maven
+mvn clean package
+
+# Run tests
+mvn test
+
+# Build documentation
+mvn generate-resources
+# HTML docs in target/generated-docs/
+----
+
+== Code Style
+
+The project uses link:https://github.com/diffplug/spotless[Spotless] for code formatting:
+
+* 3-space indentation for Java and XML
+* Import ordering: `java`, `javax`, `org`, `com`, `net`
+* UTF-8 encoding, Unix line endings
+
+[source,bash]
+----
+# Check formatting
+mvn spotless:check
+
+# Apply formatting
+mvn spotless:apply
+----
+
+== Project Structure
+
+[source]
+----
+src/main/java/net/glassless/provider/
+├── GlaSSLessProvider.java       # Main provider class
+├── FIPSStatus.java              # FIPS mode detection
+└── internal/
+    ├── OpenSSLCrypto.java       # FFM bindings to OpenSSL
+    ├── cipher/                  # Cipher implementations
+    ├── digest/                  # MessageDigest implementations
+    ├── mac/                     # MAC implementations
+    ├── signature/               # Signature implementations
+    ├── kdf/                     # KDF implementations
+    ├── keygen/                  # KeyGenerator implementations
+    ├── keypairgen/              # KeyPairGenerator implementations
+    ├── keyfactory/              # KeyFactory implementations
+    ├── keyagreement/            # KeyAgreement implementations
+    ├── securerandom/            # SecureRandom implementations
+    ├── mlkem/                   # ML-KEM (FIPS 203) implementations
+    ├── mldsa/                   # ML-DSA (FIPS 204) implementations
+    ├── slhdsa/                  # SLH-DSA (FIPS 205) implementations
+    └── ...
+----
+
+== Key Files
+
+[cols="1,2"]
+|===
+|File |Purpose
+
+|`OpenSSLCrypto.java` |All FFM bindings to OpenSSL. Add new OpenSSL functions here.
+|`GlaSSLessProvider.java` |Service registration. Add new algorithms here.
+|`module-info.java` |Java module definition. Add `opens` directives for new packages.
+|===
+
+== Adding a New Algorithm Family
+
+1. **Create package** under `internal/` (e.g., `internal/newalgo/`)
+
+2. **Add FFM bindings** to `OpenSSLCrypto.java` if needed
+
+3. **Implement SPI classes** (e.g., `KeyPairGeneratorSpi`, `SignatureSpi`)
+
+4. **Create key classes** (`GlaSSLessXxxPublicKey`, `GlaSSLessXxxPrivateKey`)
+
+5. **Register services** in `GlaSSLessProvider.java`
+
+6. **Add module opens** in `module-info.java`:
++
+[source,java]
+----
+opens net.glassless.provider.internal.newalgo to java.base;
+----
+
+7. **Add tests** in `src/test/java/`
+
+== Architecture Patterns
+
+=== KeyPairGenerator Pattern
+
+Example from EdDSA/ML-KEM implementations:
+
+[source,java]
+----
+try (Arena arena = Arena.ofConfined()) {
+    MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
+        MemorySegment.NULL, opensslAlgorithmName, MemorySegment.NULL, arena);
+    OpenSSLCrypto.EVP_PKEY_keygen_init(ctx);
+    MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+    OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
+    MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
+
+    byte[] publicKeyEncoded = OpenSSLCrypto.exportPublicKey(pkey, arena);
+    byte[] privateKeyEncoded = OpenSSLCrypto.exportPrivateKey(pkey, arena);
+    // Create key objects...
+} finally {
+    // Free resources
+}
+----
+
+=== Signature Pattern (Single-shot)
+
+For algorithms like EdDSA and ML-DSA that use single-shot signing:
+
+* Use `EVP_DigestSign`/`EVP_DigestVerify`
+* Pass `NULL` for digest handle when algorithm has built-in hashing
+* Buffer data in `ByteArrayOutputStream` until sign/verify
+
+=== Runtime Algorithm Detection
+
+[source,java]
+----
+// Check if algorithm is available (useful for OpenSSL 3.5+ PQC)
+if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768")) {
+    // Register the service
+}
+----
+
+== OpenSSL Algorithm Names
+
+[cols="1,1,2"]
+|===
+|JCA Name |OpenSSL Name |Notes
+
+|ML-KEM-768 |mlkem768 |Has aliases
+|ML-DSA-65 |mldsa65 |Has aliases
+|SLH-DSA-SHA2-128f |SLH-DSA-SHA2-128f |Hyphenated, no aliases
+|Ed25519 |ED25519 |
+|X25519 |X25519 |
+|===
+
+== Testing
+
+Tests use JUnit 5:
+
+[source,bash]
+----
+# Run all tests
+mvn test
+
+# Run specific test class
+mvn test -Dtest=MLKEMTest
+
+# Run tests with output
+mvn test -Dtest=MLKEMTest -Dsurefire.useFile=false
+----
+
+=== Using Assumptions
+
+Use `Assumptions.assumeTrue()` for optional features:
+
+[source,java]
+----
+assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768"),
+    "ML-KEM requires OpenSSL 3.5+");
+----
+
+Post-quantum tests skip gracefully on older OpenSSL versions.
+
+== Benchmarks
+
+Benchmarks are located in `src/test/java/net/glassless/provider/benchmark/`.
+
+Follow existing patterns:
+
+* Use `@Param` for algorithm variants
+* Check availability in `@Setup` method
+* Return dummy value if algorithm unavailable
+
+[source,bash]
+----
+# Run benchmarks (~20 minutes)
+mvn test -Pbenchmarks
+
+# Generate performance report
+./scripts/generate-performance-report.sh
+----
+
+== Common Issues
+
+=== Module Access Errors
+
+Add `opens` directive to `module-info.java`:
+
+[source,java]
+----
+opens net.glassless.provider.internal.newalgo to java.base;
+----
+
+=== Algorithm Not Found
+
+1. Check `isAlgorithmAvailable()` returns true
+2. Verify registration in `GlaSSLessProvider.java`
+3. Check OpenSSL version (`openssl version`)
+
+=== OpenSSL Name Mismatch
+
+Verify exact OpenSSL algorithm name:
+
+[source,bash]
+----
+openssl list -key-managers
+openssl list -signature-algorithms
+openssl list -kem-algorithms
+----
+
+== Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Ensure code follows the project style (`mvn spotless:apply`)
+4. Add tests for new functionality
+5. Commit your changes (`git commit -am 'Add new feature'`)
+6. Push to the branch (`git push origin feature/my-feature`)
+7. Open a Pull Request
+
+Please ensure all tests pass before submitting:
+
+[source,bash]
+----
+mvn test
+----

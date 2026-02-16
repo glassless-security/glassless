@@ -1,0 +1,252 @@
+= Usage Guide
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+This guide provides examples for using GlaSSLess cryptographic operations.
+
+== Message Digest (Hashing)
+
+[source,java]
+----
+import java.security.MessageDigest;
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+byte[] hash = md.digest("Hello, World!".getBytes());
+----
+
+== Symmetric Encryption (AES-GCM)
+
+[source,java]
+----
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import java.security.SecureRandom;
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate a key
+KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
+keyGen.init(256);
+SecretKey key = keyGen.generateKey();
+
+// Generate IV
+byte[] iv = new byte[12];
+SecureRandom random = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+random.nextBytes(iv);
+
+// Encrypt
+Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
+byte[] ciphertext = cipher.doFinal("Secret message".getBytes());
+
+// Decrypt
+cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
+byte[] plaintext = cipher.doFinal(ciphertext);
+----
+
+== Digital Signatures (ECDSA)
+
+[source,java]
+----
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate key pair
+KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+keyPairGen.initialize(256);
+KeyPair keyPair = keyPairGen.generateKeyPair();
+
+// Sign
+Signature signer = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+signer.initSign(keyPair.getPrivate());
+signer.update("Data to sign".getBytes());
+byte[] signature = signer.sign();
+
+// Verify
+Signature verifier = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+verifier.initVerify(keyPair.getPublic());
+verifier.update("Data to sign".getBytes());
+boolean valid = verifier.verify(signature);
+----
+
+== Key Derivation (HKDF)
+
+[source,java]
+----
+import javax.crypto.KDF;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.HKDFParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Input keying material
+byte[] ikm = "input-key-material".getBytes();
+byte[] salt = "salt-value".getBytes();
+byte[] info = "context-info".getBytes();
+
+KDF hkdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+SecretKey derived = hkdf.deriveKey("AES",
+    HKDFParameterSpec.expandOnly(new SecretKeySpec(ikm, "HKDF"), info, 32));
+----
+
+== HMAC
+
+[source,java]
+----
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+byte[] key = "secret-key".getBytes();
+SecretKeySpec keySpec = new SecretKeySpec(key, "HmacSHA256");
+
+Mac mac = Mac.getInstance("HmacSHA256", "GlaSSLess");
+mac.init(keySpec);
+byte[] hmac = mac.doFinal("Message".getBytes());
+----
+
+== Post-Quantum Key Encapsulation (ML-KEM)
+
+Requires OpenSSL 3.5+.
+
+[source,java]
+----
+import javax.crypto.KEM;
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate ML-KEM key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-KEM-768", "GlaSSLess");
+KeyPair keyPair = kpg.generateKeyPair();
+
+// Encapsulation (sender side)
+KEM kem = KEM.getInstance("ML-KEM-768", "GlaSSLess");
+KEM.Encapsulator encapsulator = kem.newEncapsulator(keyPair.getPublic());
+KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+byte[] ciphertext = encapsulated.encapsulation();
+SecretKey sharedSecretSender = encapsulated.key();
+
+// Decapsulation (receiver side)
+KEM.Decapsulator decapsulator = kem.newDecapsulator(keyPair.getPrivate());
+SecretKey sharedSecretReceiver = decapsulator.decapsulate(ciphertext);
+
+// Both parties now have the same shared secret
+----
+
+== Post-Quantum Digital Signatures (ML-DSA)
+
+Requires OpenSSL 3.5+.
+
+[source,java]
+----
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate ML-DSA key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+KeyPair keyPair = kpg.generateKeyPair();
+
+// Sign
+Signature signer = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+signer.initSign(keyPair.getPrivate());
+signer.update("Data to sign".getBytes());
+byte[] signature = signer.sign();
+
+// Verify
+Signature verifier = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+verifier.initVerify(keyPair.getPublic());
+verifier.update("Data to sign".getBytes());
+boolean valid = verifier.verify(signature);
+----
+
+== Hybrid Key Encapsulation (X25519MLKEM768)
+
+Hybrid KEMs combine classical and post-quantum cryptography. Requires OpenSSL 3.5+.
+
+[source,java]
+----
+import javax.crypto.KEM;
+import java.security.*;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Server generates hybrid key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPair serverKeyPair = kpg.generateKeyPair();
+
+// Client encapsulates shared secret using server's public key
+KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
+KEM.Encapsulated encapsulated = encapsulator.encapsulate();
+
+byte[] ciphertext = encapsulated.encapsulation();  // Send to server
+SecretKey clientSecret = encapsulated.key();       // 64-byte shared secret
+
+// Server decapsulates to recover the same shared secret
+KEM.Decapsulator decapsulator = kem.newDecapsulator(serverKeyPair.getPrivate());
+SecretKey serverSecret = decapsulator.decapsulate(ciphertext);
+
+// Both parties now have identical shared secrets
+----
+
+NOTE: JDK 25's JSSE does not yet support hybrid named groups for TLS 1.3. See <<pqc.adoc#,Post-Quantum Cryptography>> for workarounds and detailed documentation.
+
+== TLS 1.3 Key Derivation
+
+GlaSSLess provides TLS 1.3 KDF implementations for deriving traffic keys:
+
+[source,java]
+----
+import javax.crypto.KDF;
+import javax.crypto.SecretKey;
+import net.glassless.provider.internal.kdf.TLS13KDFParameterSpec;
+
+// Extract PRK from input key material
+TLS13KDFParameterSpec extractParams = TLS13KDFParameterSpec
+   .forExtract(inputKeyMaterial, salt, 32)
+   .build();
+
+KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+byte[] prk = kdf.deriveData(extractParams);
+
+// Expand to derive traffic key
+TLS13KDFParameterSpec expandParams = TLS13KDFParameterSpec
+   .forExpand(prk, "key", handshakeHash, 16)
+   .build();
+
+SecretKey trafficKey = kdf.deriveKey("AES", expandParams);
+----
+
+== FIPS Mode
+
+When OpenSSL is configured with FIPS mode enabled, GlaSSLess automatically detects this and excludes non-FIPS-approved algorithms from registration.
+
+[source,java]
+----
+GlaSSLessProvider provider = new GlaSSLessProvider();
+boolean fipsMode = provider.isFIPSMode();
+System.out.println("FIPS Mode: " + (fipsMode ? "ENABLED" : "DISABLED"));
+----

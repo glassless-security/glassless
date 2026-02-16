@@ -1,0 +1,175 @@
+= Supported Algorithms
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+GlaSSLess provides over 275 cryptographic algorithm implementations backed by OpenSSL.
+
+== Message Digests (18)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|SHA-224, SHA-256, SHA-384, SHA-512 |Yes
+|SHA-512/224, SHA-512/256 |Yes
+|SHA3-224, SHA3-256, SHA3-384, SHA3-512 |Yes
+|SHAKE128, SHAKE256 |Yes
+|BLAKE2b-512, BLAKE2s-256 |Yes
+|MD5, SHA-1 |No
+|SM3, RIPEMD160 |No
+|===
+
+== Ciphers (143)
+
+[cols="1,2,2,1"]
+|===
+|Algorithm |Key Sizes |Modes |FIPS Approved
+
+|AES |128, 192, 256 |ECB, CBC, CFB, CTR, OFB, GCM, CCM, XTS |Yes
+|AES Key Wrap |128, 192, 256 |KW, KWP |Yes
+|Camellia |128, 192, 256 |ECB, CBC, CFB, CTR, OFB |No
+|ARIA |128, 192, 256 |ECB, CBC, CFB, CTR, OFB, GCM |No
+|SM4 |128 |ECB, CBC, CFB, CTR, OFB |No
+|ChaCha20 |256 |Stream |No
+|ChaCha20-Poly1305 |256 |AEAD |No
+|DESede (3DES) |168 |ECB, CBC |No
+|RSA |1024-8192 |ECB with PKCS1/OAEP |Yes
+|===
+
+== MACs (20)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512 |Yes
+|HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512 |Yes
+|AESCMAC, AESGMAC |Yes
+|KMAC128, KMAC256 |Yes
+|HmacSHA1 |No
+|Poly1305, SipHash |No
+|===
+
+== Signatures (31+)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|SHA256withRSA, SHA384withRSA, SHA512withRSA |Yes
+|SHA256withRSAandMGF1 (RSA-PSS) |Yes
+|SHA256withECDSA, SHA384withECDSA, SHA512withECDSA |Yes
+|SHA3-256withECDSA, SHA3-384withECDSA, SHA3-512withECDSA |Yes
+|SHA256withDSA, SHA384withDSA, SHA512withDSA |Yes
+|Ed25519, Ed448, EdDSA |Yes
+|SHA1withRSA, SHA1withECDSA, SHA1withDSA |No
+|===
+
+== Post-Quantum Signatures (15)
+
+Requires OpenSSL 3.5+.
+
+[cols="1,1,1"]
+|===
+|Algorithm |Security Level |FIPS Approved
+
+|ML-DSA-44 |128-bit |Yes (FIPS 204)
+|ML-DSA-65 |192-bit |Yes (FIPS 204)
+|ML-DSA-87 |256-bit |Yes (FIPS 204)
+|SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f |128-bit |Yes (FIPS 205)
+|SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f |192-bit |Yes (FIPS 205)
+|SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f |256-bit |Yes (FIPS 205)
+|SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f |128-bit |Yes (FIPS 205)
+|SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f |192-bit |Yes (FIPS 205)
+|SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f |256-bit |Yes (FIPS 205)
+|===
+
+== Key Encapsulation Mechanisms (5)
+
+Requires OpenSSL 3.5+.
+
+[cols="1,1,1"]
+|===
+|Algorithm |Security Level |FIPS Approved
+
+|ML-KEM-512 |128-bit |Yes (FIPS 203)
+|ML-KEM-768 |192-bit |Yes (FIPS 203)
+|ML-KEM-1024 |256-bit |Yes (FIPS 203)
+|X25519MLKEM768 |Hybrid |Yes
+|X448MLKEM1024 |Hybrid |Yes
+|===
+
+NOTE: **Hybrid KEMs** combine classical key exchange (X25519/X448) with ML-KEM for defense against both classical and quantum attacks. See <<pqc.adoc#,Post-Quantum Cryptography>> for details.
+
+== Key Agreement (5)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|ECDH, DH |Yes
+|X25519, X448, XDH |Yes
+|===
+
+== Key Derivation Functions (14)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|HKDF-SHA256, HKDF-SHA384, HKDF-SHA512 |Yes
+|HKDF-SHA224, HKDF-SHA1 |Yes (SHA1 deprecated)
+|TLS1-PRF-SHA256, TLS1-PRF-SHA384 |Yes
+|TLS13-KDF-SHA256, TLS13-KDF-SHA384 |Yes
+|SSHKDF-SHA256 |Yes
+|KBKDF-HMAC-SHA256 |Yes
+|X963KDF-SHA256, X963KDF-SHA384, X963KDF-SHA512 |Yes
+|===
+
+== Secret Key Factories (32)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|PBKDF2WithHmacSHA256, PBKDF2WithHmacSHA384, PBKDF2WithHmacSHA512 |Yes
+|PBKDF2WithHmacSHA3-256, PBKDF2WithHmacSHA3-384, PBKDF2WithHmacSHA3-512 |Yes
+|PBKDF2WithHmacSHA1 |No
+|SCRYPT |No
+|Argon2i, Argon2d, Argon2id |No
+|===
+
+== Secure Random (3)
+
+[cols="2,1"]
+|===
+|Algorithm |FIPS Approved
+
+|NativePRNG, DRBG |Yes
+|SHA1PRNG |No
+|===
+
+== FIPS Mode
+
+When OpenSSL is configured with FIPS mode enabled, GlaSSLess automatically detects this and excludes non-FIPS-approved algorithms from registration.
+
+=== Supported FIPS Standards
+
+[cols="1,2,2"]
+|===
+|Standard |Description |Algorithms
+
+|FIPS 140-3 |Cryptographic Module Validation |OpenSSL FIPS provider
+|FIPS 180-4 |Secure Hash Standard |SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256
+|FIPS 186-5 |Digital Signature Standard |DSA, ECDSA, EdDSA (Ed25519, Ed448)
+|FIPS 197 |Advanced Encryption Standard |AES-128, AES-192, AES-256
+|FIPS 198-1 |HMAC |HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512
+|FIPS 202 |SHA-3 Standard |SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, SHAKE256
+|FIPS 203 |ML-KEM |ML-KEM-512, ML-KEM-768, ML-KEM-1024 (OpenSSL 3.5+)
+|FIPS 204 |ML-DSA |ML-DSA-44, ML-DSA-65, ML-DSA-87 (OpenSSL 3.5+)
+|FIPS 205 |SLH-DSA |SLH-DSA-SHA2-*, SLH-DSA-SHAKE-* (OpenSSL 3.5+)
+|===
+
+NOTE: FIPS 203, 204, and 205 are the post-quantum cryptography standards. Support requires OpenSSL 3.5+ compiled with the FIPS provider that includes these algorithms.

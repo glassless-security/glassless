@@ -1,0 +1,224 @@
+= Installation Guide
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+== Maven Dependency
+
+[source,xml,subs="attributes+"]
+----
+<dependency>
+   <groupId>net.glassless</groupId>
+   <artifactId>glassless-provider</artifactId>
+   <version>{project-version}</version>
+</dependency>
+----
+
+== Gradle Dependency
+
+=== Groovy DSL
+
+[source,groovy,subs="attributes+"]
+----
+implementation 'net.glassless:glassless-provider:{project-version}'
+----
+
+=== Kotlin DSL
+
+[source,kotlin,subs="attributes+"]
+----
+implementation("net.glassless:glassless-provider:{project-version}")
+----
+
+== JVM Arguments
+
+The provider requires native access permissions:
+
+[source,bash]
+----
+java --enable-native-access=ALL-UNNAMED -jar your-app.jar
+----
+
+Or set in `JAVA_TOOL_OPTIONS`:
+
+[source,bash]
+----
+export JAVA_TOOL_OPTIONS="--enable-native-access=ALL-UNNAMED"
+----
+
+== Registering the Provider
+
+=== Programmatic Registration
+
+[source,java]
+----
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+// Option 1: Add provider programmatically
+Security.addProvider(new GlaSSLessProvider());
+
+// Option 2: Insert at highest priority
+Security.insertProviderAt(new GlaSSLessProvider(), 1);
+----
+
+=== System-wide Configuration
+
+For system-wide installation, add GlaSSLess to the `java.security` file located at `$JAVA_HOME/conf/security/java.security`.
+
+==== Finding the Configuration File
+
+[source,bash]
+----
+# Find java.security location
+java -XshowSettings:all 2>&1 | grep java.home
+# Then look in: <java.home>/conf/security/java.security
+----
+
+==== Adding the Provider
+
+Providers are listed with numeric priorities (lower numbers = higher priority):
+
+[source,properties]
+----
+# Existing providers (example)
+security.provider.1=SUN
+security.provider.2=SunRsaSign
+security.provider.3=SunEC
+security.provider.4=SunJSSE
+security.provider.5=SunJCE
+# ... other providers
+
+# Add GlaSSLess
+security.provider.13=net.glassless.provider.GlaSSLessProvider
+----
+
+== Best Practices
+
+=== Provider Priority Positioning
+
+[cols="1,2,2"]
+|===
+|Position |Use Case |Recommendation
+
+|Low priority (e.g., 13)
+|Explicit use only
+|Use `getInstance("ALG", "GlaSSLess")` to select
+
+|Mid priority (e.g., 5-6)
+|Preferred for specific algorithms
+|GlaSSLess used when JDK doesn't provide algorithm
+
+|High priority (e.g., 1-2)
+|Default for all operations
+|All crypto uses GlaSSLess unless unavailable
+|===
+
+=== Recommended: Low Priority with Explicit Selection
+
+For most applications, add GlaSSLess at low priority and explicitly request it when needed:
+
+[source,properties]
+----
+# Add GlaSSLess at low priority
+security.provider.13=net.glassless.provider.GlaSSLessProvider
+----
+
+[source,java]
+----
+// Explicitly request GlaSSLess for performance-critical operations
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
+----
+
+This approach:
+
+* Maintains JDK behavior by default
+* Allows selective use of GlaSSLess where beneficial
+* Avoids unexpected behavior changes
+
+=== High Priority for OpenSSL-First Strategy
+
+If you want all cryptographic operations to use OpenSSL by default:
+
+[source,properties]
+----
+# Insert GlaSSLess at high priority
+security.provider.1=net.glassless.provider.GlaSSLessProvider
+security.provider.2=SUN
+security.provider.3=SunRsaSign
+# ... remaining providers renumbered
+----
+
+WARNING: High priority positioning changes default behavior for all applications using this JVM. Test thoroughly before deploying.
+
+=== FIPS Mode Considerations
+
+When OpenSSL is in FIPS mode, GlaSSLess automatically excludes non-approved algorithms. For FIPS-compliant deployments:
+
+[source,properties]
+----
+# Place GlaSSLess at high priority to ensure FIPS-approved algorithms are used
+security.provider.1=net.glassless.provider.GlaSSLessProvider
+security.provider.2=SunJSSE
+# ... other providers
+----
+
+=== TLS/SSL Configuration
+
+For TLS connections to use GlaSSLess algorithms, ensure the provider is available before `SunJSSE`:
+
+[source,properties]
+----
+security.provider.1=net.glassless.provider.GlaSSLessProvider
+security.provider.2=SunJSSE
+# ... remaining providers
+----
+
+The JSSE implementation will automatically use GlaSSLess for underlying cryptographic operations.
+
+=== Security Properties File Override
+
+Instead of modifying the system `java.security`, create a custom properties file:
+
+[source,properties]
+----
+# custom-security.properties
+security.provider.1=net.glassless.provider.GlaSSLessProvider
+security.provider.2=SUN
+# ... etc
+----
+
+Then specify it at runtime:
+
+[source,bash]
+----
+java -Djava.security.properties=/path/to/custom-security.properties \
+     --enable-native-access=ALL-UNNAMED \
+     -jar your-app.jar
+----
+
+=== Module Path Configuration
+
+When using the module path, ensure GlaSSLess is accessible:
+
+[source,bash]
+----
+java --module-path /path/to/glassless-provider.jar \
+     --add-modules net.glassless.provider \
+     --enable-native-access=net.glassless.provider \
+     -jar your-app.jar
+----
+
+== Command-Line Tool
+
+Display provider information:
+
+[source,bash,subs="attributes+"]
+----
+java --enable-native-access=ALL-UNNAMED -jar glassless-provider-{project-version}.jar
+
+# Verbose mode (list all algorithms)
+java --enable-native-access=ALL-UNNAMED -jar glassless-provider-{project-version}.jar --verbose
+----
