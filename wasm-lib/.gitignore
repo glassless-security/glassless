@@ -1,3 +1,2 @@
-*.wasm
 wasi-sdk/
 binaryen/
