@@ -2216,6 +2216,68 @@ public class OpenSSLCrypto {
       return params;
    }
 
+   /**
+    * Creates an OSSL_PARAM array for TLS 1.3 KDF operations.
+    *
+    * @param digestName the digest algorithm name (SHA256 or SHA384)
+    * @param mode the mode string ("EXTRACT_ONLY" or "EXPAND_ONLY")
+    * @param key the input key material (for extract) or PRK (for expand)
+    * @param salt the salt (for extract mode, can be null)
+    * @param prefix the label prefix (typically "tls13 ")
+    * @param label the label (for expand mode)
+    * @param data the context data (for expand mode)
+    * @param arena the arena for memory allocation
+    * @return the OSSL_PARAM array
+    */
+   public static MemorySegment createTLS13KDFParams(String digestName, String mode,
+         byte[] key, byte[] salt, byte[] prefix, byte[] label, byte[] data, Arena arena) {
+      // Count number of parameters needed
+      int numParams = 3;  // digest, mode, key are always required
+      if (salt != null && salt.length > 0) numParams++;
+      if (prefix != null && prefix.length > 0) numParams++;
+      if (label != null && label.length > 0) numParams++;
+      if (data != null) numParams++;  // data can be empty but present
+      numParams++;  // end marker
+
+      MemorySegment params = arena.allocate(OSSL_PARAM_SIZE * numParams);
+      int paramIndex = 0;
+
+      // 1. Digest parameter
+      paramIndex = addUtf8Param(params, paramIndex, "digest", digestName, arena);
+
+      // 2. Mode parameter (UTF8 string for TLS13-KDF)
+      paramIndex = addUtf8Param(params, paramIndex, "mode", mode, arena);
+
+      // 3. Key parameter
+      paramIndex = addOctetParam(params, paramIndex, "key", key, arena);
+
+      // 4. Salt parameter (optional, for extract mode)
+      if (salt != null && salt.length > 0) {
+         paramIndex = addOctetParam(params, paramIndex, "salt", salt, arena);
+      }
+
+      // 5. Prefix parameter (optional, typically "tls13 ")
+      if (prefix != null && prefix.length > 0) {
+         paramIndex = addOctetParam(params, paramIndex, "prefix", prefix, arena);
+      }
+
+      // 6. Label parameter (for expand mode)
+      if (label != null && label.length > 0) {
+         paramIndex = addOctetParam(params, paramIndex, "label", label, arena);
+      }
+
+      // 7. Data parameter (context, for expand mode - can be empty)
+      if (data != null) {
+         paramIndex = addOctetParam(params, paramIndex, "data", data, arena);
+      }
+
+      // End marker
+      long offset = paramIndex * OSSL_PARAM_SIZE;
+      params.set(ValueLayout.ADDRESS, offset, MemorySegment.NULL);
+
+      return params;
+   }
+
    // Helper methods for building OSSL_PARAM entries
 
    private static int addUtf8Param(MemorySegment params, int paramIndex, String key, String value, Arena arena) {

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import net.glassless.provider.internal.kdf.KBKDFParameterSpec;
 import net.glassless.provider.internal.kdf.SSHKDFParameterSpec;
+import net.glassless.provider.internal.kdf.TLS13KDFParameterSpec;
 import net.glassless.provider.internal.kdf.TLSPRFParameterSpec;
 import net.glassless.provider.internal.kdf.X963KDFParameterSpec;
 
@@ -191,6 +192,195 @@ public class KDFTest {
 
          assertNotNull(keyBlock);
          assertEquals(128, keyBlock.length);
+      }
+   }
+
+   @Nested
+   @DisplayName("TLS 1.3 KDF Tests")
+   class TLS13KDFTests {
+
+      @Test
+      @DisplayName("TLS13-KDF-SHA256 extract mode")
+      void testTLS13KDFSHA256Extract() throws Exception {
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+         assertNotNull(kdf);
+
+         // Input key material (e.g., ECDHE shared secret)
+         byte[] ikm = new byte[32];
+         for (int i = 0; i < 32; i++) ikm[i] = (byte) i;
+
+         // Salt (e.g., previous secret in TLS 1.3 key schedule)
+         byte[] salt = new byte[32];
+         for (int i = 0; i < 32; i++) salt[i] = (byte) (i + 100);
+
+         // Extract PRK (SHA-256 output = 32 bytes)
+         TLS13KDFParameterSpec params = TLS13KDFParameterSpec
+            .forExtract(ikm, salt, 32)
+            .build();
+
+         SecretKey prk = kdf.deriveKey("TLS13-PRK", params);
+
+         assertNotNull(prk);
+         assertEquals(32, prk.getEncoded().length);
+      }
+
+      @Test
+      @DisplayName("TLS13-KDF-SHA256 expand mode")
+      void testTLS13KDFSHA256Expand() throws Exception {
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+
+         // First extract a PRK
+         byte[] ikm = new byte[32];
+         for (int i = 0; i < 32; i++) ikm[i] = (byte) i;
+         byte[] salt = new byte[32];
+
+         TLS13KDFParameterSpec extractParams = TLS13KDFParameterSpec
+            .forExtract(ikm, salt, 32)
+            .build();
+         byte[] prk = kdf.deriveData(extractParams);
+
+         // Now expand to derive a traffic key
+         byte[] context = new byte[32];  // Handshake hash
+         for (int i = 0; i < 32; i++) context[i] = (byte) (i + 50);
+
+         TLS13KDFParameterSpec expandParams = TLS13KDFParameterSpec
+            .forExpand(prk, "key", context, 16)
+            .build();
+
+         SecretKey trafficKey = kdf.deriveKey("AES", expandParams);
+
+         assertNotNull(trafficKey);
+         assertEquals("AES", trafficKey.getAlgorithm());
+         assertEquals(16, trafficKey.getEncoded().length);
+      }
+
+      @Test
+      @DisplayName("TLS13-KDF-SHA384 extract and expand")
+      void testTLS13KDFSHA384() throws Exception {
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA384", "GlaSSLess");
+         assertNotNull(kdf);
+
+         // Input key material
+         byte[] ikm = new byte[48];
+         for (int i = 0; i < 48; i++) ikm[i] = (byte) i;
+
+         // Extract PRK (SHA-384 output = 48 bytes)
+         TLS13KDFParameterSpec extractParams = TLS13KDFParameterSpec
+            .forExtract(ikm, null, 48)
+            .build();
+         byte[] prk = kdf.deriveData(extractParams);
+
+         assertNotNull(prk);
+         assertEquals(48, prk.length);
+
+         // Expand to derive IV
+         TLS13KDFParameterSpec expandParams = TLS13KDFParameterSpec
+            .forExpand(prk, "iv", new byte[0], 12)
+            .build();
+
+         byte[] iv = kdf.deriveData(expandParams);
+
+         assertNotNull(iv);
+         assertEquals(12, iv.length);
+      }
+
+      @Test
+      @DisplayName("Different labels produce different keys")
+      void testDifferentLabels() throws Exception {
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+
+         byte[] prk = new byte[32];
+         for (int i = 0; i < 32; i++) prk[i] = (byte) (i * 3);
+         byte[] context = new byte[32];
+
+         TLS13KDFParameterSpec keyParams = TLS13KDFParameterSpec
+            .forExpand(prk, "key", context, 16)
+            .build();
+         TLS13KDFParameterSpec ivParams = TLS13KDFParameterSpec
+            .forExpand(prk, "iv", context, 12)
+            .build();
+
+         byte[] keyData = kdf.deriveData(keyParams);
+         byte[] ivData = kdf.deriveData(ivParams);
+
+         assertNotNull(keyData);
+         assertNotNull(ivData);
+         // Different labels should produce different output
+         // (even if we only compare first 12 bytes)
+         boolean different = false;
+         for (int i = 0; i < 12; i++) {
+            if (keyData[i] != ivData[i]) {
+               different = true;
+               break;
+            }
+         }
+         assertTrue(different, "Different labels should produce different keys");
+      }
+
+      @Test
+      @DisplayName("TLS 1.3 full key schedule simulation")
+      void testTLS13KeySchedule() throws Exception {
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+
+         // Simulate TLS 1.3 key schedule per RFC 8446 Section 7.1
+
+         // 1. Early Secret = HKDF-Extract(salt=0, IKM=PSK or 0)
+         byte[] zeroSalt = new byte[32];
+         byte[] zeroPsk = new byte[32];  // No PSK case
+
+         TLS13KDFParameterSpec earlyParams = TLS13KDFParameterSpec
+            .forExtract(zeroPsk, zeroSalt, 32)
+            .build();
+         byte[] earlySecret = kdf.deriveData(earlyParams);
+         assertNotNull(earlySecret);
+         assertEquals(32, earlySecret.length);
+
+         // 2. Derive-Secret for "derived" with empty hash
+         byte[] emptyHash = new byte[32];  // SHA256 of empty string (simplified)
+         TLS13KDFParameterSpec derivedParams = TLS13KDFParameterSpec
+            .forExpand(earlySecret, "derived", emptyHash, 32)
+            .build();
+         byte[] derivedSecret = kdf.deriveData(derivedParams);
+         assertNotNull(derivedSecret);
+
+         // 3. Handshake Secret = HKDF-Extract(salt=derived_secret, IKM=ECDHE)
+         byte[] ecdheSecret = new byte[32];
+         for (int i = 0; i < 32; i++) ecdheSecret[i] = (byte) (i + 1);
+
+         TLS13KDFParameterSpec hsParams = TLS13KDFParameterSpec
+            .forExtract(ecdheSecret, derivedSecret, 32)
+            .build();
+         byte[] handshakeSecret = kdf.deriveData(hsParams);
+         assertNotNull(handshakeSecret);
+         assertEquals(32, handshakeSecret.length);
+
+         // 4. Derive client handshake traffic secret
+         byte[] handshakeHash = new byte[32];
+         for (int i = 0; i < 32; i++) handshakeHash[i] = (byte) (i * 2);
+
+         TLS13KDFParameterSpec chtsParams = TLS13KDFParameterSpec
+            .forExpand(handshakeSecret, "c hs traffic", handshakeHash, 32)
+            .build();
+         byte[] clientHsTrafficSecret = kdf.deriveData(chtsParams);
+         assertNotNull(clientHsTrafficSecret);
+         assertEquals(32, clientHsTrafficSecret.length);
+
+         // 5. Derive traffic key from client handshake traffic secret
+         TLS13KDFParameterSpec keyParams = TLS13KDFParameterSpec
+            .forExpand(clientHsTrafficSecret, "key", new byte[0], 16)
+            .build();
+         SecretKey trafficKey = kdf.deriveKey("AES", keyParams);
+         assertNotNull(trafficKey);
+         assertEquals("AES", trafficKey.getAlgorithm());
+         assertEquals(16, trafficKey.getEncoded().length);
+
+         // 6. Derive IV
+         TLS13KDFParameterSpec ivParams = TLS13KDFParameterSpec
+            .forExpand(clientHsTrafficSecret, "iv", new byte[0], 12)
+            .build();
+         byte[] iv = kdf.deriveData(ivParams);
+         assertNotNull(iv);
+         assertEquals(12, iv.length);
       }
    }
 }

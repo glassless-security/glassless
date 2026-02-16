@@ -1079,6 +1079,12 @@ public class GlaSSLessProvider extends Provider {
          net.glassless.provider.internal.kdf.TLS1PRF_SHA256.class.getName(), null, null));
       putService(new Service(this, KDF, "TLS1-PRF-SHA384",
          net.glassless.provider.internal.kdf.TLS1PRF_SHA384.class.getName(), null, null));
+
+      // TLS 1.3 KDF - FIPS approved (HKDF-based)
+      putService(new Service(this, KDF, "TLS13-KDF-SHA256",
+         net.glassless.provider.internal.kdf.TLS13KDF_SHA256.class.getName(), null, null));
+      putService(new Service(this, KDF, "TLS13-KDF-SHA384",
+         net.glassless.provider.internal.kdf.TLS13KDF_SHA384.class.getName(), null, null));
    }
 
    private void registerKEMServices() {
