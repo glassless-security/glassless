@@ -93,7 +93,11 @@ public class DHKeyAgreement extends KeyAgreementSpi {
 
                 try {
                     // Derive the shared secret
-                    this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privKey, pubKey, arena);
+                    byte[] rawSecret = OpenSSLCrypto.deriveSharedSecret(privKey, pubKey, arena);
+                    // Strip leading zeros for JDK interoperability.
+                    // DH shared secret is a big integer, and the JDK's SunJCE provider
+                    // returns it without leading zero bytes.
+                    this.sharedSecret = stripLeadingZeros(rawSecret);
                 } finally {
                     OpenSSLCrypto.EVP_PKEY_free(pubKey);
                 }
@@ -101,6 +105,24 @@ public class DHKeyAgreement extends KeyAgreementSpi {
                 OpenSSLCrypto.EVP_PKEY_free(privKey);
             }
         }
+    }
+
+    /**
+     * Strips leading zero bytes from the byte array.
+     * DH shared secrets are big integers, and the JDK convention is to
+     * return them without leading zeros for interoperability.
+     */
+    private static byte[] stripLeadingZeros(byte[] data) {
+        int leadingZeros = 0;
+        while (leadingZeros < data.length - 1 && data[leadingZeros] == 0) {
+            leadingZeros++;
+        }
+        if (leadingZeros == 0) {
+            return data;
+        }
+        byte[] result = new byte[data.length - leadingZeros];
+        System.arraycopy(data, leadingZeros, result, 0, result.length);
+        return result;
     }
 
     @Override
