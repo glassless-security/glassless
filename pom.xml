@@ -293,6 +293,18 @@
                      </descriptors>
                   </configuration>
                </execution>
+               <execution>
+                  <id>asciidoc-sources-jar</id>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/assembly/asciidoc-sources.xml</descriptor>
+                     </descriptors>
+                  </configuration>
+               </execution>
             </executions>
          </plugin>
       </plugins>
