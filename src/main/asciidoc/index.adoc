@@ -41,6 +41,7 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 * <<usage.adoc#,Usage Guide>>
 * <<algorithms.adoc#,Supported Algorithms>>
 * <<pqc.adoc#,Post-Quantum Cryptography>>
+* <<fips.adoc#,FIPS Compliance>>
 * <<performance.adoc#,Performance>>
 * <<development.adoc#,Development>>
 
