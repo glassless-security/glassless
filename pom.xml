@@ -4,7 +4,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>net.glassless</groupId>
    <artifactId>glassless-provider</artifactId>
-   <version>0.8.0</version>
+   <version>0.9-SNAPSHOT</version>
    <packaging>jar</packaging>
    <name>GlaSSLess Provider</name>
    <description>A JCA security provider that delegates cryptographic operations to OpenSSL via the Foreign Function and Memory API</description>
