@@ -11,6 +11,18 @@ on:
         description: 'Next development version (e.g., 0.2-SNAPSHOT)'
         required: true
         type: string
+      resume_from:
+        description: 'Resume from step (leave empty for full release)'
+        required: false
+        type: choice
+        default: ''
+        options:
+          - ''
+          - 'finalize'
+      deployment_id:
+        description: 'Maven Central deployment ID (for resume only)'
+        required: false
+        type: string
 
 jobs:
   release:
@@ -43,6 +55,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Set release version
+        if: inputs.resume_from == ''
         run: |
           mvn -B versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
           git add pom.xml
@@ -50,6 +63,7 @@ jobs:
           git tag -a "v${{ inputs.version }}" -m "Release ${{ inputs.version }}"
 
       - name: Build and publish to Maven Central
+        if: inputs.resume_from == ''
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
@@ -57,6 +71,53 @@ jobs:
         run: |
           mvn -B clean deploy -Prelease \
             -Dgpg.passphrase="${GPG_PASSPHRASE}"
+
+      - name: Check deployment status (resume mode)
+        if: inputs.resume_from == 'finalize' && inputs.deployment_id != ''
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+        run: |
+          echo "Checking deployment status for: ${{ inputs.deployment_id }}"
+          # Poll the deployment status using the Central API
+          for i in {1..60}; do
+            STATUS=$(curl -s -u "${CENTRAL_USERNAME}:${CENTRAL_PASSWORD}" \
+              "https://central.sonatype.com/api/v1/publisher/deployment/${{ inputs.deployment_id }}" \
+              | jq -r '.deploymentState // "UNKNOWN"')
+            echo "Attempt $i: Status = $STATUS"
+            if [ "$STATUS" = "PUBLISHED" ]; then
+              echo "Deployment is published!"
+              exit 0
+            elif [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "UNKNOWN" ]; then
+              echo "Deployment failed or not found"
+              exit 1
+            fi
+            sleep 30
+          done
+          echo "Timeout waiting for deployment"
+          exit 1
+
+      - name: Verify Maven Central publication (resume mode)
+        if: inputs.resume_from == 'finalize'
+        run: |
+          echo "Verifying ${{ inputs.version }} is available on Maven Central..."
+          for i in {1..10}; do
+            if curl -sf "https://repo1.maven.org/maven2/net/glassless/glassless-provider/${{ inputs.version }}/glassless-provider-${{ inputs.version }}.pom" > /dev/null; then
+              echo "Version ${{ inputs.version }} is available on Maven Central"
+              exit 0
+            fi
+            echo "Attempt $i: Not yet available, waiting..."
+            sleep 30
+          done
+          echo "Warning: Could not verify Maven Central availability, continuing anyway"
+
+      - name: Set release version (resume mode)
+        if: inputs.resume_from == 'finalize'
+        run: |
+          mvn -B versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
+          git add pom.xml
+          git commit -m "Release ${{ inputs.version }}" || echo "Release commit may already exist"
+          git tag -a "v${{ inputs.version }}" -m "Release ${{ inputs.version }}" 2>/dev/null || echo "Tag may already exist"
 
       - name: Set next development version
         run: |
@@ -67,7 +128,14 @@ jobs:
       - name: Push changes
         run: |
           git push origin main
-          git push origin "v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}" || echo "Tag may already exist on remote"
+
+      - name: Build release artifacts (resume mode)
+        if: inputs.resume_from == 'finalize'
+        run: |
+          # Need to build the JARs for the GitHub release
+          mvn -B versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
+          mvn -B clean package -DskipTests
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
