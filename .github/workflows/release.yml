@@ -137,12 +137,17 @@ jobs:
           mvn -B versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
           mvn -B clean package -DskipTests
 
+      - name: Generate release notes
+        run: |
+          .github/scripts/generate-release-notes.sh "${{ inputs.version }}" > release-notes.md
+          cat release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
           name: GlaSSLess ${{ inputs.version }}
-          generate_release_notes: true
+          body_path: release-notes.md
           files: |
             target/glassless-provider-${{ inputs.version }}.jar
             target/glassless-provider-${{ inputs.version }}-sources.jar
