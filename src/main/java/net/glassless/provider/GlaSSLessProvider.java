@@ -53,6 +53,7 @@ public class GlaSSLessProvider extends Provider {
    public static final String KEM = "KEM";
 
    private final boolean fipsMode;
+   private final boolean hybridMode;
 
    private static String getProviderVersion() {
       Package pkg = GlaSSLessProvider.class.getPackage();
@@ -70,6 +71,8 @@ public class GlaSSLessProvider extends Provider {
       }
 
       this.fipsMode = FIPSStatus.isFIPSEnabled();
+      // Hybrid mode is disabled when FIPS is active (FIPS compliance requires OpenSSL)
+      this.hybridMode = !fipsMode && HybridModeConfig.isHybridEnabled();
 
       registerMessageDigestServices();
       registerCipherServices();
@@ -94,6 +97,35 @@ public class GlaSSLessProvider extends Provider {
     */
    public boolean isFIPSMode() {
       return fipsMode;
+   }
+
+   /**
+    * Returns whether this provider instance is running in hybrid mode.
+    *
+    * <p>In hybrid mode, certain algorithms (e.g., SHA-256, HMAC-SHA256, ML-KEM)
+    * are not registered by GlaSSLess, allowing JCA to fall through to the default
+    * JDK provider for better performance.
+    *
+    * <p>Hybrid mode is automatically disabled when FIPS mode is active.
+    *
+    * @return true if hybrid mode is enabled
+    */
+   public boolean isHybridMode() {
+      return hybridMode;
+   }
+
+   /**
+    * Checks if a service should be registered based on hybrid mode settings.
+    *
+    * @param serviceType the JCA service type (e.g., "MessageDigest", "Mac")
+    * @param algorithm the algorithm name
+    * @return true if the service should be registered, false if delegated
+    */
+   private boolean shouldRegisterService(String serviceType, String algorithm) {
+      if (!hybridMode) {
+         return true;
+      }
+      return !HybridModeConfig.shouldDelegate(serviceType, algorithm);
    }
 
    /**
@@ -158,12 +190,16 @@ public class GlaSSLessProvider extends Provider {
       // SHA-2 family - FIPS approved
       putService(new Service(this, MESSAGE_DIGEST, "SHA-224", SHA_224Digest.class.getName(),
          List.of("SHA224", "OID.2.16.840.1.101.3.4.2.4", "2.16.840.1.101.3.4.2.4"), null));
-      putService(new Service(this, MESSAGE_DIGEST, "SHA-256", SHA_256Digest.class.getName(),
-         List.of("SHA256", "OID.2.16.840.1.101.3.4.2.1", "2.16.840.1.101.3.4.2.1"), null));
+      if (shouldRegisterService(MESSAGE_DIGEST, "SHA-256")) {
+         putService(new Service(this, MESSAGE_DIGEST, "SHA-256", SHA_256Digest.class.getName(),
+            List.of("SHA256", "OID.2.16.840.1.101.3.4.2.1", "2.16.840.1.101.3.4.2.1"), null));
+      }
       putService(new Service(this, MESSAGE_DIGEST, "SHA-384", SHA_384Digest.class.getName(),
          List.of("SHA384", "OID.2.16.840.1.101.3.4.2.2", "2.16.840.1.101.3.4.2.2"), null));
-      putService(new Service(this, MESSAGE_DIGEST, "SHA-512", SHA_512Digest.class.getName(),
-         List.of("SHA512", "OID.2.16.840.1.101.3.4.2.3", "2.16.840.1.101.3.4.2.3"), null));
+      if (shouldRegisterService(MESSAGE_DIGEST, "SHA-512")) {
+         putService(new Service(this, MESSAGE_DIGEST, "SHA-512", SHA_512Digest.class.getName(),
+            List.of("SHA512", "OID.2.16.840.1.101.3.4.2.3", "2.16.840.1.101.3.4.2.3"), null));
+      }
 
       // SHA-3 family - FIPS approved
       putService(new Service(this, MESSAGE_DIGEST, "SHA3-224", SHA3_224Digest.class.getName(),
@@ -458,12 +494,16 @@ public class GlaSSLessProvider extends Provider {
       // HMAC with SHA-2 - FIPS approved
       putService(new Service(this, MAC, "HmacSHA224", HmacSHA224.class.getName(),
          List.of("OID.1.2.840.113549.2.8", "1.2.840.113549.2.8"), null));
-      putService(new Service(this, MAC, "HmacSHA256", HmacSHA256.class.getName(),
-         List.of("OID.1.2.840.113549.2.9", "1.2.840.113549.2.9"), null));
+      if (shouldRegisterService(MAC, "HmacSHA256")) {
+         putService(new Service(this, MAC, "HmacSHA256", HmacSHA256.class.getName(),
+            List.of("OID.1.2.840.113549.2.9", "1.2.840.113549.2.9"), null));
+      }
       putService(new Service(this, MAC, "HmacSHA384", HmacSHA384.class.getName(),
          List.of("OID.1.2.840.113549.2.10", "1.2.840.113549.2.10"), null));
-      putService(new Service(this, MAC, "HmacSHA512", HmacSHA512.class.getName(),
-         List.of("OID.1.2.840.113549.2.11", "1.2.840.113549.2.11"), null));
+      if (shouldRegisterService(MAC, "HmacSHA512")) {
+         putService(new Service(this, MAC, "HmacSHA512", HmacSHA512.class.getName(),
+            List.of("OID.1.2.840.113549.2.11", "1.2.840.113549.2.11"), null));
+      }
 
       // HMAC with SHA-3 - FIPS approved
       putService(new Service(this, MAC, "HmacSHA3-224", HmacSHA3_224.class.getName(),
@@ -728,20 +768,26 @@ public class GlaSSLessProvider extends Provider {
 
    private void registerPQCKeyPairGeneratorServices() {
       // ML-KEM (FIPS 203) - Key Encapsulation Mechanism
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512") &&
+          shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-512")) {
          putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-512",
             MLKEM512KeyPairGenerator.class.getName(),
             List.of("MLKEM512", "OID.2.16.840.1.101.3.4.4.1", "2.16.840.1.101.3.4.4.1"), null));
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768")) {
-         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-768",
-            MLKEM768KeyPairGenerator.class.getName(),
-            List.of("MLKEM768", "OID.2.16.840.1.101.3.4.4.2", "2.16.840.1.101.3.4.4.2"), null));
+         if (shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-768")) {
+            putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-768",
+               MLKEM768KeyPairGenerator.class.getName(),
+               List.of("MLKEM768", "OID.2.16.840.1.101.3.4.4.2", "2.16.840.1.101.3.4.4.2"), null));
+         }
          // Register generic ML-KEM pointing to the most common variant
-         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM",
-            MLKEMKeyPairGenerator.class.getName(), List.of("MLKEM"), null));
+         if (shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM")) {
+            putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM",
+               MLKEMKeyPairGenerator.class.getName(), List.of("MLKEM"), null));
+         }
       }
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024") &&
+          shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-1024")) {
          putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-1024",
             MLKEM1024KeyPairGenerator.class.getName(),
             List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
@@ -1041,11 +1087,15 @@ public class GlaSSLessProvider extends Provider {
       // All implementations use OpenSSL's thread-safe RAND_bytes()
       Map<String, String> threadSafeAttr = Map.of("ThreadSafe", "true");
 
-      putService(new Service(this, SECURE_RANDOM, "NativePRNG",
-         net.glassless.provider.internal.securerandom.NativePRNG.class.getName(),
-         List.of("NativePRNGBlocking", "NativePRNGNonBlocking"), threadSafeAttr));
-      putService(new Service(this, SECURE_RANDOM, "DRBG",
-         net.glassless.provider.internal.securerandom.DRBG.class.getName(), null, threadSafeAttr));
+      if (shouldRegisterService(SECURE_RANDOM, "NativePRNG")) {
+         putService(new Service(this, SECURE_RANDOM, "NativePRNG",
+            net.glassless.provider.internal.securerandom.NativePRNG.class.getName(),
+            List.of("NativePRNGBlocking", "NativePRNGNonBlocking"), threadSafeAttr));
+      }
+      if (shouldRegisterService(SECURE_RANDOM, "DRBG")) {
+         putService(new Service(this, SECURE_RANDOM, "DRBG",
+            net.glassless.provider.internal.securerandom.DRBG.class.getName(), null, threadSafeAttr));
+      }
 
       if (!fipsMode) {
          putService(new Service(this, SECURE_RANDOM, "SHA1PRNG",
@@ -1113,20 +1163,26 @@ public class GlaSSLessProvider extends Provider {
          return;  // KEM operations not supported on this OpenSSL version
       }
 
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512") &&
+          shouldRegisterService(KEM, "ML-KEM-512")) {
          putService(new Service(this, KEM, "ML-KEM-512",
             MLKEM512.class.getName(),
             List.of("MLKEM512", "OID.2.16.840.1.101.3.4.4.1", "2.16.840.1.101.3.4.4.1"), null));
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem768")) {
-         putService(new Service(this, KEM, "ML-KEM-768",
-            MLKEM768.class.getName(),
-            List.of("MLKEM768", "OID.2.16.840.1.101.3.4.4.2", "2.16.840.1.101.3.4.4.2"), null));
+         if (shouldRegisterService(KEM, "ML-KEM-768")) {
+            putService(new Service(this, KEM, "ML-KEM-768",
+               MLKEM768.class.getName(),
+               List.of("MLKEM768", "OID.2.16.840.1.101.3.4.4.2", "2.16.840.1.101.3.4.4.2"), null));
+         }
          // Register generic ML-KEM pointing to the most common variant
-         putService(new Service(this, KEM, "ML-KEM",
-            MLKEM.class.getName(), List.of("MLKEM"), null));
+         if (shouldRegisterService(KEM, "ML-KEM")) {
+            putService(new Service(this, KEM, "ML-KEM",
+               MLKEM.class.getName(), List.of("MLKEM"), null));
+         }
       }
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024") &&
+          shouldRegisterService(KEM, "ML-KEM-1024")) {
          putService(new Service(this, KEM, "ML-KEM-1024",
             MLKEM1024.class.getName(),
             List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
@@ -1192,6 +1248,22 @@ public class GlaSSLessProvider extends Provider {
       System.out.println("FIPS Mode: " + (provider.isFIPSMode() ? "ENABLED" : "DISABLED"));
       System.out.println("FIPS Provider Available: " + FIPSStatus.isFIPSProviderAvailable());
       System.out.println("OpenSSL FIPS Enabled: " + net.glassless.provider.internal.OpenSSLCrypto.isFIPSEnabled());
+
+      System.out.println();
+      System.out.println("Hybrid Mode");
+      System.out.println("-----------");
+      System.out.println("Hybrid Mode: " + (provider.isHybridMode() ? "ENABLED" : "DISABLED"));
+      if (provider.isHybridMode()) {
+         System.out.println("Delegated algorithms (using JDK provider for better performance):");
+         for (String serviceType : new String[]{"MessageDigest", "Mac", "SecureRandom", "KEM", "KeyPairGenerator"}) {
+            java.util.Set<String> delegated = HybridModeConfig.getDelegatedAlgorithms(serviceType);
+            if (!delegated.isEmpty()) {
+               System.out.println("  " + serviceType + ": " + String.join(", ", delegated));
+            }
+         }
+      } else if (HybridModeConfig.isHybridEnabled() && provider.isFIPSMode()) {
+         System.out.println("Note: Hybrid mode disabled due to FIPS mode being active");
+      }
 
       System.out.println();
       if (verbose) {

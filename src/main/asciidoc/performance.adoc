@@ -38,6 +38,23 @@ GlaSSLess provides significant performance advantages for asymmetric cryptograph
 
 NOTE: For large data (16KB+), symmetric operation performance converges between implementations.
 
+=== Hybrid Mode Recommendation
+
+For optimal performance, consider enabling *hybrid mode* which delegates JDK-optimized operations while using GlaSSLess for operations where OpenSSL excels:
+
+[source,properties]
+----
+glassless.hybrid.enabled=true
+----
+
+In hybrid mode, GlaSSLess automatically delegates SHA-256, SHA-512, HMAC-SHA256, HMAC-SHA512, SecureRandom, and ML-KEM operations to the JDK provider, while continuing to provide:
+
+* Asymmetric operations (ECDH, ECDSA, EdDSA, RSA) where GlaSSLess is significantly faster
+* Post-quantum signatures (ML-DSA, SLH-DSA) which are only available in GlaSSLess
+* Large-data symmetric operations where performance is comparable
+
+See <<installation.adoc#_hybrid_mode_configuration,Hybrid Mode Configuration>> for details.
+
 == Benchmark Results
 
 === Test Environment
@@ -179,7 +196,70 @@ mvn test -Pbenchmarks -Dexec.args=".*MessageDigestBenchmark.*"
 |KEMBenchmark |ML-KEM-512, ML-KEM-768, ML-KEM-1024 |-
 |KeyPairGeneratorBenchmark |EC P-256/P-384, RSA-2048/4096, Ed25519, X25519 |-
 |SecureRandomBenchmark |NativePRNG |16B to 4KB
+|HybridModeBenchmark |Mixed workload comparing JDK vs GlaSSLess vs hybrid |-
 |===
+
+=== Hybrid Mode Benchmark
+
+The `HybridModeBenchmark` demonstrates the performance benefit of hybrid mode by comparing:
+
+* **JDK-optimized operations**: SHA-256, HMAC-SHA256, SecureRandom (small data)
+* **GlaSSLess-optimized operations**: ECDH, Ed25519, EC key generation
+* **Mixed workloads**: Combined operations showing overall benefit
+
+Run the hybrid mode benchmark:
+
+[source,bash]
+----
+mvn test -Pbenchmarks -Djmh.include=HybridModeBenchmark
+----
+
+==== JDK-Optimized Operations
+
+These operations are faster with JDK's HotSpot intrinsics. In hybrid mode, they are delegated to JDK.
+
+[cols="2,1,1,1"]
+|===
+|Operation |JDK (ops/ms) |GlaSSLess (ops/ms) |JDK Advantage
+
+|SHA-256 (64B) |14,512 |2,546 |5.7x faster
+|HMAC-SHA256 (64B) |6,040 |615 |9.8x faster
+|SecureRandom (32B) |5,958 |4,229 |1.4x faster
+|ML-KEM-768 Encapsulate |54.7 |35.5 |1.5x faster
+|===
+
+==== GlaSSLess-Optimized Operations
+
+These operations are faster with OpenSSL. In hybrid mode, GlaSSLess continues to provide them.
+
+[cols="2,1,1,1"]
+|===
+|Operation |GlaSSLess (ops/ms) |JDK (ops/ms) |GlaSSLess Advantage
+
+|ECDH Key Agreement |12.6 |2.4 |5.2x faster
+|Ed25519 Signing |25.0 |3.2 |7.9x faster
+|EC P-256 Key Generation |31.2 |16.5 |1.9x faster
+|===
+
+==== Mixed Workload Results
+
+The mixed workload benchmark combines SHA-256 digest, HMAC-SHA256, and Ed25519 signing to simulate real-world usage patterns.
+
+[cols="1,1,1,1"]
+|===
+|Mode |Throughput (ops/ms) |vs JDK |vs GlaSSLess
+
+|**Hybrid** |**26.5** |**8.4x faster** |**1.05x faster**
+|GlaSSLess |25.2 |8.0x faster |-
+|JDK |3.2 |- |8.0x slower
+|===
+
+**Key findings:**
+
+* **Hybrid mode delivers the best overall performance** by using each provider for what it does best
+* Ed25519 signing dominates the mixed workload (being ~8x faster in GlaSSLess), making both hybrid and GlaSSLess modes significantly outperform pure JDK
+* For workloads with more symmetric operations, hybrid mode provides even greater advantage over pure GlaSSLess
+* Hybrid mode is automatically disabled in FIPS mode to ensure compliance
 
 Results are saved to `target/jmh-results.json`.
 

@@ -153,6 +153,72 @@ security.provider.3=SunRsaSign
 
 WARNING: High priority positioning changes default behavior for all applications using this JVM. Test thoroughly before deploying.
 
+=== Hybrid Mode Configuration
+
+Hybrid mode allows GlaSSLess to delegate certain algorithms to the JDK provider for better performance. JDK's HotSpot intrinsics significantly outperform OpenSSL via FFM for some operations:
+
+* SHA-256/SHA-512 (small data <1KB): JDK is ~4-6x faster
+* HMAC-SHA256/SHA512 (small data <1KB): JDK is ~4-8x faster
+* SecureRandom (small buffers <64B): JDK is ~2x faster
+* ML-KEM operations: JDK is ~1.7-2.5x faster
+
+To enable hybrid mode:
+
+[source,properties]
+----
+# Enable hybrid mode (delegates selected algorithms to JDK)
+glassless.hybrid.enabled=true
+----
+
+Or via system property:
+
+[source,bash]
+----
+java -Dglassless.hybrid.enabled=true --enable-native-access=ALL-UNNAMED -jar your-app.jar
+----
+
+==== Default Delegated Algorithms
+
+When hybrid mode is enabled, the following algorithms are delegated to the JDK provider:
+
+[cols="1,2"]
+|===
+|Service Type |Algorithms
+
+|MessageDigest
+|SHA-256, SHA-512
+
+|Mac
+|HmacSHA256, HmacSHA512
+
+|SecureRandom
+|NativePRNG, DRBG
+
+|KEM
+|ML-KEM, ML-KEM-512, ML-KEM-768, ML-KEM-1024
+
+|KeyPairGenerator
+|ML-KEM, ML-KEM-512, ML-KEM-768, ML-KEM-1024
+|===
+
+==== Custom Algorithm Lists
+
+Override the default delegated algorithms per service type:
+
+[source,properties]
+----
+# Custom algorithm lists (comma-separated)
+glassless.hybrid.delegate.MessageDigest=SHA-256,SHA-512,SHA-384
+glassless.hybrid.delegate.Mac=HmacSHA256,HmacSHA512,HmacSHA384
+glassless.hybrid.delegate.SecureRandom=NativePRNG
+glassless.hybrid.delegate.KEM=ML-KEM-768
+glassless.hybrid.delegate.KeyPairGenerator=ML-KEM-768
+----
+
+==== Hybrid Mode and FIPS
+
+IMPORTANT: Hybrid mode is automatically disabled when FIPS mode is active. FIPS compliance requires using the FIPS-validated OpenSSL implementation for all cryptographic operations.
+
 === FIPS Mode Considerations
 
 When OpenSSL is in FIPS mode, GlaSSLess automatically excludes non-approved algorithms. For FIPS-compliant deployments:

@@ -116,15 +116,29 @@ See [Post-Quantum Cryptography](src/main/asciidoc/pqc.adoc) for details, includi
 
 ## Performance
 
-GlaSSLess excels at asymmetric cryptography:
+GlaSSLess excels at asymmetric cryptography while JDK excels at symmetric operations:
 
-| Operation | vs JDK |
-|-----------|--------|
-| ECDH Key Agreement | ~6x faster |
-| EC Key Generation | ~2x faster |
-| SecureRandom (large buffers) | ~10-25x faster |
+| GlaSSLess is faster | JDK is faster |
+|---------------------|---------------|
+| ECDH Key Agreement (~5x) | SHA-256 small data (~6x) |
+| Ed25519 Signing (~8x) | HMAC-SHA256 small data (~10x) |
+| EC Key Generation (~2x) | ML-KEM operations (~1.5x) |
 
-JDK excels at small-data symmetric operations due to HotSpot intrinsics.
+### Hybrid Mode (Recommended)
+
+Enable **hybrid mode** to get the best of both worlds - GlaSSLess automatically delegates JDK-optimized operations while using OpenSSL for asymmetric crypto:
+
+```properties
+glassless.hybrid.enabled=true
+```
+
+| Mixed Workload | Throughput | Comparison |
+|----------------|------------|------------|
+| **Hybrid Mode** | **26.5 ops/ms** | Best overall |
+| Pure GlaSSLess | 25.2 ops/ms | 5% slower |
+| Pure JDK | 3.2 ops/ms | 8x slower |
+
+Hybrid mode is automatically disabled when FIPS mode is active.
 
 See [Performance](src/main/asciidoc/performance.adoc) for detailed benchmarks.
 
