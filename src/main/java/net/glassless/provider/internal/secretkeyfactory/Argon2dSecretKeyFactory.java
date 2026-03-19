@@ -2,11 +2,11 @@ package net.glassless.provider.internal.secretkeyfactory;
 
 /**
  * SecretKeyFactory for Argon2d key derivation.
- *
+ * <p>
  * Argon2d is data-dependent and is faster and more resistant to GPU
  * cracking attacks, but is more vulnerable to side-channel attacks.
  * Use Argon2id for most applications.
- *
+ * <p>
  * Requires OpenSSL 3.2 or later.
  */
 public class Argon2dSecretKeyFactory extends AbstractArgon2SecretKeyFactory {

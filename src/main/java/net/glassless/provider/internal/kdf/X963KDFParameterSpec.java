@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for ANSI X9.63 Key Derivation Function.
- *
+ * <p>
  * X9.63 KDF is commonly used with ECDH key agreement to derive
  * symmetric keys from shared secrets.
  */

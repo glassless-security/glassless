@@ -2,7 +2,7 @@ package net.glassless.provider.internal.mac;
 
 /**
  * SipHash MAC implementation using OpenSSL.
- * SipHash is a fast short-input PRF defined in https://131002.net/siphash/.
+ * SipHash is a fast short-input PRF defined in <a href="https://131002.net/siphash/">siphash</a>.
  */
 public class SipHashMac extends AbstractMac {
 

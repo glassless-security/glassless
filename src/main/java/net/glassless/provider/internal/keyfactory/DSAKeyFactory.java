@@ -49,53 +49,51 @@ public class DSAKeyFactory extends KeyFactorySpi {
     @Override
     @SuppressWarnings("unchecked")
     protected <T extends KeySpec> T engineGetKeySpec(Key key, Class<T> keySpec) throws InvalidKeySpecException {
-        if (key == null) {
-            throw new InvalidKeySpecException("Key cannot be null");
+        switch (key) {
+            case null -> throw new InvalidKeySpecException("Key cannot be null");
+            case DSAPublicKey dsaKey -> {
+                if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+                    byte[] encoded = key.getEncoded();
+                    if (encoded == null) {
+                        throw new InvalidKeySpecException("Key does not support encoding");
+                    }
+                    return (T) new X509EncodedKeySpec(encoded);
+
+                } else if (DSAPublicKeySpec.class.isAssignableFrom(keySpec)) {
+                    return (T) new DSAPublicKeySpec(
+                        dsaKey.getY(),
+                        dsaKey.getParams().getP(),
+                        dsaKey.getParams().getQ(),
+                        dsaKey.getParams().getG()
+                    );
+
+                } else {
+                    throw new InvalidKeySpecException("Unsupported KeySpec for DSA public key: " + keySpec.getName());
+                }
+            }
+            case DSAPrivateKey dsaKey -> {
+                if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+                    byte[] encoded = key.getEncoded();
+                    if (encoded == null) {
+                        throw new InvalidKeySpecException("Key does not support encoding");
+                    }
+                    return (T) new PKCS8EncodedKeySpec(encoded);
+
+                } else if (DSAPrivateKeySpec.class.isAssignableFrom(keySpec)) {
+                    return (T) new DSAPrivateKeySpec(
+                        dsaKey.getX(),
+                        dsaKey.getParams().getP(),
+                        dsaKey.getParams().getQ(),
+                        dsaKey.getParams().getG()
+                    );
+
+                } else {
+                    throw new InvalidKeySpecException("Unsupported KeySpec for DSA private key: " + keySpec.getName());
+                }
+            }
+            default -> throw new InvalidKeySpecException("Key is not a DSA key");
         }
 
-        if (key instanceof DSAPublicKey dsaKey) {
-            if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                byte[] encoded = key.getEncoded();
-                if (encoded == null) {
-                    throw new InvalidKeySpecException("Key does not support encoding");
-                }
-                return (T) new X509EncodedKeySpec(encoded);
-
-            } else if (DSAPublicKeySpec.class.isAssignableFrom(keySpec)) {
-                return (T) new DSAPublicKeySpec(
-                    dsaKey.getY(),
-                    dsaKey.getParams().getP(),
-                    dsaKey.getParams().getQ(),
-                    dsaKey.getParams().getG()
-                );
-
-            } else {
-                throw new InvalidKeySpecException("Unsupported KeySpec for DSA public key: " + keySpec.getName());
-            }
-
-        } else if (key instanceof DSAPrivateKey dsaKey) {
-            if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                byte[] encoded = key.getEncoded();
-                if (encoded == null) {
-                    throw new InvalidKeySpecException("Key does not support encoding");
-                }
-                return (T) new PKCS8EncodedKeySpec(encoded);
-
-            } else if (DSAPrivateKeySpec.class.isAssignableFrom(keySpec)) {
-                return (T) new DSAPrivateKeySpec(
-                    dsaKey.getX(),
-                    dsaKey.getParams().getP(),
-                    dsaKey.getParams().getQ(),
-                    dsaKey.getParams().getG()
-                );
-
-            } else {
-                throw new InvalidKeySpecException("Unsupported KeySpec for DSA private key: " + keySpec.getName());
-            }
-
-        } else {
-            throw new InvalidKeySpecException("Key is not a DSA key");
-        }
     }
 
     @Override
@@ -106,13 +104,12 @@ public class DSAKeyFactory extends KeyFactorySpi {
 
         if (key instanceof DSAPublicKey || key instanceof DSAPrivateKey) {
             try {
+                byte[] encoded = key.getEncoded();
                 if (key instanceof PublicKey) {
-                    byte[] encoded = key.getEncoded();
                     if (encoded != null) {
                         return generatePublicKeyFromEncoded(encoded);
                     }
                 } else {
-                    byte[] encoded = key.getEncoded();
                     if (encoded != null) {
                         return generatePrivateKeyFromEncoded(encoded);
                     }

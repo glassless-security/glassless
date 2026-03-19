@@ -28,7 +28,6 @@ abstract class AbstractCipher extends CipherSpi {
 
     private final Arena arena;
     private final String algorithmName;
-    private final int keySize;
     private final CipherMode mode;
     private final CipherPadding padding;
     private final NativeResourceCleaner.ResourceHolder resourceHolder;
@@ -38,11 +37,9 @@ abstract class AbstractCipher extends CipherSpi {
     private MemorySegment evpCipher;
     private int opmode;
     private byte[] iv;
-    private Key key;
 
     protected AbstractCipher(String algorithmName, int keySize, CipherMode mode, CipherPadding padding) {
         this.algorithmName = algorithmName;
-        this.keySize = keySize;
         this.mode = mode;
         this.padding = padding;
         this.arena = Arena.ofShared();
@@ -50,6 +47,30 @@ abstract class AbstractCipher extends CipherSpi {
         // Register cleanup for when this object is GC'd
         this.resourceHolder = NativeResourceCleaner.createHolder(this);
         this.resourceHolder.setArena(arena);
+    }
+
+    static void init(int opmode, MemorySegment evpCipher, Arena arena, byte[] derivedKey, byte[] iv, MemorySegment evpCipherCtx) throws Throwable {
+        MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, derivedKey.length);
+        keySegment.asByteBuffer().put(derivedKey);
+
+        MemorySegment ivSegment;
+        if (iv != null) {
+            ivSegment = arena.allocate(ValueLayout.JAVA_BYTE, iv.length);
+            ivSegment.asByteBuffer().put(iv);
+        } else {
+            ivSegment = MemorySegment.NULL;
+        }
+
+        int result;
+        if (opmode == Cipher.ENCRYPT_MODE) {
+            result = OpenSSLCrypto.EVP_EncryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
+        } else {
+            result = OpenSSLCrypto.EVP_DecryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
+        }
+
+        if (result != 1) {
+            throw new InvalidKeyException("Cipher initialization failed");
+        }
     }
 
     @Override
@@ -104,12 +125,11 @@ abstract class AbstractCipher extends CipherSpi {
 
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+            throws InvalidAlgorithmParameterException {
         // Clean up any previous cipher context
         reset();
 
         this.opmode = opmode;
-        this.key = key;
 
         if (params instanceof IvParameterSpec) {
             this.iv = ((IvParameterSpec) params).getIV();
@@ -134,28 +154,8 @@ abstract class AbstractCipher extends CipherSpi {
             resourceHolder.setEvpCipherCtx(evpCipherCtx);
 
             byte[] keyBytes = key.getEncoded();
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-            keySegment.asByteBuffer().put(keyBytes);
-
-            MemorySegment ivSegment;
-            if (iv != null) {
-                ivSegment = arena.allocate(ValueLayout.JAVA_BYTE, iv.length);
-                ivSegment.asByteBuffer().put(iv);
-            } else {
-                ivSegment = MemorySegment.NULL;
-            }
-
+            init(opmode, evpCipher, arena, keyBytes, iv, evpCipherCtx);
             int result;
-            if (opmode == Cipher.ENCRYPT_MODE) {
-                result = OpenSSLCrypto.EVP_EncryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
-            } else {
-                result = OpenSSLCrypto.EVP_DecryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
-            }
-
-            if (result != 1) {
-                throw new InvalidKeyException("Cipher initialization failed");
-            }
-
 
 
             // Disable padding if NOPADDING is specified and mode is not AEAD (GCM, CCM or POLY1305)
@@ -172,8 +172,7 @@ abstract class AbstractCipher extends CipherSpi {
     }
 
     @Override
-    protected void engineInit(int opmode, Key key, AlgorithmParameters params, SecureRandom random)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+    protected void engineInit(int opmode, Key key, AlgorithmParameters params, SecureRandom random) {
         // Not implemented
         throw new UnsupportedOperationException("engineInit with AlgorithmParameters not supported");
     }
@@ -184,23 +183,22 @@ abstract class AbstractCipher extends CipherSpi {
             return null;
         }
         byte[] output = new byte[engineGetOutputSize(inputLen)];
-        try {
-            int outputLen = engineUpdate(input, inputOffset, inputLen, output, 0);
-            if (outputLen == 0) {
-                return null;
-            }
-            byte[] result = new byte[outputLen];
-            System.arraycopy(output, 0, result, 0, outputLen);
-            return result;
-        } catch (ShortBufferException e) {
-            // Should not happen with our output size estimate
-            throw new ProviderException(e);
+        int outputLen = engineUpdate(input, inputOffset, inputLen, output, 0);
+        if (outputLen == 0) {
+            return null;
         }
+        byte[] result = new byte[outputLen];
+        System.arraycopy(output, 0, result, 0, outputLen);
+        return result;
+
     }
 
     @Override
-    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
-            throws ShortBufferException {
+    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
+        return update(input, inputOffset, inputLen, output, outputOffset, opmode, evpCipherCtx);
+    }
+
+    static int update(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset, int opmode, MemorySegment evpCipherCtx) {
         try (Arena confinedArena = Arena.ofConfined()) {
             MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, inputLen);
             inputSegment.asByteBuffer().put(input, inputOffset, inputLen);
@@ -228,8 +226,7 @@ abstract class AbstractCipher extends CipherSpi {
     }
 
     @Override
-    protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen)
-            throws IllegalBlockSizeException, BadPaddingException {
+    protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen) {
         try (Arena confinedArena = Arena.ofConfined()) {
             int tagLength = gcmTagLenBits / 8; // Convert bits to bytes
 
@@ -336,7 +333,7 @@ abstract class AbstractCipher extends CipherSpi {
 
     @Override
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
-            throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+            throws ShortBufferException {
         byte[] finalOutput = engineDoFinal(input, inputOffset, inputLen);
         if (output.length - outputOffset < finalOutput.length) {
             throw new ShortBufferException("Output buffer too short");

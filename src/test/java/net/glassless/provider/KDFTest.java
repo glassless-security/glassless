@@ -1,6 +1,10 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.Security;
 
@@ -35,7 +39,7 @@ public class KDFTest {
       @Test
       @DisplayName("X963KDF-SHA256 basic derivation")
       void testX963KDFSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("X963KDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("X963KDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          byte[] sharedSecret = new byte[32];
@@ -53,7 +57,7 @@ public class KDFTest {
       @Test
       @DisplayName("X963KDF produces consistent results")
       void testX963KDFConsistency() throws Exception {
-         KDF kdf = KDF.getInstance("X963KDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("X963KDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
 
          byte[] sharedSecret = "shared-secret-value-1234".getBytes();
          byte[] sharedInfo = "info".getBytes();
@@ -75,7 +79,7 @@ public class KDFTest {
       @Test
       @DisplayName("SSHKDF-SHA256 basic derivation")
       void testSSHKDFSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("SSHKDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("SSHKDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          byte[] sharedSecret = new byte[32];
@@ -98,7 +102,7 @@ public class KDFTest {
       @Test
       @DisplayName("Different key types produce different keys")
       void testSSHKDFKeyTypes() throws Exception {
-         KDF kdf = KDF.getInstance("SSHKDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("SSHKDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
 
          byte[] sharedSecret = "ssh-shared-secret".getBytes();
          byte[] exchangeHash = "ssh-exchange-hash!".getBytes();
@@ -126,7 +130,7 @@ public class KDFTest {
       @Test
       @DisplayName("KBKDF-HMAC-SHA256 basic derivation")
       void testKBKDFHMACSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("KBKDF-HMAC-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("KBKDF-HMAC-SHA256", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          byte[] key = new byte[32];
@@ -150,7 +154,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS1-PRF-SHA256 basic derivation")
       void testTLSPRFSHA256() throws Exception {
-         KDF kdf = KDF.getInstance("TLS1-PRF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS1-PRF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          byte[] secret = new byte[48];  // Pre-master secret size
@@ -178,7 +182,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS1-PRF-SHA384 basic derivation")
       void testTLSPRFSHA384() throws Exception {
-         KDF kdf = KDF.getInstance("TLS1-PRF-SHA384", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS1-PRF-SHA384", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          byte[] secret = new byte[48];
@@ -202,7 +206,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS13-KDF-SHA256 extract mode")
       void testTLS13KDFSHA256Extract() throws Exception {
-         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          // Input key material (e.g., ECDHE shared secret)
@@ -227,7 +231,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS13-KDF-SHA256 expand mode")
       void testTLS13KDFSHA256Expand() throws Exception {
-         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
 
          // First extract a PRK
          byte[] ikm = new byte[32];
@@ -257,7 +261,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS13-KDF-SHA384 extract and expand")
       void testTLS13KDFSHA384() throws Exception {
-         KDF kdf = KDF.getInstance("TLS13-KDF-SHA384", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA384", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(kdf);
 
          // Input key material
@@ -287,7 +291,7 @@ public class KDFTest {
       @Test
       @DisplayName("Different labels produce different keys")
       void testDifferentLabels() throws Exception {
-         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
 
          byte[] prk = new byte[32];
          for (int i = 0; i < 32; i++) prk[i] = (byte) (i * 3);
@@ -320,7 +324,7 @@ public class KDFTest {
       @Test
       @DisplayName("TLS 1.3 full key schedule simulation")
       void testTLS13KeySchedule() throws Exception {
-         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", "GlaSSLess");
+         KDF kdf = KDF.getInstance("TLS13-KDF-SHA256", GlaSSLessProvider.PROVIDER_NAME);
 
          // Simulate TLS 1.3 key schedule per RFC 8446 Section 7.1
 

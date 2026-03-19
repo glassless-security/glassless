@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.algparams;
 
+import static net.glassless.provider.internal.algparams.Parameters.readLength;
+
 import java.io.IOException;
 import java.security.AlgorithmParametersSpi;
 import java.security.spec.AlgorithmParameterSpec;
@@ -120,19 +122,6 @@ public class GCMParameters extends AlgorithmParametersSpi {
         }
     }
 
-    private int readLength(byte[] der, int[] offset) throws IOException {
-        int b = der[offset[0]++] & 0xFF;
-        if (b < 128) {
-            return b;
-        }
-        int numBytes = b & 0x7F;
-        int length = 0;
-        for (int i = 0; i < numBytes; i++) {
-            length = (length << 8) | (der[offset[0]++] & 0xFF);
-        }
-        return length;
-    }
-
     private byte[] encodeDER() {
         // Encode IV as OCTET STRING
         byte[] ivEncoded = new byte[2 + iv.length];
@@ -148,13 +137,7 @@ public class GCMParameters extends AlgorithmParametersSpi {
         tLenEncoded[2] = (byte) tLenBytes;
 
         // Encode SEQUENCE
-        int contentLen = ivEncoded.length + tLenEncoded.length;
-        byte[] result = new byte[2 + contentLen];
-        result[0] = 0x30;
-        result[1] = (byte) contentLen;
-        System.arraycopy(ivEncoded, 0, result, 2, ivEncoded.length);
-        System.arraycopy(tLenEncoded, 0, result, 2 + ivEncoded.length, tLenEncoded.length);
-
-        return result;
+        return Parameters.encodeSequence(ivEncoded, tLenEncoded);
     }
+
 }

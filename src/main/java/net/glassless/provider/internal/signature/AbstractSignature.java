@@ -21,7 +21,6 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 public abstract class AbstractSignature extends SignatureSpi {
 
     private final String digestAlgorithm;
-    private final KeyType keyType;
     private final NativeResourceCleaner.ResourceHolder resourceHolder;
 
     private Arena arena;
@@ -33,7 +32,6 @@ public abstract class AbstractSignature extends SignatureSpi {
 
     protected AbstractSignature(String digestAlgorithm, KeyType keyType) {
         this.digestAlgorithm = digestAlgorithm;
-        this.keyType = keyType;
         // Register cleanup for when this object is GC'd
         this.resourceHolder = NativeResourceCleaner.createHolder(this);
     }

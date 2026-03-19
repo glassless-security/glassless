@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.algparams;
 
+import static net.glassless.provider.internal.algparams.Parameters.readLength;
+
 import java.io.IOException;
 import java.security.AlgorithmParametersSpi;
 import java.security.spec.AlgorithmParameterSpec;
@@ -41,7 +43,7 @@ public class OAEPParameters extends AlgorithmParametersSpi {
     }
 
     @Override
-    protected void engineInit(byte[] params) throws IOException {
+    protected void engineInit(byte[] params) {
         // Parse ASN.1 DER encoded OAEP parameters
         // For simplicity, set defaults - full ASN.1 parsing would be complex
         // RSAES-OAEP-params ::= SEQUENCE {
@@ -177,7 +179,7 @@ public class OAEPParameters extends AlgorithmParametersSpi {
         return oidToDigestName(oid);
     }
 
-    private void parseMGFAlgorithm(byte[] der, int[] offset, int len) throws IOException {
+    private void parseMGFAlgorithm(byte[] der, int[] offset, int len) {
         int startOffset = offset[0];
         // For MGF1, the parameters contain the hash algorithm
         this.mgfName = "MGF1";
@@ -204,26 +206,12 @@ public class OAEPParameters extends AlgorithmParametersSpi {
 
     private String oidToDigestName(String oid) {
         return switch (oid) {
-            case "1.3.14.3.2.26" -> "SHA-1";
             case "2.16.840.1.101.3.4.2.1" -> "SHA-256";
             case "2.16.840.1.101.3.4.2.2" -> "SHA-384";
             case "2.16.840.1.101.3.4.2.3" -> "SHA-512";
             case "2.16.840.1.101.3.4.2.4" -> "SHA-224";
             default -> "SHA-1";
         };
-    }
-
-    private int readLength(byte[] der, int[] offset) {
-        int b = der[offset[0]++] & 0xFF;
-        if (b < 128) {
-            return b;
-        }
-        int numBytes = b & 0x7F;
-        int length = 0;
-        for (int i = 0; i < numBytes; i++) {
-            length = (length << 8) | (der[offset[0]++] & 0xFF);
-        }
-        return length;
     }
 
     private byte[] encodeDER() throws IOException {

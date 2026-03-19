@@ -62,7 +62,7 @@ public class PBECipherTest {
             String algorithm = String.format("PBEWithHmac%sAndAES_%d", hashAlgorithm, keySize);
 
             // Get cipher from our provider
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(cipher);
 
             // Create PBE key
@@ -85,7 +85,7 @@ public class PBECipherTest {
             assertNotNull(encryptedBytes);
 
             // Decrypt - need a new cipher instance since we freed the context
-            Cipher decryptCipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, pbeKey, pbeParams);
             byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
 
@@ -111,7 +111,7 @@ public class PBECipherTest {
             String algorithm = String.format("PBEWithHmac%sAndAES_%d", hashAlgorithm, keySize);
 
             // Get cipher from our provider
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
 
             // Create PBE key
             PBEKeySpec keySpec = new PBEKeySpec(PASSWORD.toCharArray());
@@ -134,7 +134,7 @@ public class PBECipherTest {
             assertNotNull(encryptedBytes);
 
             // Decrypt
-            Cipher decryptCipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, pbeKey, pbeParams);
             byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
 

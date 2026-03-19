@@ -19,8 +19,7 @@ public class DESedeSecretKeyFactory extends SecretKeyFactorySpi {
 
     @Override
     protected SecretKey engineGenerateSecret(KeySpec keySpec) throws InvalidKeySpecException {
-        if (keySpec instanceof DESedeKeySpec) {
-            DESedeKeySpec desedeKeySpec = (DESedeKeySpec) keySpec;
+        if (keySpec instanceof DESedeKeySpec desedeKeySpec) {
             byte[] keyBytes = desedeKeySpec.getKey();
 
             // Ensure proper key length
@@ -37,8 +36,7 @@ public class DESedeSecretKeyFactory extends SecretKeyFactorySpi {
 
             return new SecretKeySpec(key, ALGORITHM);
 
-        } else if (keySpec instanceof SecretKeySpec) {
-            SecretKeySpec secretKeySpec = (SecretKeySpec) keySpec;
+        } else if (keySpec instanceof SecretKeySpec secretKeySpec) {
             if (!secretKeySpec.getAlgorithm().equals(ALGORITHM) &&
                 !secretKeySpec.getAlgorithm().equals("TripleDES")) {
                 throw new InvalidKeySpecException("Key algorithm must be DESede or TripleDES");

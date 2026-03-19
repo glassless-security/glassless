@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.security.PrivateKey;
 import java.util.Arrays;
 
-import javax.security.auth.DestroyFailedException;
 import javax.security.auth.Destroyable;
 
 /**
@@ -113,7 +112,7 @@ public class GlaSSLessHybridKEMPrivateKey implements PrivateKey, Destroyable {
    }
 
    @Override
-   public void destroy() throws DestroyFailedException {
+   public void destroy() {
       if (!destroyed && rawKey != null) {
          Arrays.fill(rawKey, (byte) 0);
          rawKey = null;

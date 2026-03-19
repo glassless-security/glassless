@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.algparams;
 
+import static net.glassless.provider.internal.algparams.Parameters.readLength;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.AlgorithmParametersSpi;
@@ -106,19 +108,6 @@ public class DSAParameters extends AlgorithmParametersSpi {
         this.g = readInteger(der, offset);
     }
 
-    private int readLength(byte[] der, int[] offset) throws IOException {
-        int b = der[offset[0]++] & 0xFF;
-        if (b < 128) {
-            return b;
-        }
-        int numBytes = b & 0x7F;
-        int length = 0;
-        for (int i = 0; i < numBytes; i++) {
-            length = (length << 8) | (der[offset[0]++] & 0xFF);
-        }
-        return length;
-    }
-
     private BigInteger readInteger(byte[] der, int[] offset) throws IOException {
         if (der[offset[0]++] != 0x02) {
             throw new IOException("Expected INTEGER tag");
@@ -163,14 +152,6 @@ public class DSAParameters extends AlgorithmParametersSpi {
     }
 
     private byte[] encodeLength(int length) {
-        if (length < 128) {
-            return new byte[]{(byte) length};
-        } else if (length < 256) {
-            return new byte[]{(byte) 0x81, (byte) length};
-        } else if (length < 65536) {
-            return new byte[]{(byte) 0x82, (byte) (length >> 8), (byte) length};
-        } else {
-            return new byte[]{(byte) 0x83, (byte) (length >> 16), (byte) (length >> 8), (byte) length};
-        }
+        return Parameters.encodeLength(length);
     }
 }

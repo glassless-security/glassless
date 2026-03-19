@@ -14,7 +14,7 @@ public class GlaSSLessSLHDSAPrivateKey implements PrivateKey, Destroyable {
     private static final long serialVersionUID = 1L;
 
     private final String algorithm;
-    private byte[] encoded;
+    private final byte[] encoded;
     private boolean destroyed = false;
 
     public GlaSSLessSLHDSAPrivateKey(String algorithm, byte[] encoded) {

@@ -80,7 +80,7 @@ public class MessageDigestBenchmark {
       }
 
       jdkDigest = MessageDigest.getInstance(algorithm);
-      glasslessDigest = MessageDigest.getInstance(algorithm, "GlaSSLess");
+      glasslessDigest = MessageDigest.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       bcFipsDigest = MessageDigest.getInstance(algorithm, "BCFIPS");
    }
 

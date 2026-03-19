@@ -46,11 +46,9 @@ public abstract class AbstractPBKDF2SecretKeyFactory extends SecretKeyFactorySpi
 
     @Override
     protected SecretKey engineGenerateSecret(KeySpec keySpec) throws InvalidKeySpecException {
-        if (!(keySpec instanceof PBEKeySpec)) {
+        if (!(keySpec instanceof PBEKeySpec pbeKeySpec)) {
             throw new InvalidKeySpecException("KeySpec must be a PBEKeySpec");
         }
-
-        PBEKeySpec pbeKeySpec = (PBEKeySpec) keySpec;
 
         char[] password = pbeKeySpec.getPassword();
         if (password == null) {

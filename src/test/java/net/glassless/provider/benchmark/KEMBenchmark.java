@@ -46,18 +46,14 @@ public class KEMBenchmark {
 
    // GlaSSLess components
    private KeyPairGenerator glasslessKeyPairGen;
-   private KEM glasslessKEM;
-   private KeyPair glasslessKeyPair;
-   private KEM.Encapsulator glasslessEncapsulator;
+    private KEM.Encapsulator glasslessEncapsulator;
    private KEM.Decapsulator glasslessDecapsulator;
    private byte[] glasslessEncapsulation;
    private boolean glasslessAvailable;
 
    // JDK components
    private KeyPairGenerator jdkKeyPairGen;
-   private KEM jdkKEM;
-   private KeyPair jdkKeyPair;
-   private KEM.Encapsulator jdkEncapsulator;
+    private KEM.Encapsulator jdkEncapsulator;
    private KEM.Decapsulator jdkDecapsulator;
    private byte[] jdkEncapsulation;
    private boolean jdkAvailable;
@@ -69,7 +65,6 @@ public class KEMBenchmark {
       // Setup GlaSSLess (requires OpenSSL 3.5+)
       String opensslName = switch (algorithm) {
          case "ML-KEM-512" -> "mlkem512";
-         case "ML-KEM-768" -> "mlkem768";
          case "ML-KEM-1024" -> "mlkem1024";
          default -> "mlkem768";
       };
@@ -77,11 +72,11 @@ public class KEMBenchmark {
       glasslessAvailable = OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", opensslName);
 
       if (glasslessAvailable) {
-         glasslessKeyPairGen = KeyPairGenerator.getInstance(algorithm, "GlaSSLess");
-         glasslessKEM = KEM.getInstance(algorithm, "GlaSSLess");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
+          KEM glasslessKEM = KEM.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
 
          // Pre-generate a key pair for encapsulation/decapsulation benchmarks
-         glasslessKeyPair = glasslessKeyPairGen.generateKeyPair();
+          KeyPair glasslessKeyPair = glasslessKeyPairGen.generateKeyPair();
          glasslessEncapsulator = glasslessKEM.newEncapsulator(glasslessKeyPair.getPublic());
          glasslessDecapsulator = glasslessKEM.newDecapsulator(glasslessKeyPair.getPrivate());
 
@@ -97,10 +92,10 @@ public class KEMBenchmark {
       try {
          // Try to get ML-KEM from the default JDK provider
          jdkKeyPairGen = KeyPairGenerator.getInstance(algorithm);
-         jdkKEM = KEM.getInstance(algorithm);
+          KEM jdkKEM = KEM.getInstance(algorithm);
 
          // Pre-generate a key pair for encapsulation/decapsulation benchmarks
-         jdkKeyPair = jdkKeyPairGen.generateKeyPair();
+          KeyPair jdkKeyPair = jdkKeyPairGen.generateKeyPair();
          jdkEncapsulator = jdkKEM.newEncapsulator(jdkKeyPair.getPublic());
          jdkDecapsulator = jdkKEM.newDecapsulator(jdkKeyPair.getPrivate());
 
@@ -125,7 +120,7 @@ public class KEMBenchmark {
    }
 
    @Benchmark
-   public void glasslessEncapsulate(Blackhole bh) throws Exception {
+   public void glasslessEncapsulate(Blackhole bh) {
       if (!glasslessAvailable) {
          return;
       }
@@ -153,7 +148,7 @@ public class KEMBenchmark {
    }
 
    @Benchmark
-   public void jdkEncapsulate(Blackhole bh) throws Exception {
+   public void jdkEncapsulate(Blackhole bh) {
       if (!jdkAvailable) {
          return;
       }

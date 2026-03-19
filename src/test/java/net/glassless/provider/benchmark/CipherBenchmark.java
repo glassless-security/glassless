@@ -106,10 +106,10 @@ public class CipherBenchmark {
          jdkDecrypt = Cipher.getInstance(algorithm);
          jdkDecrypt.init(Cipher.DECRYPT_MODE, key, gcmSpec);
 
-         glasslessEncrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessEncrypt = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
          glasslessEncrypt.init(Cipher.ENCRYPT_MODE, key, gcmSpec);
 
-         glasslessDecrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessDecrypt = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
          glasslessDecrypt.init(Cipher.DECRYPT_MODE, key, gcmSpec);
 
          bcFipsEncrypt = Cipher.getInstance(algorithm, "BCFIPS");
@@ -148,10 +148,10 @@ public class CipherBenchmark {
          jdkDecrypt = Cipher.getInstance(algorithm);
          jdkDecrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
-         glasslessEncrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessEncrypt = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
          glasslessEncrypt.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
-         glasslessDecrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessDecrypt = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
          glasslessDecrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
          bcFipsEncrypt = Cipher.getInstance(algorithm, "BCFIPS");

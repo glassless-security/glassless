@@ -11,11 +11,11 @@ This document describes the post-quantum cryptography (PQC) support in GlaSSLess
 
 GlaSSLess supports the three NIST-standardized post-quantum algorithms:
 
-| Algorithm | Standard | Type | Variants |
-|-----------|----------|------|----------|
-| ML-KEM | FIPS 203 | Key Encapsulation | ML-KEM-512, ML-KEM-768, ML-KEM-1024 |
-| ML-DSA | FIPS 204 | Digital Signature | ML-DSA-44, ML-DSA-65, ML-DSA-87 |
-| SLH-DSA | FIPS 205 | Digital Signature | 12 variants (SHA2/SHAKE, 128/192/256, s/f) |
+| Algorithm | Standard | Type              | Variants                                   |
+|-----------|----------|-------------------|--------------------------------------------|
+| ML-KEM    | FIPS 203 | Key Encapsulation | ML-KEM-512, ML-KEM-768, ML-KEM-1024        |
+| ML-DSA    | FIPS 204 | Digital Signature | ML-DSA-44, ML-DSA-65, ML-DSA-87            |
+| SLH-DSA   | FIPS 205 | Digital Signature | 12 variants (SHA2/SHAKE, 128/192/256, s/f) |
 
 See the main [README.md](README.md) for usage examples of these algorithms.
 
@@ -25,34 +25,34 @@ Hybrid KEMs combine a classical key exchange algorithm (X25519 or X448) with ML-
 
 ### Supported Hybrid KEMs
 
-| Algorithm | Classical Component | PQC Component | Shared Secret Size | Ciphertext Size |
-|-----------|---------------------|---------------|-------------------|-----------------|
-| X25519MLKEM768 | X25519 | ML-KEM-768 | 64 bytes | 1120 bytes |
-| X448MLKEM1024 | X448 | ML-KEM-1024 | 64 bytes | 1632 bytes |
+| Algorithm      | Classical Component | PQC Component | Shared Secret Size | Ciphertext Size |
+|----------------|---------------------|---------------|--------------------|-----------------|
+| X25519MLKEM768 | X25519              | ML-KEM-768    | 64 bytes           | 1120 bytes      |
+| X448MLKEM1024  | X448                | ML-KEM-1024   | 64 bytes           | 1632 bytes      |
 
 ### Unsupported Variants
 
 The following hybrid KEMs are defined in standards but **not currently supported** in GlaSSLess:
 
-| Algorithm | Classical Component | PQC Component | Status |
-|-----------|---------------------|---------------|--------|
-| SecP256r1MLKEM768 | P-256 (secp256r1) | ML-KEM-768 | Blocked by OpenSSL |
-| SecP384r1MLKEM1024 | P-384 (secp384r1) | ML-KEM-1024 | Blocked by OpenSSL |
+| Algorithm          | Classical Component | PQC Component | Status             |
+|--------------------|---------------------|---------------|--------------------|
+| SecP256r1MLKEM768  | P-256 (secp256r1)   | ML-KEM-768    | Blocked by OpenSSL |
+| SecP384r1MLKEM1024 | P-384 (secp384r1)   | ML-KEM-1024   | Blocked by OpenSSL |
 
 #### Technical Details
 
 OpenSSL 3.5.x supports these algorithms for **in-memory operations** but lacks key serialization support:
 
-| Feature | X25519MLKEM768 | SecP256r1MLKEM768 |
-|---------|----------------|-------------------|
-| Key generation | Yes | Yes |
-| Encapsulation | Yes | Yes |
-| Decapsulation | Yes | Yes |
-| `EVP_PKEY_get_raw_public_key` | **Yes** | No |
-| `EVP_PKEY_get_raw_private_key` | **Yes** | No |
-| DER/PEM encoding | No | No |
-| `EVP_PKEY_fromdata` | Yes | No |
-| `EVP_PKEY_dup` | Yes | No |
+| Feature                        | X25519MLKEM768 | SecP256r1MLKEM768 |
+|--------------------------------|----------------|-------------------|
+| Key generation                 | Yes            | Yes               |
+| Encapsulation                  | Yes            | Yes               |
+| Decapsulation                  | Yes            | Yes               |
+| `EVP_PKEY_get_raw_public_key`  | **Yes**        | No                |
+| `EVP_PKEY_get_raw_private_key` | **Yes**        | No                |
+| DER/PEM encoding               | No             | No                |
+| `EVP_PKEY_fromdata`            | Yes            | No                |
+| `EVP_PKEY_dup`                 | Yes            | No                |
 
 Java's JCA model requires keys to be serializable via `Key.getEncoded()` and reconstructable via `KeyFactory`. Without OpenSSL serialization support, GlaSSLess cannot:
 
@@ -190,12 +190,12 @@ Hybrid groups like `x25519_mlkem768` are **not yet supported** by JSSE.
 
 #### Roadmap
 
-| Date | Milestone |
-|------|-----------|
-| JDK 24 (March 2024) | JEP 496: ML-KEM support added |
-| September 2025 | JEP 527 elevated to Candidate status |
-| January 2026 | JEP 527 elevated to Targeted for JDK 27 |
-| JDK 26 (March 2026) | No hybrid TLS support yet |
+| Date                        | Milestone                                     |
+|-----------------------------|-----------------------------------------------|
+| JDK 24 (March 2024)         | JEP 496: ML-KEM support added                 |
+| September 2025              | JEP 527 elevated to Candidate status          |
+| January 2026                | JEP 527 elevated to Targeted for JDK 27       |
+| JDK 26 (March 2026)         | No hybrid TLS support yet                     |
 | **JDK 27 (September 2026)** | **JEP 527 targeted - hybrid TLS 1.3 support** |
 
 #### What JEP 527 Will Provide
@@ -296,20 +296,20 @@ Hybrid key exchange provides defense-in-depth:
 
 ### Key Sizes
 
-| Algorithm | Public Key | Private Key | Ciphertext | Shared Secret |
-|-----------|------------|-------------|------------|---------------|
-| X25519MLKEM768 | 1216 bytes | 2432 bytes | 1120 bytes | 64 bytes |
-| X448MLKEM1024 | 1664 bytes | 3168 bytes | 1632 bytes | 64 bytes |
+| Algorithm      | Public Key | Private Key | Ciphertext | Shared Secret |
+|----------------|------------|-------------|------------|---------------|
+| X25519MLKEM768 | 1216 bytes | 2432 bytes  | 1120 bytes | 64 bytes      |
+| X448MLKEM1024  | 1664 bytes | 3168 bytes  | 1632 bytes | 64 bytes      |
 
 ### Performance
 
 Hybrid KEMs are slower than classical key exchange due to the additional ML-KEM operations. Typical performance (varies by hardware):
 
-| Operation | X25519MLKEM768 | X448MLKEM1024 |
-|-----------|----------------|---------------|
-| Key Generation | ~0.1ms | ~0.15ms |
-| Encapsulation | ~0.1ms | ~0.15ms |
-| Decapsulation | ~0.1ms | ~0.15ms |
+| Operation      | X25519MLKEM768 | X448MLKEM1024 |
+|----------------|----------------|---------------|
+| Key Generation | ~0.1ms         | ~0.15ms       |
+| Encapsulation  | ~0.1ms         | ~0.15ms       |
+| Decapsulation  | ~0.1ms         | ~0.15ms       |
 
 ### Standards Compliance
 

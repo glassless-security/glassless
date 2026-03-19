@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Key specification for Argon2 key derivation.
- *
+ * <p>
  * Argon2 parameters:
  * - password: the password
  * - salt: the salt (should be at least 16 bytes)

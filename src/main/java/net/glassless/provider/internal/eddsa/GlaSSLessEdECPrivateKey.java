@@ -53,8 +53,7 @@ public class GlaSSLessEdECPrivateKey implements EdECPrivateKey {
         if (!(obj instanceof EdECPrivateKey other)) return false;
         if (!params.getName().equals(other.getParams().getName())) return false;
         Optional<byte[]> otherBytes = other.getBytes();
-        if (otherBytes.isEmpty()) return false;
-        return Arrays.equals(keyBytes, otherBytes.get());
+        return otherBytes.filter(bytes -> Arrays.equals(keyBytes, bytes)).isPresent();
     }
 
     @Override

@@ -83,10 +83,10 @@ public class SignatureBenchmark {
       jdkVerifier.initVerify(keyPair.getPublic());
 
       // GlaSSLess signer/verifier
-      glasslessSigner = Signature.getInstance(algorithm, "GlaSSLess");
+      glasslessSigner = Signature.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       glasslessSigner.initSign(keyPair.getPrivate());
 
-      glasslessVerifier = Signature.getInstance(algorithm, "GlaSSLess");
+      glasslessVerifier = Signature.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       glasslessVerifier.initVerify(keyPair.getPublic());
 
       // BC FIPS signer/verifier

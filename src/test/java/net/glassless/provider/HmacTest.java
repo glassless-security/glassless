@@ -3,6 +3,7 @@ package net.glassless.provider;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.SecureRandom;
 import java.security.Security;
@@ -60,7 +61,7 @@ public class HmacTest {
         })
         void testHmacSHA(String algorithm, int keyLength, int expectedMacLength) throws Exception {
             String macAlgorithm = "Hmac" + algorithm;
-            Mac mac = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(mac);
 
             byte[] keyBytes = generateKey(keyLength);
@@ -89,7 +90,7 @@ public class HmacTest {
         })
         void testHmacIncrementalUpdate(String algorithm, int expectedMacLength) throws Exception {
             String macAlgorithm = "Hmac" + algorithm;
-            Mac mac = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] keyBytes = generateKey(32);
             SecretKey key = new SecretKeySpec(keyBytes, macAlgorithm);
@@ -123,7 +124,7 @@ public class HmacTest {
         })
         void testHmacSHA3(int bits, int expectedMacLength) throws Exception {
             String macAlgorithm = "HmacSHA3-" + bits;
-            Mac mac = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(mac);
 
             byte[] keyBytes = generateKey(32);
@@ -154,7 +155,7 @@ public class HmacTest {
         })
         void testHmacPBE(String algorithm, int expectedMacLength) throws Exception {
             String macAlgorithm = "HmacPBE" + algorithm;
-            Mac mac = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(mac);
 
             // Create PBE key
@@ -178,7 +179,7 @@ public class HmacTest {
             assertEquals(expectedMacLength, result.length);
 
             // Verify consistency with same password, salt, and iteration count
-            Mac mac2 = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac2 = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
             mac2.init(pbeKey, pbeParams);
             byte[] result2 = mac2.doFinal(data);
             assertArrayEquals(result, result2);
@@ -199,11 +200,11 @@ public class HmacTest {
 
             byte[] data = "Test data".getBytes();
 
-            Mac mac1 = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac1 = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
             mac1.init(pbeKey, new PBEParameterSpec(salt1, iterationCount));
             byte[] result1 = mac1.doFinal(data);
 
-            Mac mac2 = Mac.getInstance(macAlgorithm, "GlaSSLess");
+            Mac mac2 = Mac.getInstance(macAlgorithm, GlaSSLessProvider.PROVIDER_NAME);
             mac2.init(pbeKey, new PBEParameterSpec(salt2, iterationCount));
             byte[] result2 = mac2.doFinal(data);
 
@@ -215,7 +216,7 @@ public class HmacTest {
                     break;
                 }
             }
-            assertEquals(true, different, "Different salts should produce different MAC values");
+            assertTrue(different, "Different salts should produce different MAC values");
         }
     }
 }

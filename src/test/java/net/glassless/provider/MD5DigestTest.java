@@ -1,6 +1,7 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.security.MessageDigest;
 import java.security.Security;
@@ -25,14 +26,14 @@ public class MD5DigestTest {
         @Test
         @DisplayName("MD5 digest length is 16 bytes")
         void testDigestLength() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             assertEquals(16, md.getDigestLength());
         }
 
         @Test
         @DisplayName("MD5 of empty string")
         void testEmptyString() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             byte[] digest = md.digest(new byte[0]);
 
             // MD5("") = d41d8cd98f00b204e9800998ecf8427e
@@ -43,7 +44,7 @@ public class MD5DigestTest {
         @Test
         @DisplayName("MD5 of 'hello'")
         void testHello() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             byte[] digest = md.digest("hello".getBytes());
 
             // MD5("hello") = 5d41402abc4b2a76b9719d911017c592
@@ -54,7 +55,7 @@ public class MD5DigestTest {
         @Test
         @DisplayName("MD5 of 'The quick brown fox jumps over the lazy dog'")
         void testQuickBrownFox() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             byte[] digest = md.digest("The quick brown fox jumps over the lazy dog".getBytes());
 
             // MD5("The quick brown fox jumps over the lazy dog") = 9e107d9d372bb6826bd81d3542a419d6
@@ -65,7 +66,7 @@ public class MD5DigestTest {
         @Test
         @DisplayName("MD5 incremental update")
         void testIncrementalUpdate() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             md.update("hello".getBytes());
             md.update(" ".getBytes());
             md.update("world".getBytes());
@@ -79,7 +80,7 @@ public class MD5DigestTest {
         @Test
         @DisplayName("MD5 reset")
         void testReset() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             md.update("some data".getBytes());
             md.reset();
             byte[] digest = md.digest("hello".getBytes());
@@ -92,7 +93,7 @@ public class MD5DigestTest {
         @Test
         @DisplayName("MD5 multiple digests")
         void testMultipleDigests() throws Exception {
-            MessageDigest md = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] digest1 = md.digest("hello".getBytes());
             byte[] digest2 = md.digest("world".getBytes());
@@ -113,7 +114,7 @@ public class MD5DigestTest {
         void testCrossProvider() throws Exception {
             byte[] data = "Cross-provider MD5 test data".getBytes();
 
-            MessageDigest glasslessMd = MessageDigest.getInstance("MD5", "GlaSSLess");
+            MessageDigest glasslessMd = MessageDigest.getInstance("MD5", GlaSSLessProvider.PROVIDER_NAME);
             byte[] glasslessDigest = glasslessMd.digest(data);
 
             MessageDigest defaultMd = MessageDigest.getInstance("MD5");
@@ -127,7 +128,7 @@ public class MD5DigestTest {
         @DisplayName("MD5 via OID alias")
         void testOidAlias() throws Exception {
             // MD5 OID: 1.2.840.113549.2.5
-            MessageDigest md = MessageDigest.getInstance("1.2.840.113549.2.5", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("1.2.840.113549.2.5", GlaSSLessProvider.PROVIDER_NAME);
             byte[] digest = md.digest("hello".getBytes());
 
             assertEquals("5d41402abc4b2a76b9719d911017c592", HexFormat.of().formatHex(digest));

@@ -4,7 +4,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -17,7 +16,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for KBKDF (SP 800-108) implementations.
- *
+ * <p>
  * KBKDF is a NIST-approved key derivation function that uses a
  * pseudorandom function (HMAC or CMAC) to derive keys.
  */
@@ -44,7 +43,7 @@ public abstract class AbstractKBKDF extends KDFSpi {
 
    @Override
    protected SecretKey engineDeriveKey(String algorithm, AlgorithmParameterSpec params)
-         throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+         throws InvalidAlgorithmParameterException {
       byte[] derivedBytes = engineDeriveData(params);
       return new SecretKeySpec(derivedBytes, algorithm);
    }

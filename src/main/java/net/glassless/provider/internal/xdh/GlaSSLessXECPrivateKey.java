@@ -54,8 +54,7 @@ public class GlaSSLessXECPrivateKey implements XECPrivateKey {
         if (!(obj instanceof XECPrivateKey other)) return false;
         if (!params.getName().equals(((NamedParameterSpec) other.getParams()).getName())) return false;
         Optional<byte[]> otherScalar = other.getScalar();
-        if (otherScalar.isEmpty()) return false;
-        return Arrays.equals(scalar, otherScalar.get());
+        return otherScalar.filter(bytes -> Arrays.equals(scalar, bytes)).isPresent();
     }
 
     @Override

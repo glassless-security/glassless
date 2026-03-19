@@ -4,7 +4,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -17,7 +16,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for TLS PRF implementations.
- *
+ * <p>
  * TLS PRF is used for key derivation in TLS 1.0-1.2.
  * TLS 1.2 uses a single hash function (typically SHA-256).
  */
@@ -42,7 +41,7 @@ public abstract class AbstractTLSPRF extends KDFSpi {
 
    @Override
    protected SecretKey engineDeriveKey(String algorithm, AlgorithmParameterSpec params)
-         throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+         throws InvalidAlgorithmParameterException {
       byte[] derivedBytes = engineDeriveData(params);
       return new SecretKeySpec(derivedBytes, algorithm);
    }

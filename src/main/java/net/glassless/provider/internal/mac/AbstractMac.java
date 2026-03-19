@@ -3,7 +3,6 @@ package net.glassless.provider.internal.mac;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.ProviderException;
@@ -24,7 +23,6 @@ public abstract class AbstractMac extends MacSpi {
     private final int macLength;
     private final Arena arena;
 
-    private MemorySegment evpMac;
     private MemorySegment evpMacCtx;
     private byte[] keyBytes;
     private boolean initialized = false;
@@ -53,7 +51,7 @@ public abstract class AbstractMac extends MacSpi {
 
     @Override
     protected void engineInit(Key key, AlgorithmParameterSpec params)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+            throws InvalidKeyException {
         if (key == null) {
             throw new InvalidKeyException("Key cannot be null");
         }
@@ -69,7 +67,7 @@ public abstract class AbstractMac extends MacSpi {
 
         try {
             // Fetch the MAC implementation
-            evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, macAlgorithm, MemorySegment.NULL, arena);
+            MemorySegment evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, macAlgorithm, MemorySegment.NULL, arena);
             if (evpMac.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to fetch MAC: " + macAlgorithm);
             }

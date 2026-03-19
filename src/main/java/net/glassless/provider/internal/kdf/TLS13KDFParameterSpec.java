@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for TLS 1.3 Key Derivation Function (HKDF-based).
- *
+ * <p>
  * TLS 1.3 uses HKDF for key derivation with two modes:
  * <ul>
  *   <li>EXTRACT_ONLY: Performs HKDF-Extract to derive the PRK from input key material</li>

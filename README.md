@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/img/glassless.png" alt="GlaSSLess Logo" width="400">
+  <img src="docs/img/glassless.png" alt="GlaSSLess Logo" width="800">
 </p>
 
 <p align="center">

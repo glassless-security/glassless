@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.cipher;
 
+import static net.glassless.provider.internal.cipher.AbstractCipher.update;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -38,7 +40,6 @@ abstract class AbstractPBECipher extends CipherSpi {
     private final String prf; // Pseudo-Random Function (hash algorithm for PBKDF2)
 
     private MemorySegment evpCipherCtx;
-    private MemorySegment evpCipher;
     private int opmode;
     private byte[] iv;
     private byte[] derivedKey;
@@ -125,8 +126,7 @@ abstract class AbstractPBECipher extends CipherSpi {
         int iterationCount;
         AlgorithmParameterSpec ivSpec = null;
 
-        if (params instanceof PBEParameterSpec) {
-            PBEParameterSpec pbeParams = (PBEParameterSpec) params;
+        if (params instanceof PBEParameterSpec pbeParams) {
             salt = pbeParams.getSalt();
             iterationCount = pbeParams.getIterationCount();
             ivSpec = pbeParams.getParameterSpec();
@@ -151,7 +151,7 @@ abstract class AbstractPBECipher extends CipherSpi {
             derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(password, salt, iterationCount, prf, keySize, arena);
 
             // Initialize the underlying cipher
-            evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(opensslCipherName, arena);
+            MemorySegment evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(opensslCipherName, arena);
             if (evpCipher.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to get cipher: " + opensslCipherName);
             }
@@ -161,27 +161,7 @@ abstract class AbstractPBECipher extends CipherSpi {
                 throw new ProviderException("Failed to create EVP_CIPHER_CTX");
             }
 
-            MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, derivedKey.length);
-            keySegment.asByteBuffer().put(derivedKey);
-
-            MemorySegment ivSegment;
-            if (iv != null) {
-                ivSegment = arena.allocate(ValueLayout.JAVA_BYTE, iv.length);
-                ivSegment.asByteBuffer().put(iv);
-            } else {
-                ivSegment = MemorySegment.NULL;
-            }
-
-            int result;
-            if (opmode == Cipher.ENCRYPT_MODE) {
-                result = OpenSSLCrypto.EVP_EncryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
-            } else {
-                result = OpenSSLCrypto.EVP_DecryptInit_ex(evpCipherCtx, evpCipher, MemorySegment.NULL, keySegment, ivSegment);
-            }
-
-            if (result != 1) {
-                throw new InvalidKeyException("Cipher initialization failed");
-            }
+            AbstractCipher.init(opmode, evpCipher, arena, derivedKey, iv, evpCipherCtx);
 
         } catch (Throwable e) {
             throw new ProviderException("Error initializing PBE cipher", e);
@@ -189,8 +169,7 @@ abstract class AbstractPBECipher extends CipherSpi {
     }
 
     @Override
-    protected void engineInit(int opmode, Key key, AlgorithmParameters params, SecureRandom random)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+    protected void engineInit(int opmode, Key key, AlgorithmParameters params, SecureRandom random) {
         throw new UnsupportedOperationException("engineInit with AlgorithmParameters not supported");
     }
 
@@ -200,51 +179,22 @@ abstract class AbstractPBECipher extends CipherSpi {
             return null;
         }
         byte[] output = new byte[engineGetOutputSize(inputLen)];
-        try {
-            int outputLen = engineUpdate(input, inputOffset, inputLen, output, 0);
-            if (outputLen == 0) {
-                return null;
-            }
-            byte[] result = new byte[outputLen];
-            System.arraycopy(output, 0, result, 0, outputLen);
-            return result;
-        } catch (ShortBufferException e) {
-            throw new ProviderException(e);
+        int outputLen = engineUpdate(input, inputOffset, inputLen, output, 0);
+        if (outputLen == 0) {
+            return null;
         }
+        byte[] result = new byte[outputLen];
+        System.arraycopy(output, 0, result, 0, outputLen);
+        return result;
     }
 
     @Override
-    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
-            throws ShortBufferException {
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, inputLen);
-            inputSegment.asByteBuffer().put(input, inputOffset, inputLen);
-
-            MemorySegment outputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, output.length - outputOffset);
-            MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT);
-
-            int result;
-            if (opmode == Cipher.ENCRYPT_MODE) {
-                result = OpenSSLCrypto.EVP_EncryptUpdate(evpCipherCtx, outputSegment, outLenSegment, inputSegment, inputLen);
-            } else {
-                result = OpenSSLCrypto.EVP_DecryptUpdate(evpCipherCtx, outputSegment, outLenSegment, inputSegment, inputLen);
-            }
-
-            if (result != 1) {
-                throw new ProviderException("Cipher update failed");
-            }
-
-            int written = outLenSegment.get(ValueLayout.JAVA_INT, 0);
-            outputSegment.asByteBuffer().get(output, outputOffset, written);
-            return written;
-        } catch (Throwable e) {
-            throw new ProviderException("Error updating cipher", e);
-        }
+    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
+        return update(input, inputOffset, inputLen, output, outputOffset, opmode, evpCipherCtx);
     }
 
     @Override
-    protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen)
-            throws IllegalBlockSizeException, BadPaddingException {
+    protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen) {
         try (Arena confinedArena = Arena.ofConfined()) {
             // Step 1: Process any remaining input
             int currentUpdateOutputLen = 0;
@@ -315,7 +265,7 @@ abstract class AbstractPBECipher extends CipherSpi {
 
     @Override
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
-            throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+            throws ShortBufferException {
         byte[] finalOutput = engineDoFinal(input, inputOffset, inputLen);
         if (output.length - outputOffset < finalOutput.length) {
             throw new ShortBufferException("Output buffer too short");

@@ -2,7 +2,7 @@ package net.glassless.provider.internal.cipher;
 
 /**
  * ChaCha20-Poly1305 AEAD cipher implementation.
- *
+ * <p>
  * Key size: 256 bits (32 bytes)
  * Nonce size: 96 bits (12 bytes)
  * Tag size: 128 bits (16 bytes)

@@ -1,7 +1,11 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -46,7 +50,7 @@ public class SLHDSATest {
         void testGenerateKeyPair() throws Exception {
             assumeSLHDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -64,10 +68,10 @@ public class SLHDSATest {
         void testSignAndVerify() throws Exception {
             assumeSLHDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("test message".getBytes());
             byte[] signature = sig.sign();
@@ -84,10 +88,10 @@ public class SLHDSATest {
         void testVerifyFailsWithWrongMessage() throws Exception {
             assumeSLHDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("original message".getBytes());
             byte[] signature = sig.sign();
@@ -108,7 +112,7 @@ public class SLHDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128s"),
                 "SLH-DSA-SHA2-128s requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128s", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128s", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -121,10 +125,10 @@ public class SLHDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-128s"),
                 "SLH-DSA-SHA2-128s requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128s", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128s", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128s", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128s", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("test".getBytes());
             byte[] signature = sig.sign();
@@ -145,7 +149,7 @@ public class SLHDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-128f"),
                 "SLH-DSA-SHAKE-128f requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHAKE-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHAKE-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -158,10 +162,10 @@ public class SLHDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHAKE-128f"),
                 "SLH-DSA-SHAKE-128f requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHAKE-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHAKE-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("SLH-DSA-SHAKE-128f", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHAKE-128f", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("SHAKE variant test".getBytes());
             byte[] signature = sig.sign();
@@ -182,10 +186,10 @@ public class SLHDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-192f"),
                 "SLH-DSA-SHA2-192f requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-192f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-192f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("SLH-DSA-SHA2-192f", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHA2-192f", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("192-bit security".getBytes());
             byte[] signature = sig.sign();
@@ -201,10 +205,10 @@ public class SLHDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "SLH-DSA-SHA2-256f"),
                 "SLH-DSA-SHA2-256f requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-256f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-256f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("SLH-DSA-SHA2-256f", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHA2-256f", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("256-bit security".getBytes());
             byte[] signature = sig.sign();
@@ -224,10 +228,10 @@ public class SLHDSATest {
         void testReconstructKeys() throws Exception {
             assumeSLHDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair original = kpg.generateKeyPair();
 
-            KeyFactory kf = KeyFactory.getInstance("SLH-DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("SLH-DSA", GlaSSLessProvider.PROVIDER_NAME);
 
             // Reconstruct public key
             X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(original.getPublic().getEncoded());
@@ -240,7 +244,7 @@ public class SLHDSATest {
             assertArrayEquals(original.getPrivate().getEncoded(), reconstructedPriv.getEncoded());
 
             // Use reconstructed keys for signing
-            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(reconstructedPriv);
             sig.update("test".getBytes());
             byte[] signature = sig.sign();
@@ -260,7 +264,7 @@ public class SLHDSATest {
         void testGenericSLHDSAWithSpec() throws Exception {
             assumeSLHDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA", GlaSSLessProvider.PROVIDER_NAME);
             kpg.initialize(new NamedParameterSpec("SLH-DSA-SHA2-128f"));
             KeyPair kp = kpg.generateKeyPair();
 
@@ -273,11 +277,11 @@ public class SLHDSATest {
         void testGenericSLHDSASignature() throws Exception {
             assumeSLHDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128f", GlaSSLessProvider.PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             // Use generic SLH-DSA signature
-            Signature sig = Signature.getInstance("SLH-DSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SLH-DSA", GlaSSLessProvider.PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("generic test".getBytes());
             byte[] signature = sig.sign();

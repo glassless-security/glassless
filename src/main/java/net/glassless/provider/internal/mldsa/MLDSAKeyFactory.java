@@ -172,11 +172,10 @@ public class MLDSAKeyFactory extends KeyFactorySpi {
         if (isPublic) {
             if (length < 1600) return "ML-DSA-44";
             if (length < 2300) return "ML-DSA-65";
-            return "ML-DSA-87";
         } else {
             if (length < 3000) return "ML-DSA-44";
             if (length < 4500) return "ML-DSA-65";
-            return "ML-DSA-87";
         }
+        return "ML-DSA-87";
     }
 }

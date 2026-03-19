@@ -75,7 +75,7 @@ public class MacBenchmark {
       jdkMac = Mac.getInstance(algorithm);
       jdkMac.init(keySpec);
 
-      glasslessMac = Mac.getInstance(algorithm, "GlaSSLess");
+      glasslessMac = Mac.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       glasslessMac.init(keySpec);
 
       bcFipsMac = Mac.getInstance(algorithm, "BCFIPS");

@@ -18,13 +18,13 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for Argon2 SecretKeyFactory implementations.
- *
+ * <p>
  * Argon2 is a password hashing algorithm that was the winner of the
  * Password Hashing Competition (PHC). It comes in three variants:
  * - Argon2d: Data-dependent, faster, more resistant to GPU attacks
  * - Argon2i: Data-independent, more resistant to side-channel attacks
  * - Argon2id: Hybrid of Argon2d and Argon2i (recommended)
- *
+ * <p>
  * Requires OpenSSL 3.2 or later.
  */
 public abstract class AbstractArgon2SecretKeyFactory extends SecretKeyFactorySpi {
@@ -39,13 +39,11 @@ public abstract class AbstractArgon2SecretKeyFactory extends SecretKeyFactorySpi
 
    @Override
    protected SecretKey engineGenerateSecret(KeySpec keySpec) throws InvalidKeySpecException {
-      if (!(keySpec instanceof Argon2KeySpec)) {
+      if (!(keySpec instanceof Argon2KeySpec argon2Spec)) {
          throw new InvalidKeySpecException("KeySpec must be an Argon2KeySpec");
       }
 
-      Argon2KeySpec argon2Spec = (Argon2KeySpec) keySpec;
-
-      char[] password = argon2Spec.getPassword();
+       char[] password = argon2Spec.getPassword();
       byte[] salt = argon2Spec.getSalt();
       int iterations = argon2Spec.getIterations();
       int memoryKB = argon2Spec.getMemoryKB();

@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for TLS Pseudo-Random Function (PRF).
- *
+ * <p>
  * TLS PRF is used in TLS 1.0-1.2 for key derivation from the
  * master secret. TLS 1.2 uses SHA-256 by default.
  */

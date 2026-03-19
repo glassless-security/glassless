@@ -161,7 +161,7 @@ public class DHKeyAgreement extends KeyAgreementSpi {
 
     @Override
     protected SecretKey engineGenerateSecret(String algorithm)
-            throws IllegalStateException, NoSuchAlgorithmException, InvalidKeyException {
+            throws IllegalStateException, NoSuchAlgorithmException {
         if (sharedSecret == null) {
             throw new IllegalStateException("Key agreement not completed - call doPhase first");
         }

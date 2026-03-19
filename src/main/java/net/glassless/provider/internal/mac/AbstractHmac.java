@@ -3,7 +3,6 @@ package net.glassless.provider.internal.mac;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.ProviderException;
@@ -23,7 +22,6 @@ public abstract class AbstractHmac extends MacSpi {
     private final int macLength;
     private final Arena arena;
 
-    private MemorySegment evpMac;
     private MemorySegment evpMacCtx;
     private byte[] keyBytes;
     private boolean initialized = false;
@@ -41,7 +39,7 @@ public abstract class AbstractHmac extends MacSpi {
 
     @Override
     protected void engineInit(Key key, AlgorithmParameterSpec params)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+            throws InvalidKeyException {
         if (key == null) {
             throw new InvalidKeyException("Key cannot be null");
         }
@@ -57,7 +55,7 @@ public abstract class AbstractHmac extends MacSpi {
 
         try {
             // Fetch the HMAC implementation
-            evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
+            MemorySegment evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
             if (evpMac.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to fetch HMAC");
             }
@@ -97,25 +95,7 @@ public abstract class AbstractHmac extends MacSpi {
 
     @Override
     protected void engineUpdate(byte[] input, int offset, int len) {
-        if (!initialized) {
-            throw new IllegalStateException("MAC not initialized");
-        }
-
-        if (len == 0) {
-            return;
-        }
-
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
-            inputSegment.asByteBuffer().put(input, offset, len);
-
-            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputSegment, len);
-            if (result != 1) {
-                throw new ProviderException("HMAC update failed");
-            }
-        } catch (Throwable e) {
-            throw new ProviderException("Error updating HMAC", e);
-        }
+        AbstractHmacPBE.update(input, offset, len, initialized, evpMacCtx);
     }
 
     @Override
@@ -150,18 +130,7 @@ public abstract class AbstractHmac extends MacSpi {
 
     @Override
     protected void engineReset() {
-        if (evpMacCtx != null && keyBytes != null) {
-            try {
-                // Re-initialize the context for reuse
-                MemorySegment paramsSegment = OpenSSLCrypto.createDigestParams(digestName, arena);
-                MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
-                keySegment.asByteBuffer().put(keyBytes);
-
-                OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
-            } catch (Throwable e) {
-                // Ignore reset errors
-            }
-        }
+        AbstractHmacPBE.reset(evpMacCtx, keyBytes, digestName, arena);
     }
 
     @Override

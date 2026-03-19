@@ -176,11 +176,10 @@ public class MLKEMKeyFactory extends KeyFactorySpi {
         if (isPublic) {
             if (length < 1000) return "ML-KEM-512";
             if (length < 1400) return "ML-KEM-768";
-            return "ML-KEM-1024";
         } else {
             if (length < 2000) return "ML-KEM-512";
             if (length < 2800) return "ML-KEM-768";
-            return "ML-KEM-1024";
         }
+        return "ML-KEM-1024";
     }
 }

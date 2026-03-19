@@ -5,7 +5,6 @@ import java.lang.foreign.MemorySegment;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.XECPrivateKey;
@@ -161,7 +160,7 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
     }
 
     @Override
-    protected SecretKey engineGenerateSecret(String algorithm) throws IllegalStateException, NoSuchAlgorithmException {
+    protected SecretKey engineGenerateSecret(String algorithm) throws IllegalStateException {
         byte[] secret = engineGenerateSecret();
         return new SecretKeySpec(secret, algorithm);
     }

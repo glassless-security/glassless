@@ -18,7 +18,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * SecretKeyFactory for SCRYPT key derivation using OpenSSL.
- *
+ * <p>
  * SCRYPT is a password-based key derivation function designed to be
  * computationally intensive and memory-hard, making it resistant to
  * hardware brute-force attacks.
@@ -29,11 +29,9 @@ public class ScryptSecretKeyFactory extends SecretKeyFactorySpi {
 
     @Override
     protected SecretKey engineGenerateSecret(KeySpec keySpec) throws InvalidKeySpecException {
-        if (!(keySpec instanceof ScryptKeySpec)) {
+        if (!(keySpec instanceof ScryptKeySpec scryptSpec)) {
             throw new InvalidKeySpecException("KeySpec must be a ScryptKeySpec");
         }
-
-        ScryptKeySpec scryptSpec = (ScryptKeySpec) keySpec;
 
         char[] password = scryptSpec.getPassword();
         byte[] salt = scryptSpec.getSalt();

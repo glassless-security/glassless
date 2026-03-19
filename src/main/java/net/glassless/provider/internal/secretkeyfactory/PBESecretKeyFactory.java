@@ -16,11 +16,10 @@ public class PBESecretKeyFactory extends SecretKeyFactorySpi {
 
     @Override
     protected SecretKey engineGenerateSecret(KeySpec keySpec) throws InvalidKeySpecException {
-        if (!(keySpec instanceof PBEKeySpec)) {
+        if (!(keySpec instanceof PBEKeySpec pbeKeySpec)) {
             throw new InvalidKeySpecException("KeySpec must be a PBEKeySpec");
         }
 
-        PBEKeySpec pbeKeySpec = (PBEKeySpec) keySpec;
         char[] password = pbeKeySpec.getPassword();
 
         if (password == null) {
@@ -36,7 +35,7 @@ public class PBESecretKeyFactory extends SecretKeyFactorySpi {
             throw new InvalidKeySpecException("Key cannot be null");
         }
 
-        if (!(key instanceof PBESecretKey)) {
+        if (!(key instanceof PBESecretKey pbeKey)) {
             throw new InvalidKeySpecException("Key must be a PBE key");
         }
 
@@ -44,7 +43,6 @@ public class PBESecretKeyFactory extends SecretKeyFactorySpi {
             throw new InvalidKeySpecException("Only PBEKeySpec is supported");
         }
 
-        PBESecretKey pbeKey = (PBESecretKey) key;
         return new PBEKeySpec(pbeKey.getPassword());
     }
 

@@ -1,6 +1,10 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
@@ -38,7 +42,7 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("Initialize with ECGenParameterSpec")
         void testInitWithECGenParameterSpec() throws Exception {
-            AlgorithmParameters params = AlgorithmParameters.getInstance("EC", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("EC", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new ECGenParameterSpec("secp256r1"));
 
             ECGenParameterSpec spec = params.getParameterSpec(ECGenParameterSpec.class);
@@ -49,14 +53,14 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("Encode and decode EC parameters")
         void testEncodeDecodeEC() throws Exception {
-            AlgorithmParameters params1 = AlgorithmParameters.getInstance("EC", "GlaSSLess");
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("EC", GlaSSLessProvider.PROVIDER_NAME);
             params1.init(new ECGenParameterSpec("secp384r1"));
 
             byte[] encoded = params1.getEncoded();
             assertNotNull(encoded);
             assertTrue(encoded.length > 0);
 
-            AlgorithmParameters params2 = AlgorithmParameters.getInstance("EC", "GlaSSLess");
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("EC", GlaSSLessProvider.PROVIDER_NAME);
             params2.init(encoded);
 
             ECGenParameterSpec spec = params2.getParameterSpec(ECGenParameterSpec.class);
@@ -66,7 +70,7 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("EC parameters toString")
         void testECToString() throws Exception {
-            AlgorithmParameters params = AlgorithmParameters.getInstance("EC", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("EC", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new ECGenParameterSpec("secp521r1"));
 
             String str = params.toString();
@@ -93,7 +97,7 @@ public class AlgorithmParametersTest {
 
             DSAParameterSpec spec = new DSAParameterSpec(dsaParams.getP(), dsaParams.getQ(), dsaParams.getG());
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("DSA", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("DSA", GlaSSLessProvider.PROVIDER_NAME);
             params.init(spec);
 
             DSAParameterSpec retrieved = params.getParameterSpec(DSAParameterSpec.class);
@@ -112,13 +116,13 @@ public class AlgorithmParametersTest {
 
             DSAParameterSpec spec = new DSAParameterSpec(p, q, g);
 
-            AlgorithmParameters params1 = AlgorithmParameters.getInstance("DSA", "GlaSSLess");
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("DSA", GlaSSLessProvider.PROVIDER_NAME);
             params1.init(spec);
 
             byte[] encoded = params1.getEncoded();
             assertNotNull(encoded);
 
-            AlgorithmParameters params2 = AlgorithmParameters.getInstance("DSA", "GlaSSLess");
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("DSA", GlaSSLessProvider.PROVIDER_NAME);
             params2.init(encoded);
 
             DSAParameterSpec retrieved = params2.getParameterSpec(DSAParameterSpec.class);
@@ -140,7 +144,7 @@ public class AlgorithmParametersTest {
 
             DHParameterSpec spec = new DHParameterSpec(p, g);
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("DH", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("DH", GlaSSLessProvider.PROVIDER_NAME);
             params.init(spec);
 
             DHParameterSpec retrieved = params.getParameterSpec(DHParameterSpec.class);
@@ -158,7 +162,7 @@ public class AlgorithmParametersTest {
 
             DHParameterSpec spec = new DHParameterSpec(p, g, l);
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("DH", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("DH", GlaSSLessProvider.PROVIDER_NAME);
             params.init(spec);
 
             DHParameterSpec retrieved = params.getParameterSpec(DHParameterSpec.class);
@@ -176,7 +180,7 @@ public class AlgorithmParametersTest {
             byte[] iv = new byte[16];
             for (int i = 0; i < 16; i++) iv[i] = (byte) i;
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("AES", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("AES", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new IvParameterSpec(iv));
 
             IvParameterSpec retrieved = params.getParameterSpec(IvParameterSpec.class);
@@ -190,7 +194,7 @@ public class AlgorithmParametersTest {
             byte[] iv = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                          0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
 
-            AlgorithmParameters params1 = AlgorithmParameters.getInstance("AES", "GlaSSLess");
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("AES", GlaSSLessProvider.PROVIDER_NAME);
             params1.init(new IvParameterSpec(iv));
 
             byte[] encoded = params1.getEncoded();
@@ -200,7 +204,7 @@ public class AlgorithmParametersTest {
             assertEquals(0x04, encoded[0]);
             assertEquals(16, encoded[1]);
 
-            AlgorithmParameters params2 = AlgorithmParameters.getInstance("AES", "GlaSSLess");
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("AES", GlaSSLessProvider.PROVIDER_NAME);
             params2.init(encoded);
 
             IvParameterSpec retrieved = params2.getParameterSpec(IvParameterSpec.class);
@@ -218,7 +222,7 @@ public class AlgorithmParametersTest {
             byte[] iv = new byte[8];
             for (int i = 0; i < 8; i++) iv[i] = (byte) (i + 1);
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("DESede", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("DESede", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new IvParameterSpec(iv));
 
             IvParameterSpec retrieved = params.getParameterSpec(IvParameterSpec.class);
@@ -238,7 +242,7 @@ public class AlgorithmParametersTest {
             for (int i = 0; i < 12; i++) iv[i] = (byte) i;
             int tagLen = 128;
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("GCM", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("GCM", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new GCMParameterSpec(tagLen, iv));
 
             GCMParameterSpec retrieved = params.getParameterSpec(GCMParameterSpec.class);
@@ -253,13 +257,13 @@ public class AlgorithmParametersTest {
             byte[] iv = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C};
             int tagLen = 96;
 
-            AlgorithmParameters params1 = AlgorithmParameters.getInstance("GCM", "GlaSSLess");
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("GCM", GlaSSLessProvider.PROVIDER_NAME);
             params1.init(new GCMParameterSpec(tagLen, iv));
 
             byte[] encoded = params1.getEncoded();
             assertNotNull(encoded);
 
-            AlgorithmParameters params2 = AlgorithmParameters.getInstance("GCM", "GlaSSLess");
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("GCM", GlaSSLessProvider.PROVIDER_NAME);
             params2.init(encoded);
 
             GCMParameterSpec retrieved = params2.getParameterSpec(GCMParameterSpec.class);
@@ -282,7 +286,7 @@ public class AlgorithmParametersTest {
                 PSource.PSpecified.DEFAULT
             );
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("OAEP", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("OAEP", GlaSSLessProvider.PROVIDER_NAME);
             params.init(spec);
 
             OAEPParameterSpec retrieved = params.getParameterSpec(OAEPParameterSpec.class);
@@ -301,7 +305,7 @@ public class AlgorithmParametersTest {
                 PSource.PSpecified.DEFAULT
             );
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("OAEP", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("OAEP", GlaSSLessProvider.PROVIDER_NAME);
             params.init(spec);
 
             OAEPParameterSpec retrieved = params.getParameterSpec(OAEPParameterSpec.class);
@@ -324,7 +328,7 @@ public class AlgorithmParametersTest {
                 1
             );
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("RSASSA-PSS", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("RSASSA-PSS", GlaSSLessProvider.PROVIDER_NAME);
             params.init(spec);
 
             PSSParameterSpec retrieved = params.getParameterSpec(PSSParameterSpec.class);
@@ -346,13 +350,13 @@ public class AlgorithmParametersTest {
                 1
             );
 
-            AlgorithmParameters params1 = AlgorithmParameters.getInstance("RSASSA-PSS", "GlaSSLess");
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("RSASSA-PSS", GlaSSLessProvider.PROVIDER_NAME);
             params1.init(spec);
 
             byte[] encoded = params1.getEncoded();
             assertNotNull(encoded);
 
-            AlgorithmParameters params2 = AlgorithmParameters.getInstance("RSASSA-PSS", "GlaSSLess");
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("RSASSA-PSS", GlaSSLessProvider.PROVIDER_NAME);
             params2.init(encoded);
 
             PSSParameterSpec retrieved = params2.getParameterSpec(PSSParameterSpec.class);
@@ -363,7 +367,7 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("PSS alias works")
         void testPSSAlias() throws Exception {
-            AlgorithmParameters params = AlgorithmParameters.getInstance("PSS", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("PSS", GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(params);
 
             PSSParameterSpec spec = new PSSParameterSpec(
@@ -391,7 +395,7 @@ public class AlgorithmParametersTest {
             for (int i = 0; i < 16; i++) salt[i] = (byte) i;
             int iterationCount = 10000;
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("PBEWithHmacSHA1AndAES_128", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("PBEWithHmacSHA1AndAES_128", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new PBEParameterSpec(salt, iterationCount));
 
             PBEParameterSpec retrieved = params.getParameterSpec(PBEParameterSpec.class);
@@ -411,7 +415,7 @@ public class AlgorithmParametersTest {
             }
             int iterationCount = 10000;
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new PBEParameterSpec(salt, iterationCount, new IvParameterSpec(iv)));
 
             PBEParameterSpec retrieved = params.getParameterSpec(PBEParameterSpec.class);
@@ -419,7 +423,7 @@ public class AlgorithmParametersTest {
             assertArrayEquals(salt, retrieved.getSalt());
             assertEquals(iterationCount, retrieved.getIterationCount());
             assertNotNull(retrieved.getParameterSpec());
-            assertTrue(retrieved.getParameterSpec() instanceof IvParameterSpec);
+            assertInstanceOf(IvParameterSpec.class, retrieved.getParameterSpec());
             assertArrayEquals(iv, ((IvParameterSpec) retrieved.getParameterSpec()).getIV());
         }
 
@@ -432,14 +436,14 @@ public class AlgorithmParametersTest {
                          0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20};
             int iterationCount = 50000;
 
-            AlgorithmParameters params1 = AlgorithmParameters.getInstance("PBEWithHmacSHA512AndAES_256", "GlaSSLess");
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("PBEWithHmacSHA512AndAES_256", GlaSSLessProvider.PROVIDER_NAME);
             params1.init(new PBEParameterSpec(salt, iterationCount, new IvParameterSpec(iv)));
 
             byte[] encoded = params1.getEncoded();
             assertNotNull(encoded);
             assertTrue(encoded.length > 0);
 
-            AlgorithmParameters params2 = AlgorithmParameters.getInstance("PBEWithHmacSHA512AndAES_256", "GlaSSLess");
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("PBEWithHmacSHA512AndAES_256", GlaSSLessProvider.PROVIDER_NAME);
             params2.init(encoded);
 
             PBEParameterSpec retrieved = params2.getParameterSpec(PBEParameterSpec.class);
@@ -450,7 +454,7 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("PBES2 alias works")
         void testPBES2Alias() throws Exception {
-            AlgorithmParameters params = AlgorithmParameters.getInstance("PBES2", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("PBES2", GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(params);
 
             byte[] salt = new byte[16];
@@ -466,7 +470,7 @@ public class AlgorithmParametersTest {
             byte[] salt = new byte[16];
             byte[] iv = new byte[16];
 
-            AlgorithmParameters params = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_256", "GlaSSLess");
+            AlgorithmParameters params = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_256", GlaSSLessProvider.PROVIDER_NAME);
             params.init(new PBEParameterSpec(salt, 100000, new IvParameterSpec(iv)));
 
             String str = params.toString();

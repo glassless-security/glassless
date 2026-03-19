@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for SSH Key Derivation Function (RFC 4253).
- *
+ * <p>
  * SSH uses this KDF to derive multiple keys from the shared secret
  * established during key exchange.
  */

@@ -55,8 +55,7 @@ abstract class AbstractRSACipher extends CipherSpi {
     @Override
     protected void engineSetPadding(String paddingStr) throws NoSuchPaddingException {
         // Padding is fixed at construction time
-        String normalizedPadding = paddingStr.toUpperCase().replace("PADDING", "PADDING");
-        if (!this.padding.name().equalsIgnoreCase(normalizedPadding.replace("PADDING", "PADDING"))) {
+        if (!this.padding.name().equalsIgnoreCase(paddingStr)) {
             throw new NoSuchPaddingException("Unsupported padding: " + paddingStr);
         }
     }
@@ -64,7 +63,7 @@ abstract class AbstractRSACipher extends CipherSpi {
     @Override
     protected int engineGetBlockSize() {
         // RSA block size is the key size
-        return keySize > 0 ? keySize : 0;
+        return Math.max(keySize, 0);
     }
 
     @Override
@@ -84,23 +83,18 @@ abstract class AbstractRSACipher extends CipherSpi {
 
     @Override
     protected void engineInit(int opmode, Key key, SecureRandom random) throws InvalidKeyException {
-        try {
-            engineInit(opmode, key, (AlgorithmParameterSpec) null, random);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new InvalidKeyException(e);
-        }
+        engineInit(opmode, key, (AlgorithmParameterSpec) null, random);
     }
 
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+            throws InvalidKeyException {
         this.opmode = opmode;
 
-        if (!(key instanceof RSAKey)) {
+        if (!(key instanceof RSAKey rsaKey)) {
             throw new InvalidKeyException("Key must be an RSA key");
         }
 
-        RSAKey rsaKey = (RSAKey) key;
         this.keySize = (rsaKey.getModulus().bitLength() + 7) / 8;
 
         try {
@@ -193,8 +187,7 @@ abstract class AbstractRSACipher extends CipherSpi {
     }
 
     @Override
-    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
-            throws ShortBufferException {
+    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
         return 0;
     }
 

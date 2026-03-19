@@ -258,14 +258,7 @@ public class XDHKeyFactory extends KeyFactorySpi {
         System.arraycopy(rawKey, 0, bitString, 3, rawKey.length);
 
         // SubjectPublicKeyInfo: SEQUENCE
-        int totalLen = algId.length + bitString.length;
-        byte[] encoded = new byte[2 + totalLen];
-        encoded[0] = 0x30;
-        encoded[1] = (byte) totalLen;
-        System.arraycopy(algId, 0, encoded, 2, algId.length);
-        System.arraycopy(bitString, 0, encoded, 2 + algId.length, bitString.length);
-
-        return encoded;
+        return encodeSequence(algId, bitString);
     }
 
     private byte[] createPKCS8Encoding(NamedParameterSpec params, byte[] keyBytes) {

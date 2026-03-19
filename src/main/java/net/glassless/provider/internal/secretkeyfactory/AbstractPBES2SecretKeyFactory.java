@@ -1,5 +1,6 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
+import java.io.Serial;
 import java.lang.foreign.Arena;
 import java.security.InvalidKeyException;
 import java.security.ProviderException;
@@ -58,7 +59,6 @@ public abstract class AbstractPBES2SecretKeyFactory extends SecretKeyFactorySpi 
 
         // For PBES2, the key length is determined by the cipher, not the key spec
         // The keySpec keyLength is ignored - we use the cipher's required key size
-        int keyLength = keyLengthBits;
 
         try (Arena arena = Arena.ofConfined()) {
             // Convert password to UTF-8 bytes
@@ -71,7 +71,7 @@ public abstract class AbstractPBES2SecretKeyFactory extends SecretKeyFactorySpi 
                     salt,
                     iterationCount,
                     digestName,
-                    keyLength / 8,
+                    keyLengthBits / 8,
                     arena
                 );
 
@@ -120,6 +120,7 @@ public abstract class AbstractPBES2SecretKeyFactory extends SecretKeyFactorySpi 
      * Internal PBES2 SecretKey implementation.
      */
     private static class PBES2SecretKey implements SecretKey {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private final byte[] keyBytes;

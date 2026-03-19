@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.algparams;
 
+import static net.glassless.provider.internal.algparams.Parameters.readLength;
+
 import java.io.IOException;
 import java.security.AlgorithmParametersSpi;
 import java.security.spec.AlgorithmParameterSpec;
@@ -180,22 +182,7 @@ public class PBEParameters extends AlgorithmParametersSpi {
         }
     }
 
-    private int readLength(byte[] der, int[] offset) throws IOException {
-        int b = der[offset[0]++] & 0xFF;
-        if (b < 128) {
-            return b;
-        }
-        int numBytes = b & 0x7F;
-        int length = 0;
-        for (int i = 0; i < numBytes; i++) {
-            length = (length << 8) | (der[offset[0]++] & 0xFF);
-        }
-        return length;
-    }
-
     private byte[] encodeDER() {
-        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-
         // Build PBKDF2-params
         byte[] pbkdf2Params = buildPBKDF2Params();
 
@@ -207,9 +194,7 @@ public class PBEParameters extends AlgorithmParametersSpi {
         byte[] encScheme = buildEncryptionScheme();
 
         // Build PBES2-params SEQUENCE
-        byte[] pbes2Params = encodeSequence(concat(kdfAlgId, encScheme));
-
-        return pbes2Params;
+        return encodeSequence(concat(kdfAlgId, encScheme));
     }
 
     private byte[] buildPBKDF2Params() {

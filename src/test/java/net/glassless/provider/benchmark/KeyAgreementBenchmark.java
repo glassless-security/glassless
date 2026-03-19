@@ -67,7 +67,7 @@ public class KeyAgreementBenchmark {
       bobKeyPair = kpg.generateKeyPair();
 
       jdkKeyAgreement = KeyAgreement.getInstance(algorithm);
-      glasslessKeyAgreement = KeyAgreement.getInstance(algorithm, "GlaSSLess");
+      glasslessKeyAgreement = KeyAgreement.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
       bcFipsKeyAgreement = KeyAgreement.getInstance(algorithm, "BCFIPS");
 
       // Try to configure NSS provider

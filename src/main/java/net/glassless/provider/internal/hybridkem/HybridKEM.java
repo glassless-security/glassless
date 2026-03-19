@@ -221,9 +221,8 @@ public class HybridKEM implements KEMSpi {
       private final String opensslName;
       private final byte[] rawPrivateKey;
       private final int sharedSecretSize;
-      private int encapsulationSize = -1;
 
-      HybridKEMDecapsulator(String opensslName, byte[] rawPrivateKey, int sharedSecretSize) {
+       HybridKEMDecapsulator(String opensslName, byte[] rawPrivateKey, int sharedSecretSize) {
          this.opensslName = opensslName;
          this.rawPrivateKey = rawPrivateKey;
          this.sharedSecretSize = sharedSecretSize;
@@ -317,7 +316,8 @@ public class HybridKEM implements KEMSpi {
          // X448MLKEM1024: 1624 bytes (56 + 1568)
          // SecP256r1MLKEM768: ~1153 bytes (65 + 1088)
          // SecP384r1MLKEM1024: ~1665 bytes (97 + 1568)
-         return encapsulationSize > 0 ? encapsulationSize : 1120;
+          int encapsulationSize = -1;
+          return encapsulationSize > 0 ? encapsulationSize : 1120;
       }
    }
 }

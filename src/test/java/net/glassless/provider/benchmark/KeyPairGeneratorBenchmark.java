@@ -78,7 +78,7 @@ public class KeyPairGeneratorBenchmark {
          jdkKeyPairGen = KeyPairGenerator.getInstance("EC");
          jdkKeyPairGen.initialize(new ECGenParameterSpec(curve));
 
-         glasslessKeyPairGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance("EC", GlaSSLessProvider.PROVIDER_NAME);
          glasslessKeyPairGen.initialize(new ECGenParameterSpec(curve));
 
          bcFipsKeyPairGen = KeyPairGenerator.getInstance("EC", "BCFIPS");
@@ -98,7 +98,7 @@ public class KeyPairGeneratorBenchmark {
          jdkKeyPairGen = KeyPairGenerator.getInstance("RSA");
          jdkKeyPairGen.initialize(keySize);
 
-         glasslessKeyPairGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance("RSA", GlaSSLessProvider.PROVIDER_NAME);
          glasslessKeyPairGen.initialize(keySize);
 
          bcFipsKeyPairGen = KeyPairGenerator.getInstance("RSA", "BCFIPS");

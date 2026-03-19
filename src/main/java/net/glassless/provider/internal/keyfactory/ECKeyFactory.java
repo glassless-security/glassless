@@ -22,12 +22,10 @@ public class ECKeyFactory extends KeyFactorySpi {
 
     @Override
     protected PublicKey engineGeneratePublic(KeySpec keySpec) throws InvalidKeySpecException {
-        if (keySpec instanceof X509EncodedKeySpec) {
-            X509EncodedKeySpec x509Spec = (X509EncodedKeySpec) keySpec;
+        if (keySpec instanceof X509EncodedKeySpec x509Spec) {
             return generatePublicKeyFromEncoded(x509Spec.getEncoded());
 
-        } else if (keySpec instanceof ECPublicKeySpec) {
-            ECPublicKeySpec ecSpec = (ECPublicKeySpec) keySpec;
+        } else if (keySpec instanceof ECPublicKeySpec ecSpec) {
             return generatePublicKeyFromSpec(ecSpec);
 
         } else {
@@ -37,12 +35,10 @@ public class ECKeyFactory extends KeyFactorySpi {
 
     @Override
     protected PrivateKey engineGeneratePrivate(KeySpec keySpec) throws InvalidKeySpecException {
-        if (keySpec instanceof PKCS8EncodedKeySpec) {
-            PKCS8EncodedKeySpec pkcs8Spec = (PKCS8EncodedKeySpec) keySpec;
+        if (keySpec instanceof PKCS8EncodedKeySpec pkcs8Spec) {
             return generatePrivateKeyFromEncoded(pkcs8Spec.getEncoded());
 
-        } else if (keySpec instanceof ECPrivateKeySpec) {
-            ECPrivateKeySpec ecSpec = (ECPrivateKeySpec) keySpec;
+        } else if (keySpec instanceof ECPrivateKeySpec ecSpec) {
             return generatePrivateKeyFromSpec(ecSpec);
 
         } else {
@@ -53,47 +49,43 @@ public class ECKeyFactory extends KeyFactorySpi {
     @Override
     @SuppressWarnings("unchecked")
     protected <T extends KeySpec> T engineGetKeySpec(Key key, Class<T> keySpec) throws InvalidKeySpecException {
-        if (key == null) {
-            throw new InvalidKeySpecException("Key cannot be null");
+        switch (key) {
+            case null -> throw new InvalidKeySpecException("Key cannot be null");
+            case ECPublicKey ecKey -> {
+
+                if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+                    byte[] encoded = key.getEncoded();
+                    if (encoded == null) {
+                        throw new InvalidKeySpecException("Key does not support encoding");
+                    }
+                    return (T) new X509EncodedKeySpec(encoded);
+
+                } else if (ECPublicKeySpec.class.isAssignableFrom(keySpec)) {
+                    return (T) new ECPublicKeySpec(ecKey.getW(), ecKey.getParams());
+
+                } else {
+                    throw new InvalidKeySpecException("Unsupported KeySpec for EC public key: " + keySpec.getName());
+                }
+            }
+            case ECPrivateKey ecKey -> {
+
+                if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+                    byte[] encoded = key.getEncoded();
+                    if (encoded == null) {
+                        throw new InvalidKeySpecException("Key does not support encoding");
+                    }
+                    return (T) new PKCS8EncodedKeySpec(encoded);
+
+                } else if (ECPrivateKeySpec.class.isAssignableFrom(keySpec)) {
+                    return (T) new ECPrivateKeySpec(ecKey.getS(), ecKey.getParams());
+
+                } else {
+                    throw new InvalidKeySpecException("Unsupported KeySpec for EC private key: " + keySpec.getName());
+                }
+            }
+            default -> throw new InvalidKeySpecException("Key is not an EC key");
         }
 
-        if (key instanceof ECPublicKey) {
-            ECPublicKey ecKey = (ECPublicKey) key;
-
-            if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                byte[] encoded = key.getEncoded();
-                if (encoded == null) {
-                    throw new InvalidKeySpecException("Key does not support encoding");
-                }
-                return (T) new X509EncodedKeySpec(encoded);
-
-            } else if (ECPublicKeySpec.class.isAssignableFrom(keySpec)) {
-                return (T) new ECPublicKeySpec(ecKey.getW(), ecKey.getParams());
-
-            } else {
-                throw new InvalidKeySpecException("Unsupported KeySpec for EC public key: " + keySpec.getName());
-            }
-
-        } else if (key instanceof ECPrivateKey) {
-            ECPrivateKey ecKey = (ECPrivateKey) key;
-
-            if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                byte[] encoded = key.getEncoded();
-                if (encoded == null) {
-                    throw new InvalidKeySpecException("Key does not support encoding");
-                }
-                return (T) new PKCS8EncodedKeySpec(encoded);
-
-            } else if (ECPrivateKeySpec.class.isAssignableFrom(keySpec)) {
-                return (T) new ECPrivateKeySpec(ecKey.getS(), ecKey.getParams());
-
-            } else {
-                throw new InvalidKeySpecException("Unsupported KeySpec for EC private key: " + keySpec.getName());
-            }
-
-        } else {
-            throw new InvalidKeySpecException("Key is not an EC key");
-        }
     }
 
     @Override

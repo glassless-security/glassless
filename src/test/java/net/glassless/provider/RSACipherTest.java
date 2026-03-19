@@ -51,7 +51,7 @@ public class RSACipherTest {
         void testRSAPKCS1Padding(int keySize, int plaintextSize) throws Exception {
             KeyPair keyPair = keySize == 2048 ? keyPair2048 : keyPair4096;
 
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", GlaSSLessProvider.PROVIDER_NAME);
 
             // Generate plaintext
             byte[] plaintext = new byte[plaintextSize];
@@ -63,7 +63,7 @@ public class RSACipherTest {
             assertNotNull(encryptedBytes);
 
             // Decrypt with private key
-            Cipher decryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", GlaSSLessProvider.PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
             byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
 
@@ -74,7 +74,7 @@ public class RSACipherTest {
         @DisplayName("RSA alias test")
         void testRSAAlias() throws Exception {
             // Test that "RSA" alias works
-            Cipher cipher = Cipher.getInstance("RSA", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("RSA", GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(cipher);
 
             byte[] plaintext = "Test message".getBytes();
@@ -82,7 +82,7 @@ public class RSACipherTest {
             cipher.init(Cipher.ENCRYPT_MODE, keyPair2048.getPublic());
             byte[] encrypted = cipher.doFinal(plaintext);
 
-            Cipher decryptCipher = Cipher.getInstance("RSA", "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance("RSA", GlaSSLessProvider.PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, keyPair2048.getPrivate());
             byte[] decrypted = decryptCipher.doFinal(encrypted);
 
@@ -109,7 +109,7 @@ public class RSACipherTest {
             KeyPair keyPair = keySize == 2048 ? keyPair2048 : keyPair4096;
             String algorithm = String.format("RSA/ECB/OAEPWith%sAndMGF1Padding", hash);
 
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
 
             // Generate plaintext
             byte[] plaintext = new byte[plaintextSize];
@@ -121,7 +121,7 @@ public class RSACipherTest {
             assertNotNull(encryptedBytes);
 
             // Decrypt with private key
-            Cipher decryptCipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
             byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
 
@@ -136,7 +136,7 @@ public class RSACipherTest {
         @Test
         @DisplayName("RSA/ECB/NoPadding with block-sized data")
         void testRSANoPadding() throws Exception {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/NoPadding", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("RSA/ECB/NoPadding", GlaSSLessProvider.PROVIDER_NAME);
 
             // For NoPadding, plaintext must be exactly key size (256 bytes for 2048-bit key)
             // and the value must be less than the modulus
@@ -152,7 +152,7 @@ public class RSACipherTest {
             assertNotNull(encryptedBytes);
 
             // Decrypt with private key
-            Cipher decryptCipher = Cipher.getInstance("RSA/ECB/NoPadding", "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance("RSA/ECB/NoPadding", GlaSSLessProvider.PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, keyPair2048.getPrivate());
             byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
 

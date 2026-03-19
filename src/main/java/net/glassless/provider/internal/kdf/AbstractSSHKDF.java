@@ -4,7 +4,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -17,7 +16,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for SSH KDF implementations (RFC 4253).
- *
+ * <p>
  * SSH KDF derives encryption keys, integrity keys, and IVs from
  * the shared secret established during SSH key exchange.
  */
@@ -42,7 +41,7 @@ public abstract class AbstractSSHKDF extends KDFSpi {
 
    @Override
    protected SecretKey engineDeriveKey(String algorithm, AlgorithmParameterSpec params)
-         throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+         throws InvalidAlgorithmParameterException {
       byte[] derivedBytes = engineDeriveData(params);
       return new SecretKeySpec(derivedBytes, algorithm);
    }

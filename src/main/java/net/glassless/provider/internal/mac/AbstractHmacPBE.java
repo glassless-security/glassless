@@ -28,7 +28,6 @@ public abstract class AbstractHmacPBE extends MacSpi {
     private final int derivedKeyLength;
     private final Arena arena;
 
-    private MemorySegment evpMac;
     private MemorySegment evpMacCtx;
     private byte[] derivedKey;
     private boolean initialized = false;
@@ -68,11 +67,10 @@ public abstract class AbstractHmacPBE extends MacSpi {
         }
 
         // Extract salt and iteration count from params
-        if (!(params instanceof PBEParameterSpec)) {
+        if (!(params instanceof PBEParameterSpec pbeParams)) {
             throw new InvalidAlgorithmParameterException("PBEParameterSpec required");
         }
 
-        PBEParameterSpec pbeParams = (PBEParameterSpec) params;
         byte[] salt = pbeParams.getSalt();
         int iterationCount = pbeParams.getIterationCount();
 
@@ -81,7 +79,7 @@ public abstract class AbstractHmacPBE extends MacSpi {
             derivedKey = OpenSSLCrypto.PKCS5_PBKDF2_HMAC(password, salt, iterationCount, kdfDigestName, derivedKeyLength, arena);
 
             // Fetch the HMAC implementation
-            evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
+            MemorySegment evpMac = OpenSSLCrypto.EVP_MAC_fetch(MemorySegment.NULL, "HMAC", MemorySegment.NULL, arena);
             if (evpMac.equals(MemorySegment.NULL)) {
                 throw new ProviderException("Failed to fetch HMAC");
             }
@@ -121,25 +119,7 @@ public abstract class AbstractHmacPBE extends MacSpi {
 
     @Override
     protected void engineUpdate(byte[] input, int offset, int len) {
-        if (!initialized) {
-            throw new IllegalStateException("MAC not initialized");
-        }
-
-        if (len == 0) {
-            return;
-        }
-
-        try (Arena confinedArena = Arena.ofConfined()) {
-            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
-            inputSegment.asByteBuffer().put(input, offset, len);
-
-            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputSegment, len);
-            if (result != 1) {
-                throw new ProviderException("HMAC update failed");
-            }
-        } catch (Throwable e) {
-            throw new ProviderException("Error updating HMAC", e);
-        }
+        update(input, offset, len, initialized, evpMacCtx);
     }
 
     @Override
@@ -173,6 +153,37 @@ public abstract class AbstractHmacPBE extends MacSpi {
 
     @Override
     protected void engineReset() {
+        reset(evpMacCtx, derivedKey, digestName, arena);
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException("HMAC clone not supported");
+    }
+
+    static void update(byte[] input, int offset, int len, boolean initialized, MemorySegment evpMacCtx) {
+        if (!initialized) {
+            throw new IllegalStateException("MAC not initialized");
+        }
+
+        if (len == 0) {
+            return;
+        }
+
+        try (Arena confinedArena = Arena.ofConfined()) {
+            MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
+            inputSegment.asByteBuffer().put(input, offset, len);
+
+            int result = OpenSSLCrypto.EVP_MAC_update(evpMacCtx, inputSegment, len);
+            if (result != 1) {
+                throw new ProviderException("HMAC update failed");
+            }
+        } catch (Throwable e) {
+            throw new ProviderException("Error updating HMAC", e);
+        }
+    }
+
+    static void reset(MemorySegment evpMacCtx, byte[] derivedKey, String digestName, Arena arena) {
         if (evpMacCtx != null && derivedKey != null) {
             try {
                 // Re-initialize the context for reuse
@@ -185,10 +196,5 @@ public abstract class AbstractHmacPBE extends MacSpi {
                 // Ignore reset errors
             }
         }
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException("HMAC clone not supported");
     }
 }

@@ -92,7 +92,7 @@ public class ECParameters extends AlgorithmParametersSpi {
         if (curveName != null) {
             return "EC Parameters: curve=" + curveName;
         } else if (ecParameterSpec != null) {
-            return "EC Parameters: " + ecParameterSpec.toString();
+            return "EC Parameters: " + ecParameterSpec;
         }
         return "EC Parameters: <not initialized>";
     }

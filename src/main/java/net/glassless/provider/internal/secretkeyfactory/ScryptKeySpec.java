@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Key specification for SCRYPT key derivation.
- *
+ * <p>
  * SCRYPT parameters:
  * - password: the password
  * - salt: the salt (should be at least 16 bytes)

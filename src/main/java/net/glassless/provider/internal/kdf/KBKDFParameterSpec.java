@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for Key-Based Key Derivation Function (SP 800-108).
- *
+ * <p>
  * KBKDF is a NIST-approved KDF that derives keys from an existing key
  * using a pseudorandom function (typically HMAC or CMAC).
  */

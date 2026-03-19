@@ -153,6 +153,7 @@ security.provider.3=SunRsaSign
 
 WARNING: High priority positioning changes default behavior for all applications using this JVM. Test thoroughly before deploying.
 
+[#_hybrid_mode_configuration]
 === Hybrid Mode Configuration
 
 Hybrid mode allows GlaSSLess to delegate certain algorithms to the JDK provider for better performance. JDK's HotSpot intrinsics significantly outperform OpenSSL via FFM for some operations:

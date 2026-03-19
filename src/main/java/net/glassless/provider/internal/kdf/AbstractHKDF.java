@@ -4,7 +4,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.List;
@@ -44,7 +43,7 @@ public abstract class AbstractHKDF extends KDFSpi {
 
     @Override
     protected SecretKey engineDeriveKey(String algorithm, AlgorithmParameterSpec params)
-            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+            throws InvalidAlgorithmParameterException {
         byte[] derivedBytes = engineDeriveData(params);
         return new SecretKeySpec(derivedBytes, algorithm);
     }
@@ -204,7 +203,7 @@ public abstract class AbstractHKDF extends KDFSpi {
             return new byte[0];
         }
         if (keys.size() == 1) {
-            return keys.get(0).getEncoded();
+            return keys.getFirst().getEncoded();
         }
 
         // Calculate total length

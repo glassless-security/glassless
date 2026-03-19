@@ -1,6 +1,11 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -32,16 +37,16 @@ public class HybridModeIntegrationTest {
    @BeforeAll
    public static void setUpClass() {
       // Save original provider if present
-      originalProvider = (GlaSSLessProvider) Security.getProvider("GlaSSLess");
+      originalProvider = (GlaSSLessProvider) Security.getProvider(GlaSSLessProvider.PROVIDER_NAME);
       if (originalProvider != null) {
-         Security.removeProvider("GlaSSLess");
+         Security.removeProvider(GlaSSLessProvider.PROVIDER_NAME);
       }
    }
 
    @AfterAll
    public static void tearDownClass() {
       // Restore original provider
-      Security.removeProvider("GlaSSLess");
+      Security.removeProvider(GlaSSLessProvider.PROVIDER_NAME);
       if (originalProvider != null) {
          Security.addProvider(originalProvider);
       }
@@ -60,7 +65,7 @@ public class HybridModeIntegrationTest {
       FIPSStatus.clearCache();
 
       // Remove provider if present
-      Security.removeProvider("GlaSSLess");
+      Security.removeProvider(GlaSSLessProvider.PROVIDER_NAME);
    }
 
    @AfterEach
@@ -78,7 +83,7 @@ public class HybridModeIntegrationTest {
       }
       HybridModeConfig.clearCache();
       FIPSStatus.clearCache();
-      Security.removeProvider("GlaSSLess");
+      Security.removeProvider(GlaSSLessProvider.PROVIDER_NAME);
    }
 
    @Nested
@@ -108,12 +113,12 @@ public class HybridModeIntegrationTest {
 
          // SHA-256 should NOT be available from GlaSSLess in hybrid mode
          assertThrows(NoSuchAlgorithmException.class, () ->
-            MessageDigest.getInstance("SHA-256", "GlaSSLess"));
+            MessageDigest.getInstance("SHA-256", GlaSSLessProvider.PROVIDER_NAME));
 
          // But it should still be available from default provider
          MessageDigest md = MessageDigest.getInstance("SHA-256");
          assertNotNull(md);
-         assertNotEquals("GlaSSLess", md.getProvider().getName());
+         assertNotEquals(GlaSSLessProvider.PROVIDER_NAME, md.getProvider().getName());
       }
 
       @Test
@@ -127,12 +132,12 @@ public class HybridModeIntegrationTest {
 
          // SHA-512 should NOT be available from GlaSSLess in hybrid mode
          assertThrows(NoSuchAlgorithmException.class, () ->
-            MessageDigest.getInstance("SHA-512", "GlaSSLess"));
+            MessageDigest.getInstance("SHA-512", GlaSSLessProvider.PROVIDER_NAME));
 
          // But it should still be available from default provider
          MessageDigest md = MessageDigest.getInstance("SHA-512");
          assertNotNull(md);
-         assertNotEquals("GlaSSLess", md.getProvider().getName());
+         assertNotEquals(GlaSSLessProvider.PROVIDER_NAME, md.getProvider().getName());
       }
 
       @Test
@@ -146,12 +151,12 @@ public class HybridModeIntegrationTest {
 
          // HmacSHA256 should NOT be available from GlaSSLess in hybrid mode
          assertThrows(NoSuchAlgorithmException.class, () ->
-            Mac.getInstance("HmacSHA256", "GlaSSLess"));
+            Mac.getInstance("HmacSHA256", GlaSSLessProvider.PROVIDER_NAME));
 
          // But it should still be available from default provider
          Mac mac = Mac.getInstance("HmacSHA256");
          assertNotNull(mac);
-         assertNotEquals("GlaSSLess", mac.getProvider().getName());
+         assertNotEquals(GlaSSLessProvider.PROVIDER_NAME, mac.getProvider().getName());
       }
 
       @Test
@@ -165,12 +170,12 @@ public class HybridModeIntegrationTest {
 
          // HmacSHA512 should NOT be available from GlaSSLess in hybrid mode
          assertThrows(NoSuchAlgorithmException.class, () ->
-            Mac.getInstance("HmacSHA512", "GlaSSLess"));
+            Mac.getInstance("HmacSHA512", GlaSSLessProvider.PROVIDER_NAME));
 
          // But it should still be available from default provider
          Mac mac = Mac.getInstance("HmacSHA512");
          assertNotNull(mac);
-         assertNotEquals("GlaSSLess", mac.getProvider().getName());
+         assertNotEquals(GlaSSLessProvider.PROVIDER_NAME, mac.getProvider().getName());
       }
 
       @Test
@@ -183,14 +188,14 @@ public class HybridModeIntegrationTest {
          Security.insertProviderAt(provider, 1);
 
          // SHA-384 is not in the default delegate list, so should be available
-         MessageDigest md = MessageDigest.getInstance("SHA-384", "GlaSSLess");
+         MessageDigest md = MessageDigest.getInstance("SHA-384", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(md);
-         assertEquals("GlaSSLess", md.getProvider().getName());
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, md.getProvider().getName());
 
          // HmacSHA384 is not in the default delegate list
-         Mac mac = Mac.getInstance("HmacSHA384", "GlaSSLess");
+         Mac mac = Mac.getInstance("HmacSHA384", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(mac);
-         assertEquals("GlaSSLess", mac.getProvider().getName());
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, mac.getProvider().getName());
       }
 
       @Test
@@ -203,9 +208,9 @@ public class HybridModeIntegrationTest {
          Security.insertProviderAt(provider, 1);
 
          // SHA3-256 is not in the default delegate list
-         MessageDigest md = MessageDigest.getInstance("SHA3-256", "GlaSSLess");
+         MessageDigest md = MessageDigest.getInstance("SHA3-256", GlaSSLessProvider.PROVIDER_NAME);
          assertNotNull(md);
-         assertEquals("GlaSSLess", md.getProvider().getName());
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, md.getProvider().getName());
       }
    }
 
@@ -223,17 +228,17 @@ public class HybridModeIntegrationTest {
          assertFalse(provider.isHybridMode());
 
          // All algorithms should be available from GlaSSLess
-         MessageDigest sha256 = MessageDigest.getInstance("SHA-256", "GlaSSLess");
-         assertEquals("GlaSSLess", sha256.getProvider().getName());
+         MessageDigest sha256 = MessageDigest.getInstance("SHA-256", GlaSSLessProvider.PROVIDER_NAME);
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, sha256.getProvider().getName());
 
-         MessageDigest sha512 = MessageDigest.getInstance("SHA-512", "GlaSSLess");
-         assertEquals("GlaSSLess", sha512.getProvider().getName());
+         MessageDigest sha512 = MessageDigest.getInstance("SHA-512", GlaSSLessProvider.PROVIDER_NAME);
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, sha512.getProvider().getName());
 
-         Mac hmacSha256 = Mac.getInstance("HmacSHA256", "GlaSSLess");
-         assertEquals("GlaSSLess", hmacSha256.getProvider().getName());
+         Mac hmacSha256 = Mac.getInstance("HmacSHA256", GlaSSLessProvider.PROVIDER_NAME);
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, hmacSha256.getProvider().getName());
 
-         Mac hmacSha512 = Mac.getInstance("HmacSHA512", "GlaSSLess");
-         assertEquals("GlaSSLess", hmacSha512.getProvider().getName());
+         Mac hmacSha512 = Mac.getInstance("HmacSHA512", GlaSSLessProvider.PROVIDER_NAME);
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, hmacSha512.getProvider().getName());
       }
    }
 
@@ -274,11 +279,11 @@ public class HybridModeIntegrationTest {
 
          // SHA-256 should be available from GlaSSLess in FIPS mode
          // (hybrid delegation is overridden)
-         MessageDigest sha256 = MessageDigest.getInstance("SHA-256", "GlaSSLess");
-         assertEquals("GlaSSLess", sha256.getProvider().getName());
+         MessageDigest sha256 = MessageDigest.getInstance("SHA-256", GlaSSLessProvider.PROVIDER_NAME);
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, sha256.getProvider().getName());
 
-         MessageDigest sha512 = MessageDigest.getInstance("SHA-512", "GlaSSLess");
-         assertEquals("GlaSSLess", sha512.getProvider().getName());
+         MessageDigest sha512 = MessageDigest.getInstance("SHA-512", GlaSSLessProvider.PROVIDER_NAME);
+         assertEquals(GlaSSLessProvider.PROVIDER_NAME, sha512.getProvider().getName());
       }
    }
 
@@ -313,7 +318,7 @@ public class HybridModeIntegrationTest {
          Security.insertProviderAt(provider, 1);
 
          // Get SHA-384 from GlaSSLess (not delegated)
-         MessageDigest md = MessageDigest.getInstance("SHA-384", "GlaSSLess");
+         MessageDigest md = MessageDigest.getInstance("SHA-384", GlaSSLessProvider.PROVIDER_NAME);
          byte[] digest = md.digest("test".getBytes());
 
          // Verify digest length is correct for SHA-384

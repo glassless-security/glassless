@@ -6,7 +6,7 @@ import javax.crypto.KDFParameters;
 
 /**
  * TLS 1.3 KDF implementation using SHA-384.
- *
+ * <p>
  * This is used by TLS 1.3 cipher suites using AES-256.
  */
 public class TLS13KDF_SHA384 extends AbstractTLS13KDF {

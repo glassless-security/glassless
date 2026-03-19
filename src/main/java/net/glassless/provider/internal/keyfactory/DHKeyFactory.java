@@ -50,51 +50,49 @@ public class DHKeyFactory extends KeyFactorySpi {
     @Override
     @SuppressWarnings("unchecked")
     protected <T extends KeySpec> T engineGetKeySpec(Key key, Class<T> keySpec) throws InvalidKeySpecException {
-        if (key == null) {
-            throw new InvalidKeySpecException("Key cannot be null");
+        switch (key) {
+            case null -> throw new InvalidKeySpecException("Key cannot be null");
+            case DHPublicKey dhKey -> {
+                if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+                    byte[] encoded = key.getEncoded();
+                    if (encoded == null) {
+                        throw new InvalidKeySpecException("Key does not support encoding");
+                    }
+                    return (T) new X509EncodedKeySpec(encoded);
+
+                } else if (DHPublicKeySpec.class.isAssignableFrom(keySpec)) {
+                    return (T) new DHPublicKeySpec(
+                        dhKey.getY(),
+                        dhKey.getParams().getP(),
+                        dhKey.getParams().getG()
+                    );
+
+                } else {
+                    throw new InvalidKeySpecException("Unsupported KeySpec for DH public key: " + keySpec.getName());
+                }
+            }
+            case DHPrivateKey dhKey -> {
+                if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+                    byte[] encoded = key.getEncoded();
+                    if (encoded == null) {
+                        throw new InvalidKeySpecException("Key does not support encoding");
+                    }
+                    return (T) new PKCS8EncodedKeySpec(encoded);
+
+                } else if (DHPrivateKeySpec.class.isAssignableFrom(keySpec)) {
+                    return (T) new DHPrivateKeySpec(
+                        dhKey.getX(),
+                        dhKey.getParams().getP(),
+                        dhKey.getParams().getG()
+                    );
+
+                } else {
+                    throw new InvalidKeySpecException("Unsupported KeySpec for DH private key: " + keySpec.getName());
+                }
+            }
+            default -> throw new InvalidKeySpecException("Key is not a DH key");
         }
 
-        if (key instanceof DHPublicKey dhKey) {
-            if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                byte[] encoded = key.getEncoded();
-                if (encoded == null) {
-                    throw new InvalidKeySpecException("Key does not support encoding");
-                }
-                return (T) new X509EncodedKeySpec(encoded);
-
-            } else if (DHPublicKeySpec.class.isAssignableFrom(keySpec)) {
-                return (T) new DHPublicKeySpec(
-                    dhKey.getY(),
-                    dhKey.getParams().getP(),
-                    dhKey.getParams().getG()
-                );
-
-            } else {
-                throw new InvalidKeySpecException("Unsupported KeySpec for DH public key: " + keySpec.getName());
-            }
-
-        } else if (key instanceof DHPrivateKey dhKey) {
-            if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                byte[] encoded = key.getEncoded();
-                if (encoded == null) {
-                    throw new InvalidKeySpecException("Key does not support encoding");
-                }
-                return (T) new PKCS8EncodedKeySpec(encoded);
-
-            } else if (DHPrivateKeySpec.class.isAssignableFrom(keySpec)) {
-                return (T) new DHPrivateKeySpec(
-                    dhKey.getX(),
-                    dhKey.getParams().getP(),
-                    dhKey.getParams().getG()
-                );
-
-            } else {
-                throw new InvalidKeySpecException("Unsupported KeySpec for DH private key: " + keySpec.getName());
-            }
-
-        } else {
-            throw new InvalidKeySpecException("Key is not a DH key");
-        }
     }
 
     @Override
@@ -105,13 +103,12 @@ public class DHKeyFactory extends KeyFactorySpi {
 
         if (key instanceof DHPublicKey || key instanceof DHPrivateKey) {
             try {
+                byte[] encoded = key.getEncoded();
                 if (key instanceof PublicKey) {
-                    byte[] encoded = key.getEncoded();
                     if (encoded != null) {
                         return generatePublicKeyFromEncoded(encoded);
                     }
                 } else {
-                    byte[] encoded = key.getEncoded();
                     if (encoded != null) {
                         return generatePrivateKeyFromEncoded(encoded);
                     }

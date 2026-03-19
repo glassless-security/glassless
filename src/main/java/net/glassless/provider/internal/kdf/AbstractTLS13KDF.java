@@ -4,7 +4,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -17,7 +16,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for TLS 1.3 KDF implementations.
- *
+ * <p>
  * TLS 1.3 uses HKDF for key derivation with two modes:
  * <ul>
  *   <li>EXTRACT_ONLY: HKDF-Extract to derive PRK from input key material</li>
@@ -47,7 +46,7 @@ public abstract class AbstractTLS13KDF extends KDFSpi {
 
    @Override
    protected SecretKey engineDeriveKey(String algorithm, AlgorithmParameterSpec params)
-         throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+         throws InvalidAlgorithmParameterException {
       byte[] derivedBytes = engineDeriveData(params);
       return new SecretKeySpec(derivedBytes, algorithm);
    }

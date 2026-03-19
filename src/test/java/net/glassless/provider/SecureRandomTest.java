@@ -1,6 +1,9 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.SecureRandom;
 import java.security.Security;
@@ -29,16 +32,16 @@ public class SecureRandomTest {
         @ParameterizedTest(name = "Algorithm: {0}")
         @ValueSource(strings = {"NativePRNG", "DRBG", "SHA1PRNG"})
         void testGetInstance(String algorithm) throws Exception {
-            SecureRandom sr = SecureRandom.getInstance(algorithm, "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(sr);
             assertEquals(algorithm, sr.getAlgorithm());
-            assertEquals("GlaSSLess", sr.getProvider().getName());
+            assertEquals(GlaSSLessProvider.PROVIDER_NAME, sr.getProvider().getName());
         }
 
         @ParameterizedTest(name = "Algorithm: {0}")
         @ValueSource(strings = {"NativePRNG", "DRBG", "SHA1PRNG"})
         void testNextBytes(String algorithm) throws Exception {
-            SecureRandom sr = SecureRandom.getInstance(algorithm, "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] bytes = new byte[32];
             sr.nextBytes(bytes);
@@ -57,7 +60,7 @@ public class SecureRandomTest {
         @ParameterizedTest(name = "Algorithm: {0}")
         @ValueSource(strings = {"NativePRNG", "DRBG", "SHA1PRNG"})
         void testGenerateSeed(String algorithm) throws Exception {
-            SecureRandom sr = SecureRandom.getInstance(algorithm, "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance(algorithm, GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] seed = sr.generateSeed(32);
 
@@ -78,7 +81,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("Successive calls produce different bytes")
         void testRandomnessQuality() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] bytes1 = new byte[32];
             byte[] bytes2 = new byte[32];
@@ -92,8 +95,8 @@ public class SecureRandomTest {
         @Test
         @DisplayName("Different instances produce different bytes")
         void testDifferentInstances() throws Exception {
-            SecureRandom sr1 = SecureRandom.getInstance("DRBG", "GlaSSLess");
-            SecureRandom sr2 = SecureRandom.getInstance("DRBG", "GlaSSLess");
+            SecureRandom sr1 = SecureRandom.getInstance("DRBG", GlaSSLessProvider.PROVIDER_NAME);
+            SecureRandom sr2 = SecureRandom.getInstance("DRBG", GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] bytes1 = new byte[32];
             byte[] bytes2 = new byte[32];
@@ -112,7 +115,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("SetSeed does not throw")
         void testSetSeed() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] seed = new byte[32];
             Arrays.fill(seed, (byte) 0x42);
@@ -137,7 +140,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("SetSeed with long value")
         void testSetSeedLong() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("DRBG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("DRBG", GlaSSLessProvider.PROVIDER_NAME);
 
             // Should not throw
             sr.setSeed(12345678L);
@@ -155,7 +158,7 @@ public class SecureRandomTest {
         @ParameterizedTest(name = "Size: {0} bytes")
         @ValueSource(ints = {1, 8, 16, 32, 64, 128, 256, 1024, 4096})
         void testVariousSizes(int size) throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] bytes = new byte[size];
             sr.nextBytes(bytes);
@@ -176,7 +179,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("Zero length array")
         void testZeroLength() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("DRBG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("DRBG", GlaSSLessProvider.PROVIDER_NAME);
 
             byte[] bytes = new byte[0];
             sr.nextBytes(bytes); // Should not throw
@@ -187,7 +190,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("Generate seed of various sizes")
         void testGenerateSeedSizes() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("SHA1PRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("SHA1PRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             for (int size : new int[]{8, 16, 32, 64}) {
                 byte[] seed = sr.generateSeed(size);
@@ -203,7 +206,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("NativePRNGBlocking alias works")
         void testNativePRNGBlockingAlias() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNGBlocking", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNGBlocking", GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(sr);
 
             byte[] bytes = new byte[16];
@@ -213,7 +216,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("NativePRNGNonBlocking alias works")
         void testNativePRNGNonBlockingAlias() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNGNonBlocking", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNGNonBlocking", GlaSSLessProvider.PROVIDER_NAME);
             assertNotNull(sr);
 
             byte[] bytes = new byte[16];
@@ -228,7 +231,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("nextInt produces varied results")
         void testNextInt() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             Set<Integer> values = new HashSet<>();
             for (int i = 0; i < 100; i++) {
@@ -242,7 +245,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("nextInt with bound")
         void testNextIntBound() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("DRBG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("DRBG", GlaSSLessProvider.PROVIDER_NAME);
 
             int bound = 100;
             for (int i = 0; i < 100; i++) {
@@ -254,7 +257,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("nextLong produces varied results")
         void testNextLong() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("SHA1PRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("SHA1PRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             Set<Long> values = new HashSet<>();
             for (int i = 0; i < 100; i++) {
@@ -268,7 +271,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("nextDouble produces values in [0, 1)")
         void testNextDouble() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("NativePRNG", GlaSSLessProvider.PROVIDER_NAME);
 
             for (int i = 0; i < 100; i++) {
                 double value = sr.nextDouble();
@@ -279,7 +282,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("nextBoolean produces both true and false")
         void testNextBoolean() throws Exception {
-            SecureRandom sr = SecureRandom.getInstance("DRBG", "GlaSSLess");
+            SecureRandom sr = SecureRandom.getInstance("DRBG", GlaSSLessProvider.PROVIDER_NAME);
 
             boolean seenTrue = false;
             boolean seenFalse = false;

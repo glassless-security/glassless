@@ -7,6 +7,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
+import java.security.SignatureException;
 import java.util.NoSuchElementException;
 
 public class OpenSSLCrypto {
@@ -65,10 +66,8 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_MAC_update;
    private static MethodHandle EVP_MAC_final;
    private static MethodHandle EVP_MAC_CTX_get_mac_size;
-   private static MethodHandle OSSL_PARAM_construct_utf8_string;
-   private static MethodHandle OSSL_PARAM_construct_end;
 
-   // Method handles for secure random
+    // Method handles for secure random
    private static MethodHandle RAND_bytes;
    private static MethodHandle RAND_seed;
 
@@ -355,15 +354,15 @@ public class OpenSSLCrypto {
             FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
          );
          // OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf, size_t bsize)
-         OSSL_PARAM_construct_utf8_string = linker.downcallHandle(
-            libcrypto.find("OSSL_PARAM_construct_utf8_string").orElseThrow(),
-            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
-         );
+          MethodHandle OSSL_PARAM_construct_utf8_string = linker.downcallHandle(
+              libcrypto.find("OSSL_PARAM_construct_utf8_string").orElseThrow(),
+              FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+          );
          // OSSL_PARAM OSSL_PARAM_construct_end(void)
-         OSSL_PARAM_construct_end = linker.downcallHandle(
-            libcrypto.find("OSSL_PARAM_construct_end").orElseThrow(),
-            FunctionDescriptor.of(ValueLayout.ADDRESS)
-         );
+          MethodHandle OSSL_PARAM_construct_end = linker.downcallHandle(
+              libcrypto.find("OSSL_PARAM_construct_end").orElseThrow(),
+              FunctionDescriptor.of(ValueLayout.ADDRESS)
+          );
 
          // int RAND_bytes(unsigned char *buf, int num)
          RAND_bytes = linker.downcallHandle(
@@ -1148,8 +1147,7 @@ public class OpenSSLCrypto {
       keyPtrSegment.set(ValueLayout.ADDRESS, 0, keySegment);
 
       // Use d2i_PrivateKey_ex with type=0 for auto-detection (works for both RSA and EC)
-      MemorySegment pkey = (MemorySegment) d2i_PrivateKey_ex.invokeExact(type, MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
-      return pkey;
+       return (MemorySegment) d2i_PrivateKey_ex.invokeExact(type, MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
    }
 
    /**
@@ -1162,8 +1160,7 @@ public class OpenSSLCrypto {
       MemorySegment keyPtrSegment = arena.allocate(ValueLayout.ADDRESS);
       keyPtrSegment.set(ValueLayout.ADDRESS, 0, keySegment);
 
-      MemorySegment pkey = (MemorySegment) d2i_PUBKEY_ex.invokeExact(MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
-      return pkey;
+       return (MemorySegment) d2i_PUBKEY_ex.invokeExact(MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
    }
 
    // Key pair generation wrapper methods
@@ -1557,7 +1554,7 @@ public class OpenSSLCrypto {
          // BN_bn2bin produces unsigned big-endian bytes
          // BigInteger expects a sign-magnitude representation
          // For positive numbers, we may need to prepend a zero byte if high bit is set
-         if (bytes.length > 0 && (bytes[0] & 0x80) != 0) {
+         if ((bytes[0] & 0x80) != 0) {
             byte[] tmp = new byte[bytes.length + 1];
             System.arraycopy(bytes, 0, tmp, 1, bytes.length);
             bytes = tmp;
@@ -1813,7 +1810,7 @@ public class OpenSSLCrypto {
       MemorySegment digestValueSegment = arena.allocate(digestValueBytes.length + 1);
       digestValueSegment.asByteBuffer().put(digestValueBytes).put((byte) 0);
 
-      long offset = paramIndex * OSSL_PARAM_SIZE;
+      long offset = 0;
       params.set(ValueLayout.ADDRESS, offset, digestKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_UTF8_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, digestValueSegment);
@@ -1923,7 +1920,7 @@ public class OpenSSLCrypto {
       MemorySegment passValueSegment = arena.allocate(ValueLayout.JAVA_BYTE, password.length);
       passValueSegment.asByteBuffer().put(password);
 
-      long offset = paramIndex * OSSL_PARAM_SIZE;
+      long offset = 0;
       params.set(ValueLayout.ADDRESS, offset, passKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, passValueSegment);
@@ -2349,5 +2346,117 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
 
       return paramIndex + 1;
+   }
+
+   public static byte[] loadPrivateKey(byte[] data, Arena arena, byte[] privateKeyEncoded) throws Throwable {
+      MemorySegment pkey = loadPrivateKey(0, privateKeyEncoded, arena);
+      if (pkey.equals(MemorySegment.NULL)) {
+          throw new SignatureException("Failed to load private key");
+      }
+
+      try {
+          // Create message digest context for signing
+          MemorySegment mdCtx = EVP_MD_CTX_new();
+          if (mdCtx.equals(MemorySegment.NULL)) {
+              throw new SignatureException("Failed to create EVP_MD_CTX");
+          }
+
+          try {
+              // Initialize signing - EdDSA uses NULL for digest (it's built into the algorithm)
+              int result = EVP_DigestSignInit(mdCtx, MemorySegment.NULL,
+                  MemorySegment.NULL, MemorySegment.NULL, pkey);
+              if (result != 1) {
+                  throw new SignatureException("EVP_DigestSignInit failed");
+              }
+
+              // For EdDSA, use single-shot EVP_DigestSign
+              // First, get the signature length by calling with NULL output
+              MemorySegment sigLenPtr = arena.allocate(ValueLayout.JAVA_LONG);
+
+              // Prepare data segment
+              MemorySegment dataSegment;
+              if (data.length > 0) {
+                  dataSegment = arena.allocate(ValueLayout.JAVA_BYTE, data.length);
+                  dataSegment.asByteBuffer().put(data);
+              } else {
+                  dataSegment = MemorySegment.NULL;
+              }
+
+              // Get required signature length
+              result = EVP_DigestSign(mdCtx, MemorySegment.NULL, sigLenPtr,
+                  dataSegment, data.length);
+              if (result != 1) {
+                  throw new SignatureException("EVP_DigestSign (get length) failed");
+              }
+
+              long sigLen = sigLenPtr.get(ValueLayout.JAVA_LONG, 0);
+              MemorySegment sigBuffer = arena.allocate(ValueLayout.JAVA_BYTE, sigLen);
+
+              // Perform the actual signing
+              result = EVP_DigestSign(mdCtx, sigBuffer, sigLenPtr,
+                  dataSegment, data.length);
+              if (result != 1) {
+                  throw new SignatureException("EVP_DigestSign failed");
+              }
+
+              // Get actual signature length and extract
+              long actualLen = sigLenPtr.get(ValueLayout.JAVA_LONG, 0);
+              byte[] signature = new byte[(int) actualLen];
+              sigBuffer.asByteBuffer().get(signature);
+
+              return signature;
+          } finally {
+              EVP_MD_CTX_free(mdCtx);
+          }
+      } finally {
+          EVP_PKEY_free(pkey);
+      }
+   }
+
+   public static boolean loadPublicKey(byte[] sigBytes, byte[] data, Arena arena, byte[] publicKeyEncoded) throws Throwable {
+      MemorySegment pkey = loadPublicKey(publicKeyEncoded, arena);
+      if (pkey.equals(MemorySegment.NULL)) {
+          throw new SignatureException("Failed to load public key");
+      }
+
+      try {
+          // Create message digest context for verification
+          MemorySegment mdCtx = EVP_MD_CTX_new();
+          if (mdCtx.equals(MemorySegment.NULL)) {
+              throw new SignatureException("Failed to create EVP_MD_CTX");
+          }
+
+          try {
+              // Initialize verification - EdDSA uses NULL for digest
+              int result = EVP_DigestVerifyInit(mdCtx, MemorySegment.NULL,
+                  MemorySegment.NULL, MemorySegment.NULL, pkey);
+              if (result != 1) {
+                  throw new SignatureException("EVP_DigestVerifyInit failed");
+              }
+
+              // Prepare signature segment
+              MemorySegment sigSegment = arena.allocate(ValueLayout.JAVA_BYTE, sigBytes.length);
+              sigSegment.asByteBuffer().put(sigBytes);
+
+              // Prepare data segment
+              MemorySegment dataSegment;
+              if (data.length > 0) {
+                  dataSegment = arena.allocate(ValueLayout.JAVA_BYTE, data.length);
+                  dataSegment.asByteBuffer().put(data);
+              } else {
+                  dataSegment = MemorySegment.NULL;
+              }
+
+              // Single-shot verification
+              result = EVP_DigestVerify(mdCtx, sigSegment, sigBytes.length,
+                  dataSegment, data.length);
+
+              return result == 1;
+          } finally {
+              EVP_MD_CTX_free(mdCtx);
+          }
+      } finally {
+          EVP_PKEY_free(pkey);
+      }
    }
 }
