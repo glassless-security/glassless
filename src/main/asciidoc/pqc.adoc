@@ -195,63 +195,152 @@ PrivateKey reconstructedPrivate = kf.generatePrivate(privSpec);
 
 == TLS 1.3 Integration
 
-=== Current Limitations
+=== JDK Version Support
 
-**JDK 25 does not support hybrid named groups in JSSE.** The supported TLS 1.3 named groups are:
-
-* `x25519`, `x448` (XDH)
-* `secp256r1`, `secp384r1`, `secp521r1` (ECDHE)
-* `ffdhe2048`, `ffdhe3072`, `ffdhe4096`, `ffdhe6144`, `ffdhe8192` (DHE)
-
-Hybrid groups like `x25519_mlkem768` are **not yet supported** by JSSE.
-
-=== JEP 527: Post-Quantum Hybrid Key Exchange for TLS 1.3
-
-link:https://openjdk.org/jeps/527[JEP 527] will add native support for hybrid post-quantum key exchange in TLS 1.3 to the JDK. This JEP builds on link:https://openjdk.org/jeps/496[JEP 496] (ML-KEM), which was delivered in JDK 24.
-
-==== Roadmap
-
-[cols="1,2"]
+[cols="1,2,2"]
 |===
-|Date |Milestone
+|JDK Version |Hybrid TLS Support |GlaSSLess Role
 
-|JDK 24 (March 2024) |JEP 496: ML-KEM support added
-|September 2025 |JEP 527 elevated to Candidate status
-|January 2026 |JEP 527 elevated to Targeted for JDK 27
-|JDK 26 (March 2026) |No hybrid TLS support yet
-|**JDK 27 (September 2026)** |**JEP 527 targeted - hybrid TLS 1.3 support**
+|JDK 24–26
+|None — JSSE has a hardcoded named group list with no hybrid groups
+|Application-layer hybrid KEM only (see <<Application-Layer Hybrid Key Exchange>>)
+
+|**JDK 27+** (JEP 527)
+|Native — `X25519MLKEM768` is the default TLS 1.3 named group
+|FIPS compliance: routes ML-KEM operations through OpenSSL's FIPS-validated module
 |===
 
-==== What JEP 527 Will Provide
+=== JDK 24–26: Why Hybrid TLS Is Not Possible
 
-* Native JSSE support for hybrid named groups in TLS 1.3
-* `X25519MLKEM768` as the default hybrid group (fastest option)
-* `SecP256r1MLKEM768` and `SecP384r1MLKEM1024` available but not enabled by default
-* Implementation based on the link:https://datatracker.ietf.org/doc/draft-ietf-tls-hybrid-design/[IETF Hybrid Key Exchange draft]
+JDK 25/26 JSSE has three limitations that **cannot be worked around** by a JCA provider like GlaSSLess:
+
+1. **Hardcoded named groups.** The `NamedGroup` enum in `sun.security.ssl` is internal. There is no SPI to register new TLS named groups.
+2. **No KEM-based key exchange.** The TLS handshake code only knows `KeyAgreement` (interactive, both sides contribute). It does not use the `javax.crypto.KEM` API (asymmetric: encapsulate/decapsulate).
+3. **No extensible handshake logic.** The JSSE handshake state machine is in `sun.security.ssl`, which is not a public API. It cannot be subclassed or extended.
+
+=== JDK 27+: JEP 527 Integration
+
+link:https://openjdk.org/jeps/527[JEP 527] modifies JSSE itself to support hybrid post-quantum key exchange. It builds on link:https://openjdk.org/jeps/496[JEP 496] (ML-KEM), which was delivered in JDK 24.
+
+==== What JEP 527 Changes
+
+* Adds hybrid named groups (`X25519MLKEM768`, `SecP256r1MLKEM768`, `SecP384r1MLKEM1024`) to JSSE's internal registry
+* Teaches the TLS handshake to use the `javax.crypto.KEM` SPI for key exchange — not just `KeyAgreement`
+* Makes `X25519MLKEM768` the **default preferred named group** — applications get PQ protection without code changes
+* Allows configuration via `SSLParameters.setNamedGroups()` and the `jdk.tls.namedGroups` system property
+
+==== Architecture: How JSSE Resolves Providers
+
+JSSE uses a layered architecture for hybrid key exchange. Critically, **the component algorithm lookups go through standard JCA provider resolution**:
+
+[source]
+----
+JSSE TLS 1.3 Handshake
+  └─ NamedGroup.X25519MLKEM768
+       └─ HybridProvider (internal to JSSE, not in system provider list)
+            └─ Hybrid.KEMImpl(left="ML-KEM-768", right="X25519")
+                 ├─ KEM.getInstance("ML-KEM")              ← standard JCA lookup
+                 └─ KEM.getInstance("DH", HybridProvider)  ← X25519-as-KEM wrapper
+            └─ Hybrid.KeyPairGeneratorImpl
+                 ├─ KeyPairGenerator.getInstance("ML-KEM-768")  ← standard JCA lookup
+                 └─ KeyPairGenerator.getInstance("X25519")      ← standard JCA lookup
+----
+
+The JDK source explicitly notes: _"This is done to work with 3rd-party providers that only have 'ML-KEM' KEM algorithm."_
+
+This means that when GlaSSLess is registered at a higher priority than SunJCE, the ML-KEM and X25519 operations within the TLS handshake are routed through GlaSSLess — and therefore through OpenSSL.
+
+==== FIPS Compliance Use Case
+
+JDK 27's SunJCE includes a pure-Java ML-KEM implementation that is performant but **not FIPS-validated**. For organizations that require FIPS 140-3 compliance, GlaSSLess provides the bridge between JSSE's TLS protocol handling and OpenSSL's FIPS-validated cryptographic module.
+
+[source,java]
+----
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+// Register GlaSSLess at highest priority
+// ML-KEM and X25519 operations in TLS handshakes will now use
+// OpenSSL's FIPS-validated provider instead of SunJCE
+Security.insertProviderAt(new GlaSSLessProvider(), 1);
+
+// Verify FIPS mode is active
+GlaSSLessProvider provider = (GlaSSLessProvider) Security.getProvider("GlaSSLess");
+assert provider.isFIPSMode() : "OpenSSL FIPS provider is not enabled";
+
+// From this point, all TLS 1.3 connections that negotiate X25519MLKEM768
+// will use OpenSSL's FIPS-validated ML-KEM implementation
+----
+
+NOTE: When GlaSSLess is at position 1, it will also intercept PBE algorithms used for PKCS12 keystore operations. Load keystores _before_ registering GlaSSLess, or register it at a position that only overrides the algorithms you need.
+
+==== Performance Considerations
+
+The full hybrid X25519MLKEM768 operation (keygen + encapsulate + decapsulate) was benchmarked across three approaches. Each iteration performs the complete key exchange that would occur during a TLS 1.3 handshake.
+
+===== ML-KEM-768 in Isolation
+
+When benchmarking ML-KEM-768 alone, JDK 27's pure-Java implementation (SunJCE) benefits from JIT compilation and inlining:
+
+[cols="1,1,1"]
+|===
+|Provider |ML-KEM-768 (keygen + encaps + decaps) |Relative
+
+|SunJCE (Java) |~111 µs/op |1.0x (baseline)
+|GlaSSLess (OpenSSL via FFM) |~151 µs/op |0.74x
+|===
+
+However, ML-KEM is only one component of the hybrid key exchange. The full picture is different.
+
+===== Full Hybrid X25519MLKEM768
+
+[cols="2,1,1,1,1"]
+|===
+|Approach |avg (µs/op) |p50 |p99 |vs baseline
+
+|**SunJCE decomposed** (JDK 27 default) +
+ML-KEM-768 via SunJCE + X25519 via SunEC
+|353.8 |346.6 |447.4 |1.00x
+
+|**GlaSSLess decomposed** (current behavior with GlaSSLess at pos 1) +
+ML-KEM-768 via GlaSSLess + X25519 via GlaSSLess
+|290.1 |287.3 |317.6 |**1.22x faster**
+
+|**GlaSSLess composite** (single OpenSSL call) +
+X25519MLKEM768 as one native `EVP_PKEY_encapsulate`
+|217.7 |216.3 |226.3 |**1.62x faster**
+|===
+
+Key findings:
+
+* **GlaSSLess decomposed is already 22% faster** than the JDK 27 default. While ML-KEM alone is slower via FFM, the X25519 component benefits significantly from OpenSSL's optimized native implementation, and the combined result favors GlaSSLess.
+* **The composite approach is 62% faster** than the JDK 27 default. OpenSSL performs the X25519 key agreement, ML-KEM encapsulation, and secret concatenation entirely in native code — a single FFM crossing instead of ~20 separate native calls across 3 Arena lifecycles.
+* **Tail latency improves dramatically.** The p99 drops from 447 µs (SunJCE) to 226 µs (composite) — fewer FFM crossings mean fewer opportunities for GC pauses or scheduling jitter to affect the operation.
+
+===== Why the Composite Approach Is Faster
+
+JDK 27's `HybridProvider` decomposes X25519MLKEM768 into separate ML-KEM-768 and X25519 JCA service calls. When GlaSSLess serves both components, each operation involves its own Arena lifecycle, key loading, and cleanup — roughly 20 FFM native calls total. GlaSSLess's composite `X25519MLKEM768` KEM delegates to a single OpenSSL `EVP_PKEY_encapsulate` call (~7 FFM crossings, 1 Arena), letting OpenSSL handle the hybrid construction natively.
+
+However, the composite approach is not currently used by JSSE because `HybridProvider` is pinned as the provider for hybrid named groups. JSSE resolves `KEM.getInstance("X25519MLKEM768", HybridProvider.PROVIDER)`, bypassing standard JCA provider lookup at the hybrid level. Standard JCA lookup only occurs for the component algorithms (ML-KEM, X25519) inside `HybridProvider`.
+
+===== Recommendation
+
+**Use GlaSSLess** when FIPS-validated cryptography is required — it provides both compliance _and_ a performance improvement over the JDK 27 default for the full hybrid operation. Even in the current decomposed mode, GlaSSLess at position 1 delivers a 22% speedup.
 
 ==== Why Hybrid Key Exchange Matters
 
 Quantum computing poses an increasing threat to widely-deployed public-key encryption algorithms like RSA and ECDH. Even though large-scale quantum computers don't yet exist, adversaries could harvest encrypted data today and decrypt it later ("harvest now, decrypt later" attacks). Hybrid key exchange provides immediate protection by combining classical algorithms with quantum-resistant ones.
 
-==== GlaSSLess and JEP 527
+=== JDK 24–26 Workarounds
 
-Until JDK 27 is released, GlaSSLess provides hybrid KEM support through OpenSSL 3.5+. Once JEP 527 lands:
+Until JDK 27, you can achieve post-quantum key exchange through:
 
-* Applications can use native JSSE hybrid TLS without GlaSSLess
-* GlaSSLess hybrid KEMs remain useful for application-layer key exchange
-* GlaSSLess may offer performance advantages depending on OpenSSL optimizations
-
-=== Workarounds
-
-Until JSSE adds hybrid group support, you can:
-
-1. **Use hybrid KEMs at the application layer** for additional key material
-2. **Implement a custom TLS provider** that supports hybrid key exchange
-3. **Use a TLS library with hybrid support** (e.g., BoringSSL, s2n-tls)
+1. **Application-layer hybrid KEM** — perform a GlaSSLess hybrid KEM exchange over a classical TLS connection (see below)
+2. **Reverse proxy** — use nginx or haproxy compiled against OpenSSL 3.5+ for TLS termination with `X25519MLKEM768`
 
 === Application-Layer Hybrid Key Exchange
 
-For applications that need quantum-resistant key exchange today, perform the hybrid KEM exchange at the application layer after establishing a classical TLS connection:
+For applications on JDK 24–26 that need quantum-resistant key exchange today, perform the hybrid KEM exchange at the application layer after establishing a classical TLS connection:
 
 [source,java]
 ----
