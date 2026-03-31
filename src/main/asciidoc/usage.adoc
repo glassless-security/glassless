@@ -81,6 +81,85 @@ verifier.update("Data to sign".getBytes());
 boolean valid = verifier.verify(signature);
 ----
 
+== Deterministic ECDSA (RFC 6979)
+
+Deterministic ECDSA uses RFC 6979 to derive the nonce deterministically from the message and private key,
+eliminating the risk of nonce reuse vulnerabilities. The same message and key always produce the same signature.
+Signatures are verifiable by standard ECDSA verifiers.
+
+[source,java]
+----
+import java.security.*;
+import java.security.spec.ECGenParameterSpec;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate key pair
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+kpg.initialize(new ECGenParameterSpec("secp256r1"));
+KeyPair keyPair = kpg.generateKeyPair();
+
+// Sign with deterministic ECDSA
+Signature signer = Signature.getInstance("SHA256withDetECDSA", PROVIDER_NAME);
+signer.initSign(keyPair.getPrivate());
+signer.update("Data to sign".getBytes());
+byte[] signature = signer.sign();
+
+// Signing again produces the same signature (deterministic)
+signer.initSign(keyPair.getPrivate());
+signer.update("Data to sign".getBytes());
+byte[] signature2 = signer.sign();
+assert java.util.Arrays.equals(signature, signature2);
+
+// Verify (works with both DetECDSA and standard ECDSA verifiers)
+Signature verifier = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
+verifier.initVerify(keyPair.getPublic());
+verifier.update("Data to sign".getBytes());
+boolean valid = verifier.verify(signature);
+----
+
+Available algorithms: `SHA224withDetECDSA`, `SHA256withDetECDSA`, `SHA384withDetECDSA`, `SHA512withDetECDSA`, `SHA3-256withDetECDSA`, `SHA3-384withDetECDSA`, `SHA3-512withDetECDSA`.
+
+== Nonce-Misuse Resistant Encryption (AES-GCM-SIV)
+
+AES-GCM-SIV (RFC 8452) provides authenticated encryption that remains secure even if a nonce is accidentally reused.
+Unlike AES-GCM, nonce reuse only leaks whether the same plaintext was encrypted twice, without compromising authenticity.
+Requires OpenSSL 3.2+.
+
+[source,java]
+----
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import java.security.SecureRandom;
+import java.security.Security;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Generate a key
+KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+keyGen.init(256);
+SecretKey key = keyGen.generateKey();
+
+// Generate 12-byte nonce
+byte[] nonce = new byte[12];
+new SecureRandom().nextBytes(nonce);
+
+// Encrypt
+Cipher cipher = Cipher.getInstance("AES_256/GCM-SIV/NoPadding", PROVIDER_NAME);
+cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, nonce));
+byte[] ciphertext = cipher.doFinal("Secret message".getBytes());
+
+// Decrypt
+cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, nonce));
+byte[] plaintext = cipher.doFinal(ciphertext);
+----
+
+Available key sizes: `AES_128/GCM-SIV/NoPadding`, `AES_192/GCM-SIV/NoPadding`, `AES_256/GCM-SIV/NoPadding`.
+
 == Key Derivation (HKDF)
 
 [source,java]
@@ -180,6 +259,35 @@ verifier.initVerify(keyPair.getPublic());
 verifier.update("Data to sign".getBytes());
 boolean valid = verifier.verify(signature);
 ----
+
+== Hash-Based Signatures (LMS Verification)
+
+LMS (Leighton-Micali Signature) is a stateful hash-based post-quantum signature scheme (RFC 8554 / NIST SP 800-208).
+GlaSSLess supports **verification only** -- signing and key generation are not supported because LMS is a stateful
+scheme where each private key can only sign a limited number of messages.
+Requires OpenSSL 3.6+.
+
+[source,java]
+----
+import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
+import net.glassless.provider.GlaSSLessProvider;
+
+Security.addProvider(new GlaSSLessProvider());
+
+// Load an LMS public key (X.509/SubjectPublicKeyInfo DER encoding)
+byte[] publicKeyBytes = ...; // LMS public key in SPKI format
+KeyFactory kf = KeyFactory.getInstance("LMS", PROVIDER_NAME);
+PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
+
+// Verify an LMS signature
+Signature verifier = Signature.getInstance("LMS", PROVIDER_NAME);
+verifier.initVerify(publicKey);
+verifier.update(message);
+boolean valid = verifier.verify(signature);
+----
+
+NOTE: LMS keys are also registered under the aliases `HSS` and `id-alg-hss-lms-hashsig`.
 
 == Hybrid Key Encapsulation (X25519MLKEM768)
 

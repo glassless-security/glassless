@@ -64,6 +64,7 @@ src/main/java/net/glassless/provider/
     ├── mlkem/                   # ML-KEM (FIPS 203) implementations
     ├── mldsa/                   # ML-DSA (FIPS 204) implementations
     ├── slhdsa/                  # SLH-DSA (FIPS 205) implementations
+    ├── lms/                     # LMS/HSS (SP 800-208) verification
     └── ...
 ----
 

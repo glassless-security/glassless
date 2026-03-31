@@ -4,16 +4,17 @@
 :icons: font
 :source-highlighter: highlight.js
 
-This document describes the post-quantum cryptography (PQC) support in GlaSSLess, including the standalone algorithms (ML-KEM, ML-DSA, SLH-DSA) and the hybrid key exchange schemes that combine classical and post-quantum cryptography.
+This document describes the post-quantum cryptography (PQC) support in GlaSSLess, including the standalone algorithms (ML-KEM, ML-DSA, SLH-DSA, LMS/HSS) and the hybrid key exchange schemes that combine classical and post-quantum cryptography.
 
 == Requirements
 
-* **OpenSSL 3.5+** for all PQC algorithms
+* **OpenSSL 3.5+** for lattice-based PQC algorithms (ML-KEM, ML-DSA, SLH-DSA)
+* **OpenSSL 3.6+** for hash-based PQC signatures (LMS/HSS)
 * **Java 25+** with `--enable-native-access` flag
 
 == Standalone PQC Algorithms
 
-GlaSSLess supports the three NIST-standardized post-quantum algorithms:
+GlaSSLess supports the NIST-standardized post-quantum algorithms:
 
 [cols="1,1,1,2"]
 |===
@@ -22,7 +23,18 @@ GlaSSLess supports the three NIST-standardized post-quantum algorithms:
 |ML-KEM |FIPS 203 |Key Encapsulation |ML-KEM-512, ML-KEM-768, ML-KEM-1024
 |ML-DSA |FIPS 204 |Digital Signature |ML-DSA-44, ML-DSA-65, ML-DSA-87
 |SLH-DSA |FIPS 205 |Digital Signature |12 variants (SHA2/SHAKE, 128/192/256, s/f)
+|LMS/HSS |SP 800-208 |Digital Signature (verification only) |RFC 8554
 |===
+
+=== LMS/HSS Hash-Based Signatures
+
+LMS (Leighton-Micali Signature) / HSS (Hierarchical Signature System) is a stateful hash-based signature scheme standardized in RFC 8554 and NIST SP 800-208. Unlike ML-DSA and SLH-DSA, LMS is **stateful** -- each private key can only produce a limited number of signatures, and state must be carefully managed to avoid key reuse.
+
+GlaSSLess supports **verification only**. Signing and key generation are not supported because state management must be handled by the key owner.
+
+* **Signature algorithm**: `LMS` (aliases: `HSS`, `id-alg-hss-lms-hashsig`)
+* **KeyFactory**: `LMS` -- loads public keys from X.509/SubjectPublicKeyInfo encoding
+* **Requires**: OpenSSL 3.6+ with LMS support enabled
 
 See <<usage.adoc#,Usage Guide>> for code examples.
 

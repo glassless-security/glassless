@@ -13,14 +13,15 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 * **Native OpenSSL Performance**: Leverages OpenSSL's optimized implementations
 * **No Native Compilation**: Uses Java's FFM API (no JNI required)
 * **FIPS Mode Support**: Automatically detects and respects OpenSSL FIPS mode
-* **Comprehensive Algorithm Coverage**: 370+ algorithm implementations
-* **Post-Quantum Cryptography**: ML-KEM, ML-DSA, SLH-DSA, and hybrid key exchange (OpenSSL 3.5+)
+* **Comprehensive Algorithm Coverage**: 380+ algorithm implementations
+* **Post-Quantum Cryptography**: ML-KEM, ML-DSA, SLH-DSA, LMS/HSS, and hybrid key exchange (OpenSSL 3.5+)
+* **Modern Algorithms**: AES-GCM-SIV (nonce-misuse resistant), deterministic ECDSA (RFC 6979)
 * **Drop-in Replacement**: Standard JCA provider interface
 
 == Requirements
 
 * **Java**: 25 or later (with `--enable-native-access` flag)
-* **OpenSSL**: 3.0 or later (`libcrypto.so.3`)
+* **OpenSSL**: 3.0 or later (`libcrypto.so.3` or `libcrypto.so.4`)
 
 === OpenSSL Version Compatibility
 
@@ -30,9 +31,11 @@ GlaSSLess is a Java Cryptography Architecture (JCA) provider that wraps a system
 
 |3.0.x |Supported |Base algorithms
 |3.1.x |Supported |Full support
-|3.2.x |Supported |Adds Argon2 KDFs
-|3.3.x |Supported |Latest features
+|3.2.x |Supported |Adds Argon2 KDFs, AES-GCM-SIV
+|3.3.x |Supported |Full support
 |3.5.x |Supported |Adds Post-Quantum Cryptography (ML-KEM, ML-DSA, SLH-DSA)
+|3.6.x |Supported |Adds LMS/HSS signatures, deterministic ECDSA (RFC 6979)
+|4.0.x |Supported |Full support (`libcrypto.so.4`)
 |===
 
 == Documentation

@@ -24,7 +24,7 @@ public abstract class AbstractSignature extends SignatureSpi {
    private final KeyType keyType;
    private final NativeResourceCleaner.ResourceHolder resourceHolder;
 
-   private Arena arena;
+   protected Arena arena;
    private MemorySegment mdCtx;
    private MemorySegment evpPkey;
    private MemorySegment pkeyCtxPtr;

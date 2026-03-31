@@ -276,26 +276,33 @@ import net.glassless.provider.internal.signature.SHA1withECDSASignature;
 import net.glassless.provider.internal.signature.SHA1withRSASignature;
 import net.glassless.provider.internal.signature.SHA1withRSAandMGF1Signature;
 import net.glassless.provider.internal.signature.SHA224withDSASignature;
+import net.glassless.provider.internal.signature.SHA224withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA224withECDSASignature;
 import net.glassless.provider.internal.signature.SHA224withRSASignature;
 import net.glassless.provider.internal.signature.SHA224withRSAandMGF1Signature;
 import net.glassless.provider.internal.signature.SHA256withDSASignature;
+import net.glassless.provider.internal.signature.SHA256withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA256withECDSASignature;
 import net.glassless.provider.internal.signature.SHA256withRSASignature;
 import net.glassless.provider.internal.signature.SHA256withRSAandMGF1Signature;
 import net.glassless.provider.internal.signature.SHA384withDSASignature;
+import net.glassless.provider.internal.signature.SHA384withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA384withECDSASignature;
 import net.glassless.provider.internal.signature.SHA384withRSASignature;
 import net.glassless.provider.internal.signature.SHA384withRSAandMGF1Signature;
 import net.glassless.provider.internal.signature.SHA3_224withECDSASignature;
+import net.glassless.provider.internal.signature.SHA3_256withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA3_256withECDSASignature;
+import net.glassless.provider.internal.signature.SHA3_384withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA3_384withECDSASignature;
+import net.glassless.provider.internal.signature.SHA3_512withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA3_512withECDSASignature;
 import net.glassless.provider.internal.signature.SHA512_224withRSASignature;
 import net.glassless.provider.internal.signature.SHA512_224withRSAandMGF1Signature;
 import net.glassless.provider.internal.signature.SHA512_256withRSASignature;
 import net.glassless.provider.internal.signature.SHA512_256withRSAandMGF1Signature;
 import net.glassless.provider.internal.signature.SHA512withDSASignature;
+import net.glassless.provider.internal.signature.SHA512withDetECDSASignature;
 import net.glassless.provider.internal.signature.SHA512withECDSASignature;
 import net.glassless.provider.internal.signature.SHA512withRSASignature;
 import net.glassless.provider.internal.signature.SHA512withRSAandMGF1Signature;
@@ -929,6 +936,15 @@ public class GlaSSLessProvider extends Provider {
          List.of("OID.2.16.840.1.101.3.4.3.11", "2.16.840.1.101.3.4.3.11"), null));
       putService(new Service(this, SIGNATURE, "SHA3-512withECDSA", SHA3_512withECDSASignature.class.getName(),
          List.of("OID.2.16.840.1.101.3.4.3.12", "2.16.840.1.101.3.4.3.12"), null));
+
+      // Deterministic ECDSA (RFC 6979 / FIPS 186-5) - FIPS approved
+      putService(new Service(this, SIGNATURE, "SHA224withDetECDSA", SHA224withDetECDSASignature.class.getName(), null, null));
+      putService(new Service(this, SIGNATURE, "SHA256withDetECDSA", SHA256withDetECDSASignature.class.getName(), null, null));
+      putService(new Service(this, SIGNATURE, "SHA384withDetECDSA", SHA384withDetECDSASignature.class.getName(), null, null));
+      putService(new Service(this, SIGNATURE, "SHA512withDetECDSA", SHA512withDetECDSASignature.class.getName(), null, null));
+      putService(new Service(this, SIGNATURE, "SHA3-256withDetECDSA", SHA3_256withDetECDSASignature.class.getName(), null, null));
+      putService(new Service(this, SIGNATURE, "SHA3-384withDetECDSA", SHA3_384withDetECDSASignature.class.getName(), null, null));
+      putService(new Service(this, SIGNATURE, "SHA3-512withDetECDSA", SHA3_512withDetECDSASignature.class.getName(), null, null));
 
       // RSA with SHA-512 truncated - FIPS approved
       putService(new Service(this, SIGNATURE, "SHA512/224withRSA", SHA512_224withRSASignature.class.getName(),

@@ -57,6 +57,7 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_PKEY_CTX_set_rsa_padding;
    private static MethodHandle EVP_PKEY_CTX_set_rsa_oaep_md;
    private static MethodHandle EVP_PKEY_CTX_set_rsa_mgf1_md;
+   private static MethodHandle EVP_PKEY_CTX_set_params;
    private static MethodHandle d2i_PrivateKey;
    private static MethodHandle d2i_PUBKEY;
    private static MethodHandle EVP_PKEY_free;
@@ -347,6 +348,11 @@ public class OpenSSLCrypto {
          );
          EVP_PKEY_CTX_set_rsa_mgf1_md = linker.downcallHandle(
             libcrypto.find("EVP_PKEY_CTX_set_rsa_mgf1_md").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+         );
+         // int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
+         EVP_PKEY_CTX_set_params = linker.downcallHandle(
+            libcrypto.find("EVP_PKEY_CTX_set_params").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
          );
          // d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
@@ -979,6 +985,39 @@ public class OpenSSLCrypto {
 
    public static int EVP_PKEY_CTX_set_rsa_mgf1_md(MemorySegment ctx, MemorySegment md) throws Throwable {
       return (int) EVP_PKEY_CTX_set_rsa_mgf1_md.invokeExact(ctx, md);
+   }
+
+   public static int EVP_PKEY_CTX_set_params(MemorySegment ctx, MemorySegment params) throws Throwable {
+      return (int) EVP_PKEY_CTX_set_params.invokeExact(ctx, params);
+   }
+
+   /**
+    * Creates an OSSL_PARAM array to set deterministic nonce generation (RFC 6979).
+    */
+   public static MemorySegment createNonceTypeParams(int nonceType, Arena arena) {
+      // 2 OSSL_PARAM entries: nonce-type + end marker
+      MemorySegment params = arena.allocate(OSSL_PARAM_SIZE * 2);
+
+      // "nonce-type" key
+      byte[] keyBytes = "nonce-type".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+      MemorySegment keySegment = arena.allocate(keyBytes.length + 1);
+      keySegment.asByteBuffer().put(keyBytes).put((byte) 0);
+
+      // Value
+      MemorySegment valueSegment = arena.allocate(ValueLayout.JAVA_INT);
+      valueSegment.set(ValueLayout.JAVA_INT, 0, nonceType);
+
+      // Fill in OSSL_PARAM entry
+      params.set(ValueLayout.ADDRESS, 0, keySegment);
+      params.set(ValueLayout.JAVA_INT, 8, OSSL_PARAM_UNSIGNED_INTEGER);
+      params.set(ValueLayout.ADDRESS, 16, valueSegment);
+      params.set(ValueLayout.JAVA_LONG, 24, 4L); // sizeof(unsigned int)
+      params.set(ValueLayout.JAVA_LONG, 32, 0L);
+
+      // End marker
+      params.set(ValueLayout.ADDRESS, OSSL_PARAM_SIZE, MemorySegment.NULL);
+
+      return params;
    }
 
    public static MemorySegment d2i_PrivateKey(int type, MemorySegment a, MemorySegment pp, long length) throws Throwable {

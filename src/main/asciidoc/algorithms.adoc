@@ -4,7 +4,7 @@
 :icons: font
 :source-highlighter: highlight.js
 
-GlaSSLess provides over 370 cryptographic algorithm implementations backed by OpenSSL.
+GlaSSLess provides over 380 cryptographic algorithm implementations backed by OpenSSL.
 
 == Summary
 
@@ -14,18 +14,18 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 
 |AlgorithmParameterGenerator |2
 |AlgorithmParameters |23
-|Cipher |143
+|Cipher |146
 |KDF |14
 |KEM |6
 |KeyAgreement |5
-|KeyFactory |11
+|KeyFactory |12
 |KeyGenerator |11
 |KeyPairGenerator |33
 |Mac |20
 |MessageDigest |18
 |SecretKeyFactory |35
 |SecureRandom |3
-|Signature |48
+|Signature |56
 |===
 
 == Message Digests (18)
@@ -52,6 +52,7 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 |Algorithm |Key Sizes |Modes |FIPS Approved
 
 |AES |128, 192, 256 |ECB, CBC, CFB, CTR, OFB, GCM, CCM, XTS |Yes
+|AES-GCM-SIV |128, 192, 256 |GCM-SIV (AEAD, nonce-misuse resistant) |No
 |AES Key Wrap |128, 192, 256 |KW, KWP |Yes
 |Camellia |128, 192, 256 |ECB, CBC, CFB, CTR, OFB |No
 |ARIA |128, 192, 256 |ECB, CBC, CFB, CTR, OFB, GCM |No
@@ -100,7 +101,7 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 
 == Signatures (48)
 
-=== Classical Signatures (33)
+=== Classical Signatures (40)
 
 [cols="2,1"]
 |===
@@ -114,6 +115,8 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 |SHA256withECDSA, SHA384withECDSA, SHA512withECDSA |Yes
 |SHA224withECDSA |Yes
 |SHA3-224withECDSA, SHA3-256withECDSA, SHA3-384withECDSA, SHA3-512withECDSA |Yes
+|SHA224withDetECDSA, SHA256withDetECDSA, SHA384withDetECDSA, SHA512withDetECDSA (RFC 6979) |Yes (FIPS 186-5)
+|SHA3-256withDetECDSA, SHA3-384withDetECDSA, SHA3-512withDetECDSA (RFC 6979) |Yes (FIPS 186-5)
 |SHA256withDSA, SHA384withDSA, SHA512withDSA |Yes
 |SHA224withDSA |Yes
 |Ed25519, Ed448, EdDSA |Yes
@@ -121,9 +124,9 @@ GlaSSLess provides over 370 cryptographic algorithm implementations backed by Op
 |SHA1withECDSA, SHA1withDSA |No
 |===
 
-=== Post-Quantum Signatures (15)
+=== Post-Quantum Signatures (16)
 
-Requires OpenSSL 3.5+.
+Requires OpenSSL 3.5+ (LMS requires OpenSSL 3.6+).
 
 [cols="1,1,1"]
 |===
@@ -132,6 +135,7 @@ Requires OpenSSL 3.5+.
 |ML-DSA, ML-DSA-44 |128-bit |Yes (FIPS 204)
 |ML-DSA-65 |192-bit |Yes (FIPS 204)
 |ML-DSA-87 |256-bit |Yes (FIPS 204)
+|LMS (verification only) |Configurable |Yes (SP 800-208)
 |SLH-DSA, SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f |128-bit |Yes (FIPS 205)
 |SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f |192-bit |Yes (FIPS 205)
 |SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f |256-bit |Yes (FIPS 205)
@@ -207,7 +211,7 @@ NOTE: **Hybrid KEMs** combine classical key exchange (X25519/X448) with ML-KEM f
 |SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f |Yes (FIPS 205)
 |===
 
-== KeyFactory (11)
+== KeyFactory (12)
 
 [cols="2,1"]
 |===
@@ -222,6 +226,7 @@ NOTE: **Hybrid KEMs** combine classical key exchange (X25519/X448) with ML-KEM f
 |ML-KEM |Yes (FIPS 203)
 |ML-DSA |Yes (FIPS 204)
 |SLH-DSA |Yes (FIPS 205)
+|LMS |Yes (SP 800-208, OpenSSL 3.6+)
 |X25519MLKEM768, X448MLKEM1024 |Yes
 |===
 
@@ -315,7 +320,8 @@ When OpenSSL is configured with FIPS mode enabled, GlaSSLess automatically detec
 
 |FIPS 140-3 |Cryptographic Module Validation |OpenSSL FIPS provider
 |FIPS 180-4 |Secure Hash Standard |SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256
-|FIPS 186-5 |Digital Signature Standard |DSA, ECDSA, EdDSA (Ed25519, Ed448)
+|FIPS 186-5 |Digital Signature Standard |DSA, ECDSA, Deterministic ECDSA (RFC 6979), EdDSA (Ed25519, Ed448)
+|SP 800-208 |LMS Hash-Based Signatures |LMS/HSS (verification only, OpenSSL 3.6+)
 |FIPS 197 |Advanced Encryption Standard |AES-128, AES-192, AES-256
 |FIPS 198-1 |HMAC |HMAC-SHA-1, HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512
 |FIPS 202 |SHA-3 Standard |SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, SHAKE256
