@@ -1219,7 +1219,24 @@ public class GlaSSLessProvider extends Provider {
       // supported because OpenSSL 3.5 doesn't provide raw key export for these types.
    }
 
-   /**
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder(PROVIDER_NAME);
+        builder.append(" version ");
+        builder.append(getProviderVersion());
+        builder.append(" [OpenSSL ");
+        builder.append(OpenSSLCrypto.getOpenSSLVersion());
+        if (fipsMode) {
+            builder.append(", FIPS");
+        }
+        if (hybridMode) {
+            builder.append(", Hybrid");
+        }
+        builder.append("]");
+        return builder.toString();
+    }
+
+    /**
     * Main method to display provider information.
     *
     * @param args command line arguments. Use "--verbose" or "-v" to list all algorithms.
