@@ -7,6 +7,7 @@ enum CipherMode {
    CTR,
    ECB,
    GCM,
+   GCM_SIV,
    KW,
    KWP,
    OFB,

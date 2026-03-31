@@ -37,6 +37,8 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_DecryptUpdate;
    private static MethodHandle EVP_DecryptFinal_ex;
    private static MethodHandle EVP_get_cipherbyname;
+   private static MethodHandle EVP_CIPHER_fetch;
+   private static MethodHandle EVP_CIPHER_free;
    private static MethodHandle EVP_CIPHER_CTX_ctrl;
    private static MethodHandle EVP_CIPHER_get_iv_length;
    private static MethodHandle EVP_CIPHER_get_key_length;
@@ -266,6 +268,16 @@ public class OpenSSLCrypto {
          EVP_get_cipherbyname = linker.downcallHandle(
             libcrypto.find("EVP_get_cipherbyname").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+         );
+         // EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *libctx, const char *algorithm, const char *properties)
+         EVP_CIPHER_fetch = linker.downcallHandle(
+            libcrypto.find("EVP_CIPHER_fetch").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+         );
+         // void EVP_CIPHER_free(EVP_CIPHER *cipher)
+         EVP_CIPHER_free = linker.downcallHandle(
+            libcrypto.find("EVP_CIPHER_free").orElseThrow(),
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
          );
          EVP_CIPHER_CTX_ctrl = linker.downcallHandle(
             libcrypto.find("EVP_CIPHER_CTX_ctrl").orElseThrow(),
@@ -782,6 +794,17 @@ public class OpenSSLCrypto {
       MemorySegment cipherNameSegment = arena.allocate(cipherNameBytes.length + 1); // +1 for null terminator
       cipherNameSegment.asByteBuffer().put(cipherNameBytes).put((byte) 0); // Copy bytes and add null terminator
       return (MemorySegment) EVP_get_cipherbyname.invokeExact(cipherNameSegment);
+   }
+
+   public static MemorySegment EVP_CIPHER_fetch(MemorySegment libctx, String algorithm, MemorySegment properties, Arena arena) throws Throwable {
+      byte[] algBytes = algorithm.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+      MemorySegment algSegment = arena.allocate(algBytes.length + 1);
+      algSegment.asByteBuffer().put(algBytes).put((byte) 0);
+      return (MemorySegment) EVP_CIPHER_fetch.invokeExact(libctx, algSegment, properties);
+   }
+
+   public static void EVP_CIPHER_free(MemorySegment cipher) throws Throwable {
+      EVP_CIPHER_free.invokeExact(cipher);
    }
 
    public static int EVP_CIPHER_CTX_ctrl(MemorySegment ctx, int cmd, int larg, MemorySegment parg) throws Throwable {
@@ -1660,7 +1683,16 @@ public class OpenSSLCrypto {
             }
             case "CIPHER" -> {
                MemorySegment cipher = EVP_get_cipherbyname(name, arena);
-               yield !cipher.equals(MemorySegment.NULL);
+               if (!cipher.equals(MemorySegment.NULL)) {
+                  yield true;
+               }
+               // Try EVP_CIPHER_fetch for newer ciphers
+               cipher = EVP_CIPHER_fetch(MemorySegment.NULL, name, MemorySegment.NULL, arena);
+               if (!cipher.equals(MemorySegment.NULL)) {
+                  EVP_CIPHER_free(cipher);
+                  yield true;
+               }
+               yield false;
             }
             case "MAC" -> {
                MemorySegment mac = EVP_MAC_fetch(MemorySegment.NULL, name, MemorySegment.NULL, arena);

@@ -119,6 +119,10 @@ abstract class AbstractCipher extends CipherSpi {
       try {
          evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(algorithmName, arena);
          if (evpCipher.equals(MemorySegment.NULL)) {
+            // Fall back to EVP_CIPHER_fetch for newer ciphers (e.g., AES-GCM-SIV)
+            evpCipher = OpenSSLCrypto.EVP_CIPHER_fetch(MemorySegment.NULL, algorithmName, MemorySegment.NULL, arena);
+         }
+         if (evpCipher.equals(MemorySegment.NULL)) {
             throw new ProviderException("Failed to get cipher: " + algorithmName);
          }
 
@@ -154,7 +158,7 @@ abstract class AbstractCipher extends CipherSpi {
 
 
          // Disable padding if NOPADDING is specified and mode is not AEAD (GCM, CCM or POLY1305)
-         if (padding == CipherPadding.NOPADDING && mode != CipherMode.GCM && mode != CipherMode.CCM && mode != CipherMode.POLY1305) {
+         if (padding == CipherPadding.NOPADDING && mode != CipherMode.GCM && mode != CipherMode.GCM_SIV && mode != CipherMode.CCM && mode != CipherMode.POLY1305) {
             result = OpenSSLCrypto.EVP_CIPHER_CTX_set_padding(evpCipherCtx, 0);
             if (result != 1) {
                throw new ProviderException("Failed to set NOPADDING");
@@ -237,7 +241,7 @@ abstract class AbstractCipher extends CipherSpi {
 
             // For AEAD decryption (GCM, CCM, POLY1305), the input is (ciphertext || tag)
             // We need to extract the tag and only pass the ciphertext to DecryptUpdate
-            if (opmode == Cipher.DECRYPT_MODE && (mode == CipherMode.GCM || mode == CipherMode.CCM || mode == CipherMode.POLY1305)) {
+            if (opmode == Cipher.DECRYPT_MODE && (mode == CipherMode.GCM || mode == CipherMode.GCM_SIV || mode == CipherMode.CCM || mode == CipherMode.POLY1305)) {
                if (inputLen < tagLength) {
                   throw new BadPaddingException("GCM input too short to contain tag");
                }
@@ -284,7 +288,7 @@ abstract class AbstractCipher extends CipherSpi {
             result = OpenSSLCrypto.EVP_EncryptFinal_ex(evpCipherCtx, finalOutputSegment, finalOutLenSegment);
             finalCiphertextLen = finalOutLenSegment.get(ValueLayout.JAVA_INT, 0);
 
-            if (result == 1 && (mode == CipherMode.GCM || mode == CipherMode.CCM || mode == CipherMode.POLY1305)) {
+            if (result == 1 && (mode == CipherMode.GCM || mode == CipherMode.GCM_SIV || mode == CipherMode.CCM || mode == CipherMode.POLY1305)) {
                // Retrieve AEAD tag (GCM, CCM or Poly1305)
                tagSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, tagLength);
                int getTagResult = OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x10, tagLength, tagSegment); // 0x10 is EVP_CTRL_GCM_GET_TAG

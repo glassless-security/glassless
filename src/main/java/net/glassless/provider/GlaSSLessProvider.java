@@ -20,6 +20,7 @@ import net.glassless.provider.internal.cipher.AES_128EcbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128EcbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128GcmNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128GcmSivNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128OfbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128OfbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128WrapCipher;
@@ -36,6 +37,7 @@ import net.glassless.provider.internal.cipher.AES_192EcbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_192EcbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_192GcmNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_192GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192GcmSivNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_192OfbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_192OfbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_192WrapCipher;
@@ -51,6 +53,7 @@ import net.glassless.provider.internal.cipher.AES_256EcbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256EcbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256GcmNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256GcmSivNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256OfbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256OfbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256WrapCipher;
@@ -620,6 +623,13 @@ public class GlaSSLessProvider extends Provider {
          List.of("OID.1.3.111.2.1619.0.1.1", "1.3.111.2.1619.0.1.1"), null));
       putService(new Service(this, CIPHER, "AES_256/XTS/NoPadding", AES_256XtsNoPaddingCipher.class.getName(),
          List.of("OID.1.3.111.2.1619.0.1.2", "1.3.111.2.1619.0.1.2"), null));
+
+      // AES-GCM-SIV (RFC 8452) - NOT FIPS approved, requires OpenSSL 3.2+
+      if (!fipsMode && OpenSSLCrypto.isAlgorithmAvailable("CIPHER", "aes-128-gcm-siv")) {
+         putService(new Service(this, CIPHER, "AES_128/GCM-SIV/NoPadding", AES_128GcmSivNoPaddingCipher.class.getName(), null, null));
+         putService(new Service(this, CIPHER, "AES_192/GCM-SIV/NoPadding", AES_192GcmSivNoPaddingCipher.class.getName(), null, null));
+         putService(new Service(this, CIPHER, "AES_256/GCM-SIV/NoPadding", AES_256GcmSivNoPaddingCipher.class.getName(), null, null));
+      }
 
       // AES Key Wrap - FIPS approved
       putService(new Service(this, CIPHER, "AESWrap_128", AES_128WrapCipher.class.getName(),
