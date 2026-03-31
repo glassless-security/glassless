@@ -196,6 +196,8 @@ import net.glassless.provider.internal.keypairgen.DHKeyPairGenerator;
 import net.glassless.provider.internal.keypairgen.DSAKeyPairGenerator;
 import net.glassless.provider.internal.keypairgen.ECKeyPairGenerator;
 import net.glassless.provider.internal.keypairgen.RSAKeyPairGenerator;
+import net.glassless.provider.internal.lms.LMSKeyFactory;
+import net.glassless.provider.internal.lms.LMSSignature;
 import net.glassless.provider.internal.mac.AESCMACMac;
 import net.glassless.provider.internal.mac.AESGMACMac;
 import net.glassless.provider.internal.mac.HmacPBESHA1;
@@ -1032,6 +1034,14 @@ public class GlaSSLessProvider extends Provider {
          putService(new Service(this, SIGNATURE, "SLH-DSA-SHAKE-256f",
             SLHDSA_SHAKE_256fSignature.class.getName(), null, null));
       }
+
+      // LMS (RFC 8554 / NIST SP 800-208) - Leighton-Micali Signature (verification only)
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS")) {
+         putService(new Service(this, SIGNATURE, "LMS",
+            LMSSignature.class.getName(),
+            List.of("HSS", "id-alg-hss-lms-hashsig",
+               "OID.1.2.840.113549.1.9.16.3.17", "1.2.840.113549.1.9.16.3.17"), null));
+      }
    }
 
    private void registerKeyPairGeneratorServices() {
@@ -1300,6 +1310,14 @@ public class GlaSSLessProvider extends Provider {
             List.of("SLHDSA", "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-192f",
                "SLH-DSA-SHA2-256s", "SLH-DSA-SHA2-256f", "SLH-DSA-SHAKE-128s", "SLH-DSA-SHAKE-128f",
                "SLH-DSA-SHAKE-192s", "SLH-DSA-SHAKE-192f", "SLH-DSA-SHAKE-256s", "SLH-DSA-SHAKE-256f"), null));
+      }
+
+      // LMS (RFC 8554 / NIST SP 800-208) - verification only, no private keys
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS")) {
+         putService(new Service(this, KEY_FACTORY, "LMS",
+            LMSKeyFactory.class.getName(),
+            List.of("HSS", "id-alg-hss-lms-hashsig",
+               "OID.1.2.840.113549.1.9.16.3.17", "1.2.840.113549.1.9.16.3.17"), null));
       }
    }
 

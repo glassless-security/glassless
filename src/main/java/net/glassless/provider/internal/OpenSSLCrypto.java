@@ -7,12 +7,16 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
-import java.util.NoSuchElementException;
 
 public class OpenSSLCrypto {
 
-   private static final String LIBCRYPTO_NAME = "crypto";
-   public static final String LIBCRYPTO_SO_3 = "libcrypto.so.3";
+   /**
+    * System property to override the libcrypto path.
+    * Example: {@code -Dglassless.libcrypto.path=/opt/openssl-4/lib64/libcrypto.so.4}
+    */
+   public static final String LIBCRYPTO_PATH_PROPERTY = "glassless.libcrypto.path";
+
+   private static final String[] LIBCRYPTO_NAMES = {"libcrypto.so.4", "libcrypto.so.3"};
 
    // Method handles for OpenSSL functions
    private static MethodHandle EVP_MD_CTX_new;
@@ -129,6 +133,7 @@ public class OpenSSLCrypto {
 
    // Method handles for version info
    private static MethodHandle OpenSSL_version;
+   private static MethodHandle OpenSSL_version_num;
 
    // Method handles for KEM (Key Encapsulation Mechanism) - OpenSSL 3.2+
    private static MethodHandle EVP_PKEY_encapsulate_init;
@@ -144,18 +149,54 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_PKEY_new_raw_public_key_ex;
    private static MethodHandle EVP_PKEY_new_raw_private_key_ex;
 
+   /**
+    * The OpenSSL version number in the format used by OpenSSL_version_num():
+    * MNNFFPPS (major, minor, fix, patch, status).
+    * For example, OpenSSL 3.5.0 = 0x30500000L.
+    * Use {@link #isVersionAtLeast(int, int, int)} for readable comparisons.
+    */
+   private static long opensslVersionNum;
+
    static {
       initFFM();
+   }
+
+   /**
+    * Looks up an OpenSSL function by name and returns a MethodHandle, or null
+    * if the symbol is not found. Use this for functions that may not exist
+    * on all supported OpenSSL versions.
+    */
+   private static MethodHandle optionalHandle(Linker linker, SymbolLookup lib,
+                                              String name, FunctionDescriptor desc) {
+      return lib.find(name)
+         .map(addr -> linker.downcallHandle(addr, desc))
+         .orElse(null);
    }
 
    private static void initFFM() {
       Linker linker = Linker.nativeLinker();
       SymbolLookup libcrypto;
-      try {
-         // Use the full path to the library
-         libcrypto = SymbolLookup.libraryLookup(LIBCRYPTO_SO_3, Arena.global());
-      } catch (IllegalArgumentException e) {
-         throw new IllegalStateException("Could not find OpenSSL crypto library at specified path", e);
+      String libcryptoPath = System.getProperty(LIBCRYPTO_PATH_PROPERTY);
+      if (libcryptoPath != null) {
+         try {
+            libcrypto = SymbolLookup.libraryLookup(libcryptoPath, Arena.global());
+         } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Could not find OpenSSL crypto library at " + libcryptoPath, e);
+         }
+      } else {
+         libcrypto = null;
+         for (String name : LIBCRYPTO_NAMES) {
+            try {
+               libcrypto = SymbolLookup.libraryLookup(name, Arena.global());
+               break;
+            } catch (IllegalArgumentException e) {
+               // Try the next one
+            }
+         }
+         if (libcrypto == null) {
+            throw new IllegalStateException("Could not find OpenSSL crypto library (tried: " +
+               String.join(", ", LIBCRYPTO_NAMES) + ")");
+         }
       }
 
       try {
@@ -619,93 +660,54 @@ public class OpenSSLCrypto {
             libcrypto.find("OpenSSL_version").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
          );
+         // unsigned long OpenSSL_version_num(void)
+         OpenSSL_version_num = linker.downcallHandle(
+            libcrypto.find("OpenSSL_version_num").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_LONG)
+         );
+         opensslVersionNum = (long) OpenSSL_version_num.invokeExact();
 
          // KEM (Key Encapsulation Mechanism) functions - OpenSSL 3.2+
-         // These may not exist on older OpenSSL versions, so we handle them gracefully
-         try {
-            // int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
-            EVP_PKEY_encapsulate_init = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_encapsulate_init").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-            );
-            // int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx, unsigned char *wrappedkey, size_t *wrappedkeylen,
-            //                         unsigned char *genkey, size_t *genkeylen)
-            EVP_PKEY_encapsulate = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_encapsulate").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-            );
-            // int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
-            EVP_PKEY_decapsulate_init = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_decapsulate_init").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-            );
-            // int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx, unsigned char *unwrapped, size_t *unwrappedlen,
-            //                         const unsigned char *wrapped, size_t wrappedlen)
-            EVP_PKEY_decapsulate = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_decapsulate").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
-            );
-         } catch (NoSuchElementException e) {
-            // KEM functions not available on this OpenSSL version
-            EVP_PKEY_encapsulate_init = null;
-            EVP_PKEY_encapsulate = null;
-            EVP_PKEY_decapsulate_init = null;
-            EVP_PKEY_decapsulate = null;
-         }
+         EVP_PKEY_encapsulate_init = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_encapsulate_init",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+         EVP_PKEY_encapsulate = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_encapsulate",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+               ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+         EVP_PKEY_decapsulate_init = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_decapsulate_init",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+         EVP_PKEY_decapsulate = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_decapsulate",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+               ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
 
          // EVP_KEYMGMT functions for checking algorithm availability
-         try {
-            // EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm, const char *properties)
-            EVP_KEYMGMT_fetch = linker.downcallHandle(
-               libcrypto.find("EVP_KEYMGMT_fetch").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-            );
-            // void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
-            EVP_KEYMGMT_free = linker.downcallHandle(
-               libcrypto.find("EVP_KEYMGMT_free").orElseThrow(),
-               FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
-            );
-         } catch (NoSuchElementException e) {
-            EVP_KEYMGMT_fetch = null;
-            EVP_KEYMGMT_free = null;
-         }
+         EVP_KEYMGMT_fetch = optionalHandle(linker, libcrypto,
+            "EVP_KEYMGMT_fetch",
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+         EVP_KEYMGMT_free = optionalHandle(linker, libcrypto,
+            "EVP_KEYMGMT_free",
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
 
          // Raw key export/import functions (for hybrid KEMs which don't have ASN.1 encoders)
-         try {
-            // int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub, size_t *len)
-            EVP_PKEY_get_raw_public_key = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_get_raw_public_key").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-            );
-            // int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv, size_t *len)
-            EVP_PKEY_get_raw_private_key = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_get_raw_private_key").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-            );
-            // EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OSSL_LIB_CTX *libctx, const char *keytype,
-            //                                          const char *propq, const unsigned char *pub, size_t len)
-            EVP_PKEY_new_raw_public_key_ex = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_new_raw_public_key_ex").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
-            );
-            // EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OSSL_LIB_CTX *libctx, const char *keytype,
-            //                                           const char *propq, const unsigned char *priv, size_t len)
-            EVP_PKEY_new_raw_private_key_ex = linker.downcallHandle(
-               libcrypto.find("EVP_PKEY_new_raw_private_key_ex").orElseThrow(),
-               FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-                  ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
-            );
-         } catch (NoSuchElementException e) {
-            EVP_PKEY_get_raw_public_key = null;
-            EVP_PKEY_get_raw_private_key = null;
-            EVP_PKEY_new_raw_public_key_ex = null;
-            EVP_PKEY_new_raw_private_key_ex = null;
-         }
+         EVP_PKEY_get_raw_public_key = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_get_raw_public_key",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+         EVP_PKEY_get_raw_private_key = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_get_raw_private_key",
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+         EVP_PKEY_new_raw_public_key_ex = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_new_raw_public_key_ex",
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+               ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
+         EVP_PKEY_new_raw_private_key_ex = optionalHandle(linker, libcrypto,
+            "EVP_PKEY_new_raw_private_key_ex",
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+               ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
 
-      } catch (NoSuchMethodError | Exception e) {
+      } catch (Throwable e) {
          System.err.println("Error initializing OpenSSL FFM: " + e.getMessage());
          throw new IllegalStateException("Failed to initialize OpenSSL FFM", e);
       }
@@ -1769,6 +1771,24 @@ public class OpenSSLCrypto {
       } catch (Throwable e) {
          return "Unknown";
       }
+   }
+
+   /**
+    * Returns the OpenSSL version as a numeric value (from OpenSSL_version_num()).
+    * Format: MNNFFPPS (major, minor, fix, patch, status).
+    * For example, OpenSSL 3.5.0 = 0x30500000L.
+    */
+   public static long getOpenSSLVersionNum() {
+      return opensslVersionNum;
+   }
+
+   /**
+    * Checks whether the installed OpenSSL is at least the given version.
+    * For example, {@code isVersionAtLeast(3, 5, 0)} returns true on OpenSSL 3.5.0+.
+    */
+   public static boolean isVersionAtLeast(int major, int minor, int patch) {
+      long required = ((long) major << 28) | ((long) minor << 20) | ((long) patch << 12);
+      return opensslVersionNum >= required;
    }
 
    // HKDF mode constants (from openssl/kdf.h)
