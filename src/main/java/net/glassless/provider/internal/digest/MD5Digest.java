@@ -6,7 +6,7 @@ package net.glassless.provider.internal.digest;
  */
 public class MD5Digest extends AbstractDigest {
 
-    public MD5Digest() {
-        super("md5");
-    }
+   public MD5Digest() {
+      super("md5");
+   }
 }

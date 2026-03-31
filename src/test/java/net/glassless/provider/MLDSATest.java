@@ -1,7 +1,12 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -47,7 +52,7 @@ public class MLDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44"),
                 "ML-DSA-44 requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-44", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-44", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -66,10 +71,10 @@ public class MLDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44"),
                 "ML-DSA-44 requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-44", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-44", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("ML-DSA-44", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-44", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("test message".getBytes());
             byte[] signature = sig.sign();
@@ -91,7 +96,7 @@ public class MLDSATest {
         void testGenerateKeyPair() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -104,10 +109,10 @@ public class MLDSATest {
         void testSignAndVerify() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("Hello, Post-Quantum World!".getBytes());
             byte[] signature = sig.sign();
@@ -124,10 +129,10 @@ public class MLDSATest {
         void testVerifyFailsWithWrongMessage() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("original message".getBytes());
             byte[] signature = sig.sign();
@@ -142,10 +147,10 @@ public class MLDSATest {
         void testSignEmptyMessage() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             byte[] signature = sig.sign();
 
@@ -158,7 +163,7 @@ public class MLDSATest {
         void testGenericMLDSAWithSpec() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA", PROVIDER_NAME);
             kpg.initialize(new NamedParameterSpec("ML-DSA-65"));
             KeyPair kp = kpg.generateKeyPair();
 
@@ -166,7 +171,7 @@ public class MLDSATest {
             assertEquals("ML-DSA-65", kp.getPublic().getAlgorithm());
 
             // Use generic signature
-            Signature sig = Signature.getInstance("ML-DSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("test".getBytes());
             byte[] signature = sig.sign();
@@ -187,7 +192,7 @@ public class MLDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87"),
                 "ML-DSA-87 requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-87", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-87", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
@@ -201,10 +206,10 @@ public class MLDSATest {
             assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87"),
                 "ML-DSA-87 requires OpenSSL 3.5+");
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-87", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-87", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("ML-DSA-87", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-87", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("test message".getBytes());
             byte[] signature = sig.sign();
@@ -226,10 +231,10 @@ public class MLDSATest {
         void testReconstructKeys() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair original = kpg.generateKeyPair();
 
-            KeyFactory kf = KeyFactory.getInstance("ML-DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("ML-DSA", PROVIDER_NAME);
 
             // Reconstruct public key
             X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(original.getPublic().getEncoded());
@@ -242,7 +247,7 @@ public class MLDSATest {
             assertArrayEquals(original.getPrivate().getEncoded(), reconstructedPriv.getEncoded());
 
             // Use reconstructed keys for signing
-            Signature sig = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(reconstructedPriv);
             sig.update("test".getBytes());
             byte[] signature = sig.sign();
@@ -257,10 +262,10 @@ public class MLDSATest {
         void testTranslateKeys() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair original = kpg.generateKeyPair();
 
-            KeyFactory kf = KeyFactory.getInstance("ML-DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("ML-DSA", PROVIDER_NAME);
 
             PublicKey translatedPub = (PublicKey) kf.translateKey(original.getPublic());
             PrivateKey translatedPriv = (PrivateKey) kf.translateKey(original.getPrivate());
@@ -281,7 +286,7 @@ public class MLDSATest {
         void testSignLargeMessage() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
             // Create 1MB message
@@ -290,7 +295,7 @@ public class MLDSATest {
                 largeMessage[i] = (byte) (i % 256);
             }
 
-            Signature sig = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update(largeMessage);
             byte[] signature = sig.sign();
@@ -307,10 +312,10 @@ public class MLDSATest {
         void testSignWithMultipleUpdates() throws Exception {
             assumeMLDSAAvailable();
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", "GlaSSLess");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("ML-DSA-65", PROVIDER_NAME);
             KeyPair kp = kpg.generateKeyPair();
 
-            Signature sig = Signature.getInstance("ML-DSA-65", "GlaSSLess");
+            Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
             sig.update("part1".getBytes());
             sig.update("part2".getBytes());

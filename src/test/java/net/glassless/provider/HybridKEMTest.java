@@ -1,7 +1,11 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -38,7 +42,7 @@ class HybridKEMTest {
          assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KeyPair keyPair = kpg.generateKeyPair();
 
          assertNotNull(keyPair);
@@ -55,11 +59,11 @@ class HybridKEMTest {
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
          // Generate key pair
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KeyPair keyPair = kpg.generateKeyPair();
 
          // Get KEM instance
-         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
 
          // Encapsulate with public key
          KEM.Encapsulator encapsulator = kem.newEncapsulator(keyPair.getPublic());
@@ -85,10 +89,10 @@ class HybridKEMTest {
          assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KeyPair keyPair = kpg.generateKeyPair();
 
-         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KEM.Encapsulator encapsulator = kem.newEncapsulator(keyPair.getPublic());
 
          // Extract only first 32 bytes for AES-256
@@ -108,10 +112,10 @@ class HybridKEMTest {
          assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X448MLKEM1024"),
             "X448MLKEM1024 requires OpenSSL 3.5+");
 
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X448MLKEM1024", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X448MLKEM1024", PROVIDER_NAME);
          KeyPair keyPair = kpg.generateKeyPair();
 
-         KEM kem = KEM.getInstance("X448MLKEM1024", "GlaSSLess");
+         KEM kem = KEM.getInstance("X448MLKEM1024", PROVIDER_NAME);
          KEM.Encapsulator encapsulator = kem.newEncapsulator(keyPair.getPublic());
          KEM.Encapsulated encapsulated = encapsulator.encapsulate();
 
@@ -138,10 +142,10 @@ class HybridKEMTest {
          assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KeyPair keyPair = kpg.generateKeyPair();
 
-         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KEM.Decapsulator decapsulator = kem.newDecapsulator(keyPair.getPrivate());
 
          // Try to decapsulate invalid data
@@ -155,10 +159,10 @@ class HybridKEMTest {
          assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KeyPair keyPair = kpg.generateKeyPair();
 
-         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KEM.Encapsulator encapsulator = kem.newEncapsulator(keyPair.getPublic());
 
          assertEquals(64, encapsulator.secretSize());

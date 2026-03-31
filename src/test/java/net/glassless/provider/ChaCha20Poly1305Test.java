@@ -1,6 +1,10 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.security.SecureRandom;
 import java.security.Security;
@@ -17,239 +21,239 @@ import org.junit.jupiter.api.Test;
 
 public class ChaCha20Poly1305Test {
 
-    @BeforeAll
-    public static void setUp() {
-        Security.addProvider(new GlaSSLessProvider());
-    }
+   @BeforeAll
+   public static void setUp() {
+      Security.addProvider(new GlaSSLessProvider());
+   }
 
-    @Nested
-    @DisplayName("ChaCha20-Poly1305 Basic Tests")
-    class BasicTests {
+   @Nested
+   @DisplayName("ChaCha20-Poly1305 Basic Tests")
+   class BasicTests {
 
-        @Test
-        @DisplayName("Encrypt and decrypt with ChaCha20-Poly1305")
-        void testEncryptDecrypt() throws Exception {
-            // Generate a 256-bit key
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("Encrypt and decrypt with ChaCha20-Poly1305")
+      void testEncryptDecrypt() throws Exception {
+         // Generate a 256-bit key
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            // Generate a 96-bit (12-byte) nonce
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         // Generate a 96-bit (12-byte) nonce
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            // Plaintext
-            byte[] plaintext = "Hello, ChaCha20-Poly1305!".getBytes();
+         // Plaintext
+         byte[] plaintext = "Hello, ChaCha20-Poly1305!".getBytes();
 
-            // Encrypt
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = encryptCipher.doFinal(plaintext);
+         // Encrypt
+         Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
-            // Ciphertext should be plaintext + 16 bytes tag
-            assertEquals(plaintext.length + 16, ciphertext.length);
+         // Ciphertext should be plaintext + 16 bytes tag
+         assertEquals(plaintext.length + 16, ciphertext.length);
 
-            // Decrypt
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] decrypted = decryptCipher.doFinal(ciphertext);
+         // Decrypt
+         Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         byte[] decrypted = decryptCipher.doFinal(ciphertext);
 
-            assertArrayEquals(plaintext, decrypted);
-        }
+         assertArrayEquals(plaintext, decrypted);
+      }
 
-        @Test
-        @DisplayName("Different nonces produce different ciphertext")
-        void testDifferentNonces() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("Different nonces produce different ciphertext")
+      void testDifferentNonces() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] plaintext = "Same plaintext".getBytes();
+         byte[] plaintext = "Same plaintext".getBytes();
 
-            byte[] nonce1 = new byte[12];
-            byte[] nonce2 = new byte[12];
-            new SecureRandom().nextBytes(nonce1);
-            new SecureRandom().nextBytes(nonce2);
+         byte[] nonce1 = new byte[12];
+         byte[] nonce2 = new byte[12];
+         new SecureRandom().nextBytes(nonce1);
+         new SecureRandom().nextBytes(nonce2);
 
-            Cipher cipher1 = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            cipher1.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(nonce1));
-            byte[] ciphertext1 = cipher1.doFinal(plaintext);
+         Cipher cipher1 = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         cipher1.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(nonce1));
+         byte[] ciphertext1 = cipher1.doFinal(plaintext);
 
-            Cipher cipher2 = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            cipher2.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(nonce2));
-            byte[] ciphertext2 = cipher2.doFinal(plaintext);
+         Cipher cipher2 = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         cipher2.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(nonce2));
+         byte[] ciphertext2 = cipher2.doFinal(plaintext);
 
-            assertFalse(java.util.Arrays.equals(ciphertext1, ciphertext2),
-                "Different nonces should produce different ciphertext");
-        }
+         assertFalse(java.util.Arrays.equals(ciphertext1, ciphertext2),
+            "Different nonces should produce different ciphertext");
+      }
 
-        @Test
-        @DisplayName("Tampered ciphertext fails authentication")
-        void testTamperedCiphertext() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("Tampered ciphertext fails authentication")
+      void testTamperedCiphertext() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            byte[] plaintext = "Authenticate me!".getBytes();
+         byte[] plaintext = "Authenticate me!".getBytes();
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = encryptCipher.doFinal(plaintext);
+         Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
-            // Tamper with the ciphertext
-            ciphertext[0] ^= 0xFF;
+         // Tamper with the ciphertext
+         ciphertext[0] ^= 0xFF;
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
-            assertThrows(Exception.class, () -> decryptCipher.doFinal(ciphertext),
-                "Tampered ciphertext should fail authentication");
-        }
+         assertThrows(Exception.class, () -> decryptCipher.doFinal(ciphertext),
+            "Tampered ciphertext should fail authentication");
+      }
 
-        @Test
-        @DisplayName("Tampered tag fails authentication")
-        void testTamperedTag() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("Tampered tag fails authentication")
+      void testTamperedTag() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            byte[] plaintext = "Authenticate me!".getBytes();
+         byte[] plaintext = "Authenticate me!".getBytes();
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = encryptCipher.doFinal(plaintext);
+         Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
-            // Tamper with the tag (last 16 bytes)
-            ciphertext[ciphertext.length - 1] ^= 0xFF;
+         // Tamper with the tag (last 16 bytes)
+         ciphertext[ciphertext.length - 1] ^= 0xFF;
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
-            assertThrows(Exception.class, () -> decryptCipher.doFinal(ciphertext),
-                "Tampered tag should fail authentication");
-        }
+         assertThrows(Exception.class, () -> decryptCipher.doFinal(ciphertext),
+            "Tampered tag should fail authentication");
+      }
 
-        @Test
-        @DisplayName("Empty plaintext")
-        void testEmptyPlaintext() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("Empty plaintext")
+      void testEmptyPlaintext() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            byte[] plaintext = new byte[0];
+         byte[] plaintext = new byte[0];
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = encryptCipher.doFinal(plaintext);
+         Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
-            // Should be just the 16-byte tag
-            assertEquals(16, ciphertext.length);
+         // Should be just the 16-byte tag
+         assertEquals(16, ciphertext.length);
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] decrypted = decryptCipher.doFinal(ciphertext);
+         Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         byte[] decrypted = decryptCipher.doFinal(ciphertext);
 
-            assertEquals(0, decrypted.length);
-        }
+         assertEquals(0, decrypted.length);
+      }
 
-        @Test
-        @DisplayName("Large plaintext")
-        void testLargePlaintext() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("Large plaintext")
+      void testLargePlaintext() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            // 1 MB plaintext
-            byte[] plaintext = new byte[1024 * 1024];
-            new SecureRandom().nextBytes(plaintext);
+         // 1 MB plaintext
+         byte[] plaintext = new byte[1024 * 1024];
+         new SecureRandom().nextBytes(plaintext);
 
-            Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = encryptCipher.doFinal(plaintext);
+         Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = encryptCipher.doFinal(plaintext);
 
-            assertEquals(plaintext.length + 16, ciphertext.length);
+         assertEquals(plaintext.length + 16, ciphertext.length);
 
-            Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] decrypted = decryptCipher.doFinal(ciphertext);
+         Cipher decryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         decryptCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         byte[] decrypted = decryptCipher.doFinal(ciphertext);
 
-            assertArrayEquals(plaintext, decrypted);
-        }
-    }
+         assertArrayEquals(plaintext, decrypted);
+      }
+   }
 
-    @Nested
-    @DisplayName("Cross-provider Compatibility Tests")
-    class CrossProviderTests {
+   @Nested
+   @DisplayName("Cross-provider Compatibility Tests")
+   class CrossProviderTests {
 
-        @Test
-        @DisplayName("GlaSSLess encrypted, SunJCE decrypted")
-        void testGlaSSLessToSunJCE() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("GlaSSLess encrypted, SunJCE decrypted")
+      void testGlaSSLessToSunJCE() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            byte[] plaintext = "Cross-provider test".getBytes();
+         byte[] plaintext = "Cross-provider test".getBytes();
 
-            // Encrypt with GlaSSLess
-            Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            glasslessCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = glasslessCipher.doFinal(plaintext);
+         // Encrypt with GlaSSLess
+         Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         glasslessCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = glasslessCipher.doFinal(plaintext);
 
-            // Decrypt with default provider (SunJCE)
-            Cipher sunCipher = Cipher.getInstance("ChaCha20-Poly1305");
-            sunCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] decrypted = sunCipher.doFinal(ciphertext);
+         // Decrypt with default provider (SunJCE)
+         Cipher sunCipher = Cipher.getInstance("ChaCha20-Poly1305");
+         sunCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         byte[] decrypted = sunCipher.doFinal(ciphertext);
 
-            assertArrayEquals(plaintext, decrypted,
-                "SunJCE should decrypt GlaSSLess ciphertext correctly");
-        }
+         assertArrayEquals(plaintext, decrypted,
+            "SunJCE should decrypt GlaSSLess ciphertext correctly");
+      }
 
-        @Test
-        @DisplayName("SunJCE encrypted, GlaSSLess decrypted")
-        void testSunJCEToGlaSSLess() throws Exception {
-            byte[] keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-            SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
+      @Test
+      @DisplayName("SunJCE encrypted, GlaSSLess decrypted")
+      void testSunJCEToGlaSSLess() throws Exception {
+         byte[] keyBytes = new byte[32];
+         new SecureRandom().nextBytes(keyBytes);
+         SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-            byte[] nonce = new byte[12];
-            new SecureRandom().nextBytes(nonce);
-            IvParameterSpec ivSpec = new IvParameterSpec(nonce);
+         byte[] nonce = new byte[12];
+         new SecureRandom().nextBytes(nonce);
+         IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-            byte[] plaintext = "Cross-provider test".getBytes();
+         byte[] plaintext = "Cross-provider test".getBytes();
 
-            // Encrypt with default provider (SunJCE)
-            Cipher sunCipher = Cipher.getInstance("ChaCha20-Poly1305");
-            sunCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-            byte[] ciphertext = sunCipher.doFinal(plaintext);
+         // Encrypt with default provider (SunJCE)
+         Cipher sunCipher = Cipher.getInstance("ChaCha20-Poly1305");
+         sunCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+         byte[] ciphertext = sunCipher.doFinal(plaintext);
 
-            // Decrypt with GlaSSLess
-            Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", "GlaSSLess");
-            glasslessCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] decrypted = glasslessCipher.doFinal(ciphertext);
+         // Decrypt with GlaSSLess
+         Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
+         glasslessCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+         byte[] decrypted = glasslessCipher.doFinal(ciphertext);
 
-            assertArrayEquals(plaintext, decrypted,
-                "GlaSSLess should decrypt SunJCE ciphertext correctly");
-        }
-    }
+         assertArrayEquals(plaintext, decrypted,
+            "GlaSSLess should decrypt SunJCE ciphertext correctly");
+      }
+   }
 }

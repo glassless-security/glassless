@@ -806,12 +806,12 @@ public class OpenSSLCrypto {
    /**
     * Derives a key using PKCS5 PBKDF2 HMAC.
     *
-    * @param password the password
-    * @param salt the salt
+    * @param password       the password
+    * @param salt           the salt
     * @param iterationCount the iteration count
-    * @param digestName the digest algorithm name (e.g., "SHA256", "SHA1")
-    * @param keyLength the desired key length in bytes
-    * @param arena the arena for memory allocation
+    * @param digestName     the digest algorithm name (e.g., "SHA256", "SHA1")
+    * @param keyLength      the desired key length in bytes
+    * @param arena          the arena for memory allocation
     * @return the derived key bytes
     * @throws Throwable if key derivation fails
     */
@@ -864,12 +864,12 @@ public class OpenSSLCrypto {
    /**
     * Derives a key using PKCS5 PBKDF2 HMAC with pre-encoded password bytes.
     *
-    * @param passwordBytes the password as bytes (already encoded)
-    * @param salt the salt
+    * @param passwordBytes  the password as bytes (already encoded)
+    * @param salt           the salt
     * @param iterationCount the iteration count
-    * @param digestName the digest algorithm name (e.g., "SHA256", "SHA1")
-    * @param keyLength the desired key length in bytes
-    * @param arena the arena for memory allocation
+    * @param digestName     the digest algorithm name (e.g., "SHA256", "SHA1")
+    * @param keyLength      the desired key length in bytes
+    * @param arena          the arena for memory allocation
     * @return the derived key bytes
     * @throws Throwable if key derivation fails
     */
@@ -1148,8 +1148,7 @@ public class OpenSSLCrypto {
       keyPtrSegment.set(ValueLayout.ADDRESS, 0, keySegment);
 
       // Use d2i_PrivateKey_ex with type=0 for auto-detection (works for both RSA and EC)
-      MemorySegment pkey = (MemorySegment) d2i_PrivateKey_ex.invokeExact(type, MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
-      return pkey;
+      return (MemorySegment) d2i_PrivateKey_ex.invokeExact(type, MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
    }
 
    /**
@@ -1162,8 +1161,7 @@ public class OpenSSLCrypto {
       MemorySegment keyPtrSegment = arena.allocate(ValueLayout.ADDRESS);
       keyPtrSegment.set(ValueLayout.ADDRESS, 0, keySegment);
 
-      MemorySegment pkey = (MemorySegment) d2i_PUBKEY_ex.invokeExact(MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
-      return pkey;
+      return (MemorySegment) d2i_PUBKEY_ex.invokeExact(MemorySegment.NULL, keyPtrSegment, (long) keyBytes.length, MemorySegment.NULL, MemorySegment.NULL);
    }
 
    // Key pair generation wrapper methods
@@ -1352,9 +1350,9 @@ public class OpenSSLCrypto {
     * Loads a raw public key from bytes.
     * Used for hybrid KEMs which don't have standard ASN.1 encoders.
     *
-    * @param keytype the OpenSSL key type name (e.g., "X25519MLKEM768")
+    * @param keytype  the OpenSSL key type name (e.g., "X25519MLKEM768")
     * @param keyBytes the raw public key bytes
-    * @param arena the memory arena
+    * @param arena    the memory arena
     * @return the EVP_PKEY handle
     */
    public static MemorySegment loadRawPublicKey(String keytype, byte[] keyBytes, Arena arena) throws Throwable {
@@ -1380,9 +1378,9 @@ public class OpenSSLCrypto {
     * Loads a raw private key from bytes.
     * Used for hybrid KEMs which don't have standard ASN.1 encoders.
     *
-    * @param keytype the OpenSSL key type name (e.g., "X25519MLKEM768")
+    * @param keytype  the OpenSSL key type name (e.g., "X25519MLKEM768")
     * @param keyBytes the raw private key bytes
-    * @param arena the memory arena
+    * @param arena    the memory arena
     * @return the EVP_PKEY handle
     */
    public static MemorySegment loadRawPrivateKey(String keytype, byte[] keyBytes, Arena arena) throws Throwable {
@@ -1428,8 +1426,8 @@ public class OpenSSLCrypto {
     * Derives a shared secret using ECDH key agreement.
     *
     * @param privateKey the local private key (EVP_PKEY)
-    * @param publicKey the peer's public key (EVP_PKEY)
-    * @param arena the arena for memory allocation
+    * @param publicKey  the peer's public key (EVP_PKEY)
+    * @param arena      the arena for memory allocation
     * @return the derived shared secret bytes
     * @throws Throwable if key agreement fails
     */
@@ -1508,9 +1506,9 @@ public class OpenSSLCrypto {
    /**
     * Extracts a BigInteger parameter from an EVP_PKEY.
     *
-    * @param pkey the EVP_PKEY
+    * @param pkey      the EVP_PKEY
     * @param paramName the parameter name (e.g., "p", "q", "g", "pub", "priv")
-    * @param arena the arena for memory allocation
+    * @param arena     the arena for memory allocation
     * @return the BigInteger value
     * @throws Throwable if extraction fails
     */
@@ -1557,7 +1555,7 @@ public class OpenSSLCrypto {
          // BN_bn2bin produces unsigned big-endian bytes
          // BigInteger expects a sign-magnitude representation
          // For positive numbers, we may need to prepend a zero byte if high bit is set
-         if (bytes.length > 0 && (bytes[0] & 0x80) != 0) {
+         if ((bytes[0] & 0x80) != 0) {
             byte[] tmp = new byte[bytes.length + 1];
             System.arraycopy(bytes, 0, tmp, 1, bytes.length);
             bytes = tmp;
@@ -1706,7 +1704,7 @@ public class OpenSSLCrypto {
     */
    public static boolean isKEMAvailable() {
       return EVP_PKEY_encapsulate_init != null && EVP_PKEY_encapsulate != null
-          && EVP_PKEY_decapsulate_init != null && EVP_PKEY_decapsulate != null;
+         && EVP_PKEY_decapsulate_init != null && EVP_PKEY_decapsulate != null;
    }
 
    public static int EVP_PKEY_encapsulate_init(MemorySegment ctx, MemorySegment params) throws Throwable {
@@ -1740,7 +1738,7 @@ public class OpenSSLCrypto {
    }
 
    public static MemorySegment EVP_KEYMGMT_fetch(MemorySegment libctx, String algorithm,
-                                                  MemorySegment properties, Arena arena) throws Throwable {
+                                                 MemorySegment properties, Arena arena) throws Throwable {
       if (EVP_KEYMGMT_fetch == null) {
          return MemorySegment.NULL;
       }
@@ -1786,11 +1784,11 @@ public class OpenSSLCrypto {
     * Creates an OSSL_PARAM array for HKDF operations.
     *
     * @param digestName the digest algorithm name (e.g., "SHA256")
-    * @param mode the HKDF mode (extract, expand, or both)
-    * @param salt the salt (can be null for expand mode)
-    * @param key the input key material or PRK
-    * @param info the info/context (can be null for extract mode)
-    * @param arena the arena for memory allocation
+    * @param mode       the HKDF mode (extract, expand, or both)
+    * @param salt       the salt (can be null for expand mode)
+    * @param key        the input key material or PRK
+    * @param info       the info/context (can be null for extract mode)
+    * @param arena      the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createHKDFParams(String digestName, int mode, byte[] salt, byte[] key, byte[] info, Arena arena) {
@@ -1813,7 +1811,7 @@ public class OpenSSLCrypto {
       MemorySegment digestValueSegment = arena.allocate(digestValueBytes.length + 1);
       digestValueSegment.asByteBuffer().put(digestValueBytes).put((byte) 0);
 
-      long offset = paramIndex * OSSL_PARAM_SIZE;
+      long offset = 0;
       params.set(ValueLayout.ADDRESS, offset, digestKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_UTF8_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, digestValueSegment);
@@ -1900,11 +1898,11 @@ public class OpenSSLCrypto {
     * Creates an OSSL_PARAM array for SCRYPT operations.
     *
     * @param password the password
-    * @param salt the salt
-    * @param n the CPU/memory cost parameter
-    * @param r the block size parameter
-    * @param p the parallelization parameter
-    * @param arena the arena for memory allocation
+    * @param salt     the salt
+    * @param n        the CPU/memory cost parameter
+    * @param r        the block size parameter
+    * @param p        the parallelization parameter
+    * @param arena    the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createScryptParams(byte[] password, byte[] salt, long n, int r, int p, Arena arena) {
@@ -1923,7 +1921,7 @@ public class OpenSSLCrypto {
       MemorySegment passValueSegment = arena.allocate(ValueLayout.JAVA_BYTE, password.length);
       passValueSegment.asByteBuffer().put(password);
 
-      long offset = paramIndex * OSSL_PARAM_SIZE;
+      long offset = 0;
       params.set(ValueLayout.ADDRESS, offset, passKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, passValueSegment);
@@ -2005,18 +2003,18 @@ public class OpenSSLCrypto {
    /**
     * Creates an OSSL_PARAM array for Argon2 operations.
     *
-    * @param password the password
-    * @param salt the salt
-    * @param iterations the number of iterations (t_cost)
-    * @param memoryKB the memory in KB (m_cost)
+    * @param password    the password
+    * @param salt        the salt
+    * @param iterations  the number of iterations (t_cost)
+    * @param memoryKB    the memory in KB (m_cost)
     * @param parallelism the parallelism (p)
-    * @param ad optional associated data (can be null)
-    * @param secret optional secret (can be null)
-    * @param arena the arena for memory allocation
+    * @param ad          optional associated data (can be null)
+    * @param secret      optional secret (can be null)
+    * @param arena       the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createArgon2Params(byte[] password, byte[] salt, int iterations,
-         int memoryKB, int parallelism, byte[] ad, byte[] secret, Arena arena) {
+                                                  int memoryKB, int parallelism, byte[] ad, byte[] secret, Arena arena) {
       int numParams = 5;  // pass, salt, iter, memcost, lanes
       if (ad != null && ad.length > 0) numParams++;
       if (secret != null && secret.length > 0) numParams++;
@@ -2061,9 +2059,9 @@ public class OpenSSLCrypto {
     * Creates an OSSL_PARAM array for X9.63 KDF operations.
     *
     * @param digestName the digest algorithm name
-    * @param secret the shared secret
-    * @param info the shared info (can be null)
-    * @param arena the arena for memory allocation
+    * @param secret     the shared secret
+    * @param info       the shared info (can be null)
+    * @param arena      the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createX963KDFParams(String digestName, byte[] secret, byte[] info, Arena arena) {
@@ -2096,15 +2094,15 @@ public class OpenSSLCrypto {
     * Creates an OSSL_PARAM array for SSH KDF operations.
     *
     * @param digestName the digest algorithm name
-    * @param key the shared secret (K)
-    * @param xcghash the exchange hash (H)
-    * @param sessionId the session ID
-    * @param keyType the key type character (A-F)
-    * @param arena the arena for memory allocation
+    * @param key        the shared secret (K)
+    * @param xcghash    the exchange hash (H)
+    * @param sessionId  the session ID
+    * @param keyType    the key type character (A-F)
+    * @param arena      the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createSSHKDFParams(String digestName, byte[] key, byte[] xcghash,
-         byte[] sessionId, char keyType, Arena arena) {
+                                                  byte[] sessionId, char keyType, Arena arena) {
       int numParams = 5;  // digest, key, xcghash, session_id, type
       numParams++;  // end marker
 
@@ -2136,17 +2134,17 @@ public class OpenSSLCrypto {
    /**
     * Creates an OSSL_PARAM array for KBKDF (SP 800-108) operations.
     *
-    * @param macName the MAC algorithm name (e.g., "HMAC")
+    * @param macName    the MAC algorithm name (e.g., "HMAC")
     * @param digestName the digest algorithm name (e.g., "SHA256")
-    * @param key the input key
-    * @param salt the salt/label
-    * @param info the context/info
-    * @param mode the KDF mode ("counter", "feedback", or "pipeline")
-    * @param arena the arena for memory allocation
+    * @param key        the input key
+    * @param salt       the salt/label
+    * @param info       the context/info
+    * @param mode       the KDF mode ("counter", "feedback", or "pipeline")
+    * @param arena      the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createKBKDFParams(String macName, String digestName, byte[] key,
-         byte[] salt, byte[] info, String mode, Arena arena) {
+                                                 byte[] salt, byte[] info, String mode, Arena arena) {
       int numParams = 4;  // mac, digest, key, mode
       if (salt != null && salt.length > 0) numParams++;
       if (info != null && info.length > 0) numParams++;
@@ -2188,9 +2186,9 @@ public class OpenSSLCrypto {
     * Creates an OSSL_PARAM array for TLS1-PRF operations.
     *
     * @param digestName the digest algorithm name
-    * @param secret the secret
-    * @param seed the seed (label + seed concatenated)
-    * @param arena the arena for memory allocation
+    * @param secret     the secret
+    * @param seed       the seed (label + seed concatenated)
+    * @param arena      the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createTLSPRFParams(String digestName, byte[] secret, byte[] seed, Arena arena) {
@@ -2220,17 +2218,17 @@ public class OpenSSLCrypto {
     * Creates an OSSL_PARAM array for TLS 1.3 KDF operations.
     *
     * @param digestName the digest algorithm name (SHA256 or SHA384)
-    * @param mode the mode string ("EXTRACT_ONLY" or "EXPAND_ONLY")
-    * @param key the input key material (for extract) or PRK (for expand)
-    * @param salt the salt (for extract mode, can be null)
-    * @param prefix the label prefix (typically "tls13 ")
-    * @param label the label (for expand mode)
-    * @param data the context data (for expand mode)
-    * @param arena the arena for memory allocation
+    * @param mode       the mode string ("EXTRACT_ONLY" or "EXPAND_ONLY")
+    * @param key        the input key material (for extract) or PRK (for expand)
+    * @param salt       the salt (for extract mode, can be null)
+    * @param prefix     the label prefix (typically "tls13 ")
+    * @param label      the label (for expand mode)
+    * @param data       the context data (for expand mode)
+    * @param arena      the arena for memory allocation
     * @return the OSSL_PARAM array
     */
    public static MemorySegment createTLS13KDFParams(String digestName, String mode,
-         byte[] key, byte[] salt, byte[] prefix, byte[] label, byte[] data, Arena arena) {
+                                                    byte[] key, byte[] salt, byte[] prefix, byte[] label, byte[] data, Arena arena) {
       // Count number of parameters needed
       int numParams = 3;  // digest, mode, key are always required
       if (salt != null && salt.length > 0) numParams++;

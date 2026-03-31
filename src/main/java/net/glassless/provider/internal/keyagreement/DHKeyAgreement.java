@@ -24,157 +24,157 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 public class DHKeyAgreement extends KeyAgreementSpi {
 
-    private DHPrivateKey privateKey;
-    private DHPublicKey peerPublicKey;
-    private byte[] sharedSecret;
+   private DHPrivateKey privateKey;
+   private DHPublicKey peerPublicKey;
+   private byte[] sharedSecret;
 
-    @Override
-    protected void engineInit(Key key, SecureRandom random) throws InvalidKeyException {
-        if (!(key instanceof DHPrivateKey)) {
-            throw new InvalidKeyException("DH key agreement requires a DHPrivateKey");
-        }
-        this.privateKey = (DHPrivateKey) key;
-        this.peerPublicKey = null;
-        this.sharedSecret = null;
-    }
+   @Override
+   protected void engineInit(Key key, SecureRandom random) throws InvalidKeyException {
+      if (!(key instanceof DHPrivateKey)) {
+         throw new InvalidKeyException("DH key agreement requires a DHPrivateKey");
+      }
+      this.privateKey = (DHPrivateKey) key;
+      this.peerPublicKey = null;
+      this.sharedSecret = null;
+   }
 
-    @Override
-    protected void engineInit(Key key, AlgorithmParameterSpec params, SecureRandom random)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
-        if (params != null) {
-            throw new InvalidAlgorithmParameterException("No parameters expected for DH key agreement");
-        }
-        engineInit(key, random);
-    }
+   @Override
+   protected void engineInit(Key key, AlgorithmParameterSpec params, SecureRandom random)
+      throws InvalidKeyException, InvalidAlgorithmParameterException {
+      if (params != null) {
+         throw new InvalidAlgorithmParameterException("No parameters expected for DH key agreement");
+      }
+      engineInit(key, random);
+   }
 
-    @Override
-    protected Key engineDoPhase(Key key, boolean lastPhase) throws InvalidKeyException, IllegalStateException {
-        if (privateKey == null) {
-            throw new IllegalStateException("Key agreement not initialized");
-        }
+   @Override
+   protected Key engineDoPhase(Key key, boolean lastPhase) throws InvalidKeyException, IllegalStateException {
+      if (privateKey == null) {
+         throw new IllegalStateException("Key agreement not initialized");
+      }
 
-        if (!lastPhase) {
-            throw new IllegalStateException("DH only supports two-party key agreement (lastPhase must be true)");
-        }
+      if (!lastPhase) {
+         throw new IllegalStateException("DH only supports two-party key agreement (lastPhase must be true)");
+      }
 
-        if (!(key instanceof DHPublicKey)) {
-            throw new InvalidKeyException("DH key agreement requires a DHPublicKey for the peer");
-        }
+      if (!(key instanceof DHPublicKey)) {
+         throw new InvalidKeyException("DH key agreement requires a DHPublicKey for the peer");
+      }
 
-        this.peerPublicKey = (DHPublicKey) key;
+      this.peerPublicKey = (DHPublicKey) key;
 
-        // Derive the shared secret
-        try {
-            deriveSharedSecret();
-        } catch (Throwable e) {
-            throw new InvalidKeyException("Failed to derive shared secret", e);
-        }
+      // Derive the shared secret
+      try {
+         deriveSharedSecret();
+      } catch (Throwable e) {
+         throw new InvalidKeyException("Failed to derive shared secret", e);
+      }
 
-        // DH does not produce an intermediate key, return null
-        return null;
-    }
+      // DH does not produce an intermediate key, return null
+      return null;
+   }
 
-    private void deriveSharedSecret() throws Throwable {
-        try (Arena arena = Arena.ofConfined()) {
-            // Load the private key
-            byte[] privateKeyBytes = privateKey.getEncoded();
-            MemorySegment privKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyBytes, arena);
-            if (privKey.equals(MemorySegment.NULL)) {
-                throw new ProviderException("Failed to load private key");
+   private void deriveSharedSecret() throws Throwable {
+      try (Arena arena = Arena.ofConfined()) {
+         // Load the private key
+         byte[] privateKeyBytes = privateKey.getEncoded();
+         MemorySegment privKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyBytes, arena);
+         if (privKey.equals(MemorySegment.NULL)) {
+            throw new ProviderException("Failed to load private key");
+         }
+
+         try {
+            // Load the peer's public key
+            byte[] publicKeyBytes = peerPublicKey.getEncoded();
+            MemorySegment pubKey = OpenSSLCrypto.loadPublicKey(publicKeyBytes, arena);
+            if (pubKey.equals(MemorySegment.NULL)) {
+               throw new ProviderException("Failed to load peer public key");
             }
 
             try {
-                // Load the peer's public key
-                byte[] publicKeyBytes = peerPublicKey.getEncoded();
-                MemorySegment pubKey = OpenSSLCrypto.loadPublicKey(publicKeyBytes, arena);
-                if (pubKey.equals(MemorySegment.NULL)) {
-                    throw new ProviderException("Failed to load peer public key");
-                }
-
-                try {
-                    // Derive the shared secret
-                    byte[] rawSecret = OpenSSLCrypto.deriveSharedSecret(privKey, pubKey, arena);
-                    // Strip leading zeros for JDK interoperability.
-                    // DH shared secret is a big integer, and the JDK's SunJCE provider
-                    // returns it without leading zero bytes.
-                    this.sharedSecret = stripLeadingZeros(rawSecret);
-                } finally {
-                    OpenSSLCrypto.EVP_PKEY_free(pubKey);
-                }
+               // Derive the shared secret
+               byte[] rawSecret = OpenSSLCrypto.deriveSharedSecret(privKey, pubKey, arena);
+               // Strip leading zeros for JDK interoperability.
+               // DH shared secret is a big integer, and the JDK's SunJCE provider
+               // returns it without leading zero bytes.
+               this.sharedSecret = stripLeadingZeros(rawSecret);
             } finally {
-                OpenSSLCrypto.EVP_PKEY_free(privKey);
+               OpenSSLCrypto.EVP_PKEY_free(pubKey);
             }
-        }
-    }
+         } finally {
+            OpenSSLCrypto.EVP_PKEY_free(privKey);
+         }
+      }
+   }
 
-    /**
-     * Strips leading zero bytes from the byte array.
-     * DH shared secrets are big integers, and the JDK convention is to
-     * return them without leading zeros for interoperability.
-     */
-    private static byte[] stripLeadingZeros(byte[] data) {
-        int leadingZeros = 0;
-        while (leadingZeros < data.length - 1 && data[leadingZeros] == 0) {
-            leadingZeros++;
-        }
-        if (leadingZeros == 0) {
-            return data;
-        }
-        byte[] result = new byte[data.length - leadingZeros];
-        System.arraycopy(data, leadingZeros, result, 0, result.length);
-        return result;
-    }
+   /**
+    * Strips leading zero bytes from the byte array.
+    * DH shared secrets are big integers, and the JDK convention is to
+    * return them without leading zeros for interoperability.
+    */
+   private static byte[] stripLeadingZeros(byte[] data) {
+      int leadingZeros = 0;
+      while (leadingZeros < data.length - 1 && data[leadingZeros] == 0) {
+         leadingZeros++;
+      }
+      if (leadingZeros == 0) {
+         return data;
+      }
+      byte[] result = new byte[data.length - leadingZeros];
+      System.arraycopy(data, leadingZeros, result, 0, result.length);
+      return result;
+   }
 
-    @Override
-    protected byte[] engineGenerateSecret() throws IllegalStateException {
-        if (sharedSecret == null) {
-            throw new IllegalStateException("Key agreement not completed - call doPhase first");
-        }
+   @Override
+   protected byte[] engineGenerateSecret() throws IllegalStateException {
+      if (sharedSecret == null) {
+         throw new IllegalStateException("Key agreement not completed - call doPhase first");
+      }
 
-        byte[] result = sharedSecret.clone();
-        // Reset for potential reuse
-        this.sharedSecret = null;
-        this.peerPublicKey = null;
-        return result;
-    }
+      byte[] result = sharedSecret.clone();
+      // Reset for potential reuse
+      this.sharedSecret = null;
+      this.peerPublicKey = null;
+      return result;
+   }
 
-    @Override
-    protected int engineGenerateSecret(byte[] sharedSecret, int offset)
-            throws IllegalStateException, ShortBufferException {
-        if (this.sharedSecret == null) {
-            throw new IllegalStateException("Key agreement not completed - call doPhase first");
-        }
+   @Override
+   protected int engineGenerateSecret(byte[] sharedSecret, int offset)
+      throws IllegalStateException, ShortBufferException {
+      if (this.sharedSecret == null) {
+         throw new IllegalStateException("Key agreement not completed - call doPhase first");
+      }
 
-        if (offset + this.sharedSecret.length > sharedSecret.length) {
-            throw new ShortBufferException("Output buffer too small");
-        }
+      if (offset + this.sharedSecret.length > sharedSecret.length) {
+         throw new ShortBufferException("Output buffer too small");
+      }
 
-        System.arraycopy(this.sharedSecret, 0, sharedSecret, offset, this.sharedSecret.length);
-        int len = this.sharedSecret.length;
+      System.arraycopy(this.sharedSecret, 0, sharedSecret, offset, this.sharedSecret.length);
+      int len = this.sharedSecret.length;
 
-        // Reset for potential reuse
-        this.sharedSecret = null;
-        this.peerPublicKey = null;
+      // Reset for potential reuse
+      this.sharedSecret = null;
+      this.peerPublicKey = null;
 
-        return len;
-    }
+      return len;
+   }
 
-    @Override
-    protected SecretKey engineGenerateSecret(String algorithm)
-            throws IllegalStateException, NoSuchAlgorithmException, InvalidKeyException {
-        if (sharedSecret == null) {
-            throw new IllegalStateException("Key agreement not completed - call doPhase first");
-        }
+   @Override
+   protected SecretKey engineGenerateSecret(String algorithm)
+      throws IllegalStateException, NoSuchAlgorithmException, InvalidKeyException {
+      if (sharedSecret == null) {
+         throw new IllegalStateException("Key agreement not completed - call doPhase first");
+      }
 
-        if (algorithm == null) {
-            throw new NoSuchAlgorithmException("Algorithm must not be null");
-        }
+      if (algorithm == null) {
+         throw new NoSuchAlgorithmException("Algorithm must not be null");
+      }
 
-        byte[] secret = sharedSecret.clone();
-        // Reset for potential reuse
-        this.sharedSecret = null;
-        this.peerPublicKey = null;
+      byte[] secret = sharedSecret.clone();
+      // Reset for potential reuse
+      this.sharedSecret = null;
+      this.peerPublicKey = null;
 
-        return new SecretKeySpec(secret, algorithm);
-    }
+      return new SecretKeySpec(secret, algorithm);
+   }
 }

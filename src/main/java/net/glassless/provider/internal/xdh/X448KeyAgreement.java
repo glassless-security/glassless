@@ -5,7 +5,7 @@ package net.glassless.provider.internal.xdh;
  */
 public class X448KeyAgreement extends XDHKeyAgreement {
 
-    public X448KeyAgreement() {
-        super("X448");
-    }
+   public X448KeyAgreement() {
+      super("X448");
+   }
 }

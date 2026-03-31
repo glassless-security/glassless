@@ -1,5 +1,6 @@
 package net.glassless.provider;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,9 +41,8 @@ public class DESedeCipherTest {
     // Helper to get plaintext that is a multiple of block size (8 bytes for DESede)
     private byte[] getBlockAlignedPlaintext(int blocks) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < blocks; i++) {
-            sb.append("12345678"); // 8 bytes per block
-        }
+       // 8 bytes per block
+       sb.repeat("12345678", Math.max(0, blocks));
         return sb.toString().getBytes();
     }
 
@@ -57,7 +57,7 @@ public class DESedeCipherTest {
         })
         void testDESedeNoPadding(String mode) throws Exception {
             String algorithm = String.format("DESede/%s/NoPadding", mode);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey();
 
             byte[] iv = null;
@@ -78,7 +78,7 @@ public class DESedeCipherTest {
             assertNotNull(encryptedBytes);
 
             // Decryption
-            Cipher decryptCipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             if (iv == null) {
                 decryptCipher.init(Cipher.DECRYPT_MODE, secretKey);
             } else {
@@ -101,7 +101,7 @@ public class DESedeCipherTest {
         })
         void testDESedePKCS5Padding(String mode) throws Exception {
             String algorithm = String.format("DESede/%s/PKCS5Padding", mode);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey();
 
             byte[] iv = null;
@@ -126,7 +126,7 @@ public class DESedeCipherTest {
             assertEquals(expectedLength, encryptedBytes.length, "Encrypted length mismatch for " + algorithm);
 
             // Decryption
-            Cipher decryptCipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             if (iv == null) {
                 decryptCipher.init(Cipher.DECRYPT_MODE, secretKey);
             } else {
@@ -148,7 +148,7 @@ public class DESedeCipherTest {
         })
         void testDESedePKCS5PaddingVariousSizes(String mode, int plaintextSize) throws Exception {
             String algorithm = String.format("DESede/%s/PKCS5Padding", mode);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey();
 
             byte[] iv = generateIv();
@@ -163,7 +163,7 @@ public class DESedeCipherTest {
             assertNotNull(encryptedBytes);
 
             // Decryption
-            Cipher decryptCipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher decryptCipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
             byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
 

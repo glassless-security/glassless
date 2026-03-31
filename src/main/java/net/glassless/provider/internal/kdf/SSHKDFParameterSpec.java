@@ -5,23 +5,35 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for SSH Key Derivation Function (RFC 4253).
- *
+ * <p>
  * SSH uses this KDF to derive multiple keys from the shared secret
  * established during key exchange.
  */
 public class SSHKDFParameterSpec implements AlgorithmParameterSpec {
 
-   /** Initial IV client to server */
+   /**
+    * Initial IV client to server
+    */
    public static final char TYPE_INITIAL_IV_CLI_TO_SRV = 'A';
-   /** Initial IV server to client */
+   /**
+    * Initial IV server to client
+    */
    public static final char TYPE_INITIAL_IV_SRV_TO_CLI = 'B';
-   /** Encryption key client to server */
+   /**
+    * Encryption key client to server
+    */
    public static final char TYPE_ENCRYPTION_KEY_CLI_TO_SRV = 'C';
-   /** Encryption key server to client */
+   /**
+    * Encryption key server to client
+    */
    public static final char TYPE_ENCRYPTION_KEY_SRV_TO_CLI = 'D';
-   /** Integrity key client to server */
+   /**
+    * Integrity key client to server
+    */
    public static final char TYPE_INTEGRITY_KEY_CLI_TO_SRV = 'E';
-   /** Integrity key server to client */
+   /**
+    * Integrity key server to client
+    */
    public static final char TYPE_INTEGRITY_KEY_SRV_TO_CLI = 'F';
 
    private final byte[] key;          // Shared secret K
@@ -33,10 +45,10 @@ public class SSHKDFParameterSpec implements AlgorithmParameterSpec {
    /**
     * Creates an SSHKDFParameterSpec.
     *
-    * @param key the shared secret K from key exchange
-    * @param xcghash the exchange hash H
+    * @param key       the shared secret K from key exchange
+    * @param xcghash   the exchange hash H
     * @param sessionId the session identifier
-    * @param type the key type character (A-F)
+    * @param type      the key type character (A-F)
     * @param keyLength the desired key length in bytes
     */
    public SSHKDFParameterSpec(byte[] key, byte[] xcghash, byte[] sessionId, char type, int keyLength) {

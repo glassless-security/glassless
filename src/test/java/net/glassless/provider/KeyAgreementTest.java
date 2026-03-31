@@ -1,5 +1,6 @@
 package net.glassless.provider;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,13 +42,13 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -69,13 +70,13 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -95,13 +96,13 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -122,13 +123,13 @@ public class KeyAgreementTest {
             KeyPair charlieKeyPair = keyGen.generateKeyPair();
 
             // Alice-Bob shared secret
-            KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement ka1 = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             ka1.init(aliceKeyPair.getPrivate());
             ka1.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceBobSecret = ka1.generateSecret();
 
             // Alice-Charlie shared secret
-            KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement ka2 = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             ka2.init(aliceKeyPair.getPrivate());
             ka2.doPhase(charlieKeyPair.getPublic(), true);
             byte[] aliceCharlieSecret = ka2.generateSecret();
@@ -148,7 +149,7 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret as an AES key
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             SecretKey aliceSecretKey = aliceKeyAgreement.generateSecret("AES");
@@ -168,7 +169,7 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
 
@@ -189,7 +190,7 @@ public class KeyAgreementTest {
             KeyPair charlieKeyPair = keyGen.generateKeyPair();
 
             // Alice can perform multiple key agreements
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
 
             // First agreement with Bob
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
@@ -210,20 +211,20 @@ public class KeyAgreementTest {
         @DisplayName("ECDH with GlaSSLess KeyPairGenerator")
         void testECDHWithGlaSSLessKeyGen() throws Exception {
             // Use GlaSSLess provider for key generation as well
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             keyGen.initialize(new ECGenParameterSpec("secp256r1"));
 
             KeyPair aliceKeyPair = keyGen.generateKeyPair();
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice computes the shared secret
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();
 
             // Bob computes the shared secret
-            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             bobKeyAgreement.init(bobKeyPair.getPrivate());
             bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
             byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
@@ -244,7 +245,7 @@ public class KeyAgreementTest {
             KeyPair bobKeyPair = keyGen.generateKeyPair();
 
             // Alice uses GlaSSLess
-            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+            KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
             aliceKeyAgreement.init(aliceKeyPair.getPrivate());
             aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true);
             byte[] aliceSharedSecret = aliceKeyAgreement.generateSecret();

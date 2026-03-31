@@ -1,5 +1,6 @@
 package net.glassless.provider;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,9 +44,8 @@ public class AESCipherTest {
     // Helper to get plaintext that is a multiple of block size (16 bytes)
     private byte[] getBlockAlignedPlaintext(int blocks) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < blocks; i++) {
-            sb.append("0123456789abcdef"); // 16 bytes per block
-        }
+       // 16 bytes per block
+       sb.repeat("0123456789abcdef", Math.max(0, blocks));
         return sb.toString().getBytes();
     }
 
@@ -73,7 +73,7 @@ public class AESCipherTest {
         })
         void testAesNoPadding(int keySizeBits, String mode) throws Exception {
             String algorithm = String.format("AES_%d/%s/NoPadding", keySizeBits, mode);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey(keySizeBits);
 
             byte[] iv = null;
@@ -119,7 +119,7 @@ public class AESCipherTest {
         })
         void testAesGcmNoPadding(int keySizeBits) throws Exception {
             String algorithm = String.format("AES_%d/GCM/NoPadding", keySizeBits);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey(keySizeBits);
 
             byte[] iv = generateIv(12); // GCM typically uses 12-byte IV
@@ -167,7 +167,7 @@ public class AESCipherTest {
         })
         void testAesPKCS5Padding(int keySizeBits, String mode) throws Exception {
             String algorithm = String.format("AES_%d/%s/PKCS5Padding", keySizeBits, mode);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey(keySizeBits);
 
             byte[] iv = null;
@@ -213,7 +213,7 @@ public class AESCipherTest {
         })
         void testAesGcmPKCS5Padding(int keySizeBits) throws Exception {
             String algorithm = String.format("AES_%d/GCM/PKCS5Padding", keySizeBits);
-            Cipher cipher = Cipher.getInstance(algorithm, "GlaSSLess");
+            Cipher cipher = Cipher.getInstance(algorithm, PROVIDER_NAME);
             SecretKey secretKey = generateKey(keySizeBits);
 
             byte[] iv = generateIv(12); // GCM typically uses 12-byte IV

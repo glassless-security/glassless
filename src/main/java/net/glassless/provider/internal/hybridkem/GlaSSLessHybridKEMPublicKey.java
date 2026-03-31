@@ -107,8 +107,8 @@ public class GlaSSLessHybridKEMPublicKey implements PublicKey {
       if (this == obj) return true;
       if (!(obj instanceof GlaSSLessHybridKEMPublicKey other)) return false;
       return algorithm.equals(other.algorithm) &&
-             opensslName.equals(other.opensslName) &&
-             Arrays.equals(rawKey, other.rawKey);
+         opensslName.equals(other.opensslName) &&
+         Arrays.equals(rawKey, other.rawKey);
    }
 
    @Override

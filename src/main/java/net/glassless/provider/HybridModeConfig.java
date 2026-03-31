@@ -45,24 +45,22 @@ public final class HybridModeConfig {
    private static final Map<String, Set<String>> DEFAULT_DELEGATED_ALGORITHMS;
 
    static {
-      Map<String, Set<String>> defaults = new HashMap<>();
 
       // MessageDigest: SHA-256, SHA-512 are ~4-6x faster in JDK for small data
-      defaults.put("MessageDigest", Set.of("SHA-256", "SHA-512"));
 
-      // Mac: HMAC-SHA256, HMAC-SHA512 are ~4-8x faster in JDK for small data
-      defaults.put("Mac", Set.of("HmacSHA256", "HmacSHA512"));
+      DEFAULT_DELEGATED_ALGORITHMS = Map.of("MessageDigest", Set.of("SHA-256", "SHA-512"),
 
-      // SecureRandom: NativePRNG, DRBG are ~2x faster in JDK for small buffers
-      defaults.put("SecureRandom", Set.of("NativePRNG", "DRBG"));
+         // Mac: HMAC-SHA256, HMAC-SHA512 are ~4-8x faster in JDK for small data
+         "Mac", Set.of("HmacSHA256", "HmacSHA512"),
 
-      // KEM: ML-KEM operations are ~1.7-2.5x faster in JDK
-      defaults.put("KEM", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"));
+         // SecureRandom: NativePRNG, DRBG are ~2x faster in JDK for small buffers
+         "SecureRandom", Set.of("NativePRNG", "DRBG"),
 
-      // KeyPairGenerator: ML-KEM key generation is ~2x faster in JDK
-      defaults.put("KeyPairGenerator", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"));
+         // KEM: ML-KEM operations are ~1.7-2.5x faster in JDK
+         "KEM", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"),
 
-      DEFAULT_DELEGATED_ALGORITHMS = Collections.unmodifiableMap(defaults);
+         // KeyPairGenerator: ML-KEM key generation is ~2x faster in JDK
+         "KeyPairGenerator", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"));
    }
 
    // Cached values
@@ -130,7 +128,7 @@ public final class HybridModeConfig {
     * Returns whether the specified algorithm should be delegated to the JDK provider.
     *
     * @param serviceType the JCA service type (e.g., "MessageDigest", "Mac")
-    * @param algorithm the algorithm name (e.g., "SHA-256", "HmacSHA256")
+    * @param algorithm   the algorithm name (e.g., "SHA-256", "HmacSHA256")
     * @return true if the algorithm should be delegated, false otherwise
     */
    public static boolean shouldDelegate(String serviceType, String algorithm) {

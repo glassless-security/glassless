@@ -6,7 +6,7 @@ package net.glassless.provider.internal.mldsa;
  */
 public class MLDSA87KeyPairGenerator extends MLDSAKeyPairGenerator {
 
-    public MLDSA87KeyPairGenerator() {
-        super(MLDSA87, "ML-DSA-87");
-    }
+   public MLDSA87KeyPairGenerator() {
+      super(MLDSA87, "ML-DSA-87");
+   }
 }

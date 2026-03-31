@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Key specification for Argon2 key derivation.
- *
+ * <p>
  * Argon2 parameters:
  * - password: the password
  * - salt: the salt (should be at least 16 bytes)
@@ -30,17 +30,17 @@ public class Argon2KeySpec implements KeySpec {
    /**
     * Creates an Argon2KeySpec with all parameters.
     *
-    * @param password the password
-    * @param salt the salt (recommended at least 16 bytes)
-    * @param iterations number of iterations (t_cost), minimum 1
-    * @param memoryKB memory in KB (m_cost), minimum 8
-    * @param parallelism number of lanes/threads, minimum 1
-    * @param keyLength desired key length in bits
+    * @param password       the password
+    * @param salt           the salt (recommended at least 16 bytes)
+    * @param iterations     number of iterations (t_cost), minimum 1
+    * @param memoryKB       memory in KB (m_cost), minimum 8
+    * @param parallelism    number of lanes/threads, minimum 1
+    * @param keyLength      desired key length in bits
     * @param associatedData optional associated data (can be null)
-    * @param secret optional secret (can be null)
+    * @param secret         optional secret (can be null)
     */
    public Argon2KeySpec(char[] password, byte[] salt, int iterations, int memoryKB,
-         int parallelism, int keyLength, byte[] associatedData, byte[] secret) {
+                        int parallelism, int keyLength, byte[] associatedData, byte[] secret) {
       if (password == null) {
          throw new IllegalArgumentException("Password cannot be null");
       }
@@ -73,15 +73,15 @@ public class Argon2KeySpec implements KeySpec {
    /**
     * Creates an Argon2KeySpec with common defaults.
     *
-    * @param password the password
-    * @param salt the salt
-    * @param iterations number of iterations
-    * @param memoryKB memory in KB
+    * @param password    the password
+    * @param salt        the salt
+    * @param iterations  number of iterations
+    * @param memoryKB    memory in KB
     * @param parallelism number of lanes
-    * @param keyLength desired key length in bits
+    * @param keyLength   desired key length in bits
     */
    public Argon2KeySpec(char[] password, byte[] salt, int iterations, int memoryKB,
-         int parallelism, int keyLength) {
+                        int parallelism, int keyLength) {
       this(password, salt, iterations, memoryKB, parallelism, keyLength, null, null);
    }
 

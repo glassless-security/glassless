@@ -8,9 +8,9 @@ package net.glassless.provider.internal.securerandom;
  */
 public class SHA1PRNG extends OpenSSLSecureRandom {
 
-    private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-    public SHA1PRNG() {
-        super();
-    }
+   public SHA1PRNG() {
+      super();
+   }
 }

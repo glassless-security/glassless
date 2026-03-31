@@ -5,7 +5,7 @@ package net.glassless.provider.internal.xdh;
  */
 public class X25519KeyAgreement extends XDHKeyAgreement {
 
-    public X25519KeyAgreement() {
-        super("X25519");
-    }
+   public X25519KeyAgreement() {
+      super("X25519");
+   }
 }

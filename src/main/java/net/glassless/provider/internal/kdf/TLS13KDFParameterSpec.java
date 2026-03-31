@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for TLS 1.3 Key Derivation Function (HKDF-based).
- *
+ * <p>
  * TLS 1.3 uses HKDF for key derivation with two modes:
  * <ul>
  *   <li>EXTRACT_ONLY: Performs HKDF-Extract to derive the PRK from input key material</li>
@@ -117,8 +117,8 @@ public class TLS13KDFParameterSpec implements AlgorithmParameterSpec {
     * Creates a builder for extract mode.
     *
     * @param inputKeyMaterial the input key material
-    * @param salt the salt (can be null for zero-length salt)
-    * @param keyLength the PRK length (must match hash output size)
+    * @param salt             the salt (can be null for zero-length salt)
+    * @param keyLength        the PRK length (must match hash output size)
     * @return a builder configured for extract mode
     */
    public static Builder forExtract(byte[] inputKeyMaterial, byte[] salt, int keyLength) {
@@ -132,9 +132,9 @@ public class TLS13KDFParameterSpec implements AlgorithmParameterSpec {
    /**
     * Creates a builder for expand mode (HKDF-Expand-Label).
     *
-    * @param prk the pseudo-random key from extract
-    * @param label the label (e.g., "key", "iv", "finished")
-    * @param context the context data (can be empty)
+    * @param prk       the pseudo-random key from extract
+    * @param label     the label (e.g., "key", "iv", "finished")
+    * @param context   the context data (can be empty)
     * @param keyLength the desired output length
     * @return a builder configured for expand mode
     */

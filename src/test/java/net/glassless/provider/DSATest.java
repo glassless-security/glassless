@@ -1,5 +1,6 @@
 package net.glassless.provider;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -46,7 +47,7 @@ public class DSATest {
         @Test
         @DisplayName("Generate DSA key pair with 2048 bits")
         void testGenerateKeyPair2048() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", PROVIDER_NAME);
             keyGen.initialize(2048);
 
             KeyPair keyPair = keyGen.generateKeyPair();
@@ -61,7 +62,7 @@ public class DSATest {
         @Test
         @DisplayName("Generate DSA key pair with 3072 bits")
         void testGenerateKeyPair3072() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", PROVIDER_NAME);
             keyGen.initialize(3072);
 
             KeyPair keyPair = keyGen.generateKeyPair();
@@ -79,7 +80,7 @@ public class DSATest {
         @Test
         @DisplayName("Generate public key from X509EncodedKeySpec")
         void testGeneratePublicFromX509() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
             assertNotNull(kf);
 
             byte[] encoded = dsaKeyPair.getPublic().getEncoded();
@@ -95,7 +96,7 @@ public class DSATest {
         @Test
         @DisplayName("Generate private key from PKCS8EncodedKeySpec")
         void testGeneratePrivateFromPKCS8() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
 
             byte[] encoded = dsaKeyPair.getPrivate().getEncoded();
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
@@ -110,7 +111,7 @@ public class DSATest {
         @Test
         @DisplayName("Generate public key from DSAPublicKeySpec")
         void testGeneratePublicFromDSASpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
 
             DSAPublicKey dsaPub = (DSAPublicKey) dsaKeyPair.getPublic();
             DSAPublicKeySpec spec = new DSAPublicKeySpec(
@@ -132,7 +133,7 @@ public class DSATest {
         @Test
         @DisplayName("Generate private key from DSAPrivateKeySpec")
         void testGeneratePrivateFromDSASpec() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
 
             DSAPrivateKey dsaPriv = (DSAPrivateKey) dsaKeyPair.getPrivate();
             DSAPrivateKeySpec spec = new DSAPrivateKeySpec(
@@ -154,7 +155,7 @@ public class DSATest {
         @Test
         @DisplayName("Get X509EncodedKeySpec from DSA public key")
         void testGetX509SpecFromPublic() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
 
             X509EncodedKeySpec spec = kf.getKeySpec(dsaKeyPair.getPublic(), X509EncodedKeySpec.class);
 
@@ -165,7 +166,7 @@ public class DSATest {
         @Test
         @DisplayName("Get PKCS8EncodedKeySpec from DSA private key")
         void testGetPKCS8SpecFromPrivate() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
 
             PKCS8EncodedKeySpec spec = kf.getKeySpec(dsaKeyPair.getPrivate(), PKCS8EncodedKeySpec.class);
 
@@ -176,7 +177,7 @@ public class DSATest {
         @Test
         @DisplayName("Translate DSA key")
         void testTranslateKey() throws Exception {
-            KeyFactory kf = KeyFactory.getInstance("DSA", "GlaSSLess");
+            KeyFactory kf = KeyFactory.getInstance("DSA", PROVIDER_NAME);
 
             PublicKey translated = (PublicKey) kf.translateKey(dsaKeyPair.getPublic());
 
@@ -195,7 +196,7 @@ public class DSATest {
         @Test
         @DisplayName("SHA1withDSA sign and verify")
         void testSHA1withDSA() throws Exception {
-            Signature sig = Signature.getInstance("SHA1withDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA1withDSA", PROVIDER_NAME);
 
             // Sign
             sig.initSign(dsaKeyPair.getPrivate());
@@ -214,7 +215,7 @@ public class DSATest {
         @Test
         @DisplayName("SHA256withDSA sign and verify")
         void testSHA256withDSA() throws Exception {
-            Signature sig = Signature.getInstance("SHA256withDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withDSA", PROVIDER_NAME);
 
             // Sign
             sig.initSign(dsaKeyPair.getPrivate());
@@ -232,7 +233,7 @@ public class DSATest {
         @Test
         @DisplayName("SHA384withDSA sign and verify")
         void testSHA384withDSA() throws Exception {
-            Signature sig = Signature.getInstance("SHA384withDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA384withDSA", PROVIDER_NAME);
 
             sig.initSign(dsaKeyPair.getPrivate());
             sig.update(testData);
@@ -248,7 +249,7 @@ public class DSATest {
         @Test
         @DisplayName("SHA512withDSA sign and verify")
         void testSHA512withDSA() throws Exception {
-            Signature sig = Signature.getInstance("SHA512withDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA512withDSA", PROVIDER_NAME);
 
             sig.initSign(dsaKeyPair.getPrivate());
             sig.update(testData);
@@ -265,7 +266,7 @@ public class DSATest {
         @DisplayName("DSA signature interoperability with default provider")
         void testDSAInteroperability() throws Exception {
             // Sign with GlaSSLess
-            Signature glasslessSig = Signature.getInstance("SHA256withDSA", "GlaSSLess");
+            Signature glasslessSig = Signature.getInstance("SHA256withDSA", PROVIDER_NAME);
             glasslessSig.initSign(dsaKeyPair.getPrivate());
             glasslessSig.update(testData);
             byte[] signature = glasslessSig.sign();
@@ -281,12 +282,12 @@ public class DSATest {
         @DisplayName("DSA signature with GlaSSLess-generated keys")
         void testDSAWithGlaSSLessKeys() throws Exception {
             // Generate keys with GlaSSLess
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", PROVIDER_NAME);
             keyGen.initialize(2048);
             KeyPair keyPair = keyGen.generateKeyPair();
 
             // Sign
-            Signature sig = Signature.getInstance("SHA256withDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withDSA", PROVIDER_NAME);
             sig.initSign(keyPair.getPrivate());
             sig.update(testData);
             byte[] signature = sig.sign();

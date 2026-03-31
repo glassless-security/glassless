@@ -104,7 +104,7 @@ security.provider.13=net.glassless.provider.GlaSSLessProvider
 
 |Low priority (e.g., 13)
 |Explicit use only
-|Use `getInstance("ALG", "GlaSSLess")` to select
+|Use `getInstance("ALG", PROVIDER_NAME)` to select
 
 |Mid priority (e.g., 5-6)
 |Preferred for specific algorithms
@@ -128,8 +128,8 @@ security.provider.13=net.glassless.provider.GlaSSLessProvider
 [source,java]
 ----
 // Explicitly request GlaSSLess for performance-critical operations
-KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", "GlaSSLess");
-Signature sig = Signature.getInstance("Ed25519", "GlaSSLess");
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+Signature sig = Signature.getInstance("Ed25519", PROVIDER_NAME);
 ----
 
 This approach:
@@ -153,6 +153,7 @@ security.provider.3=SunRsaSign
 
 WARNING: High priority positioning changes default behavior for all applications using this JVM. Test thoroughly before deploying.
 
+[#_hybrid_mode_configuration]
 === Hybrid Mode Configuration
 
 Hybrid mode allows GlaSSLess to delegate certain algorithms to the JDK provider for better performance. JDK's HotSpot intrinsics significantly outperform OpenSSL via FFM for some operations:

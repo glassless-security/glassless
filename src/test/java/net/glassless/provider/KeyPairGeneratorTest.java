@@ -1,5 +1,6 @@
 package net.glassless.provider;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,7 +38,7 @@ public class KeyPairGeneratorTest {
         @ParameterizedTest(name = "RSA {0}-bit key")
         @ValueSource(ints = {1024, 2048, 3072, 4096})
         void testRSAKeyGeneration(int keySize) throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
             assertNotNull(keyGen);
 
             keyGen.initialize(keySize);
@@ -57,7 +58,7 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("RSA default key size")
         void testRSADefaultKeySize() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
             KeyPair keyPair = keyGen.generateKeyPair();
 
             assertNotNull(keyPair);
@@ -68,7 +69,7 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("RSA with RSAKeyGenParameterSpec")
         void testRSAWithParameterSpec() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
             RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(2048, BigInteger.valueOf(65537));
             keyGen.initialize(spec);
 
@@ -82,12 +83,12 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("RSA key pair can be used for signing")
         void testRSAKeyPairUsedForSigning() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
             keyGen.initialize(2048);
             KeyPair keyPair = keyGen.generateKeyPair();
 
             // Use the generated keys with our signature implementation
-            Signature sig = Signature.getInstance("SHA256withRSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withRSA", PROVIDER_NAME);
             byte[] data = "Test data for signing".getBytes();
 
             sig.initSign(keyPair.getPrivate());
@@ -102,7 +103,7 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("Generated RSA keys are unique")
         void testRSAKeyUniqueness() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
             keyGen.initialize(2048);
 
             KeyPair keyPair1 = keyGen.generateKeyPair();
@@ -123,7 +124,7 @@ public class KeyPairGeneratorTest {
         @ParameterizedTest(name = "EC {0}-bit key")
         @ValueSource(ints = {256, 384, 521})
         void testECKeyGenerationBySize(int keySize) throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             assertNotNull(keyGen);
 
             keyGen.initialize(keySize);
@@ -140,7 +141,7 @@ public class KeyPairGeneratorTest {
         @ParameterizedTest(name = "EC curve {0}")
         @ValueSource(strings = {"secp256r1", "secp384r1", "secp521r1"})
         void testECKeyGenerationByCurveName(String curveName) throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             keyGen.initialize(new ECGenParameterSpec(curveName));
 
             KeyPair keyPair = keyGen.generateKeyPair();
@@ -153,7 +154,7 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("EC default curve (P-256)")
         void testECDefaultCurve() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             KeyPair keyPair = keyGen.generateKeyPair();
 
             assertNotNull(keyPair);
@@ -163,7 +164,7 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("EC with P-256 alias")
         void testECWithP256Alias() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             keyGen.initialize(new ECGenParameterSpec("P-256"));
 
             KeyPair keyPair = keyGen.generateKeyPair();
@@ -173,12 +174,12 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("EC key pair can be used for ECDSA signing")
         void testECKeyPairUsedForSigning() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             keyGen.initialize(256);
             KeyPair keyPair = keyGen.generateKeyPair();
 
             // Use the generated keys with our signature implementation
-            Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
             byte[] data = "Test data for ECDSA signing".getBytes();
 
             sig.initSign(keyPair.getPrivate());
@@ -193,7 +194,7 @@ public class KeyPairGeneratorTest {
         @Test
         @DisplayName("Generated EC keys are unique")
         void testECKeyUniqueness() throws Exception {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             keyGen.initialize(256);
 
             KeyPair keyPair1 = keyGen.generateKeyPair();

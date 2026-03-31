@@ -5,7 +5,7 @@ package net.glassless.provider.internal.mldsa;
  */
 public class MLDSA65Signature extends MLDSASignature {
 
-    public MLDSA65Signature() {
-        super("ML-DSA-65");
-    }
+   public MLDSA65Signature() {
+      super("ML-DSA-65");
+   }
 }

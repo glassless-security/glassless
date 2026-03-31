@@ -1,7 +1,8 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -88,7 +89,7 @@ public class NativeMemorySoakTest {
       void testSHA256NoLeak() throws Exception {
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
             md.update(TEST_DATA);
             md.digest();
          }
@@ -99,7 +100,7 @@ public class NativeMemorySoakTest {
 
          // Soak test
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
-            MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
             md.update(TEST_DATA);
             md.digest();
 
@@ -127,7 +128,7 @@ public class NativeMemorySoakTest {
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             for (String algo : algorithms) {
-               MessageDigest md = MessageDigest.getInstance(algo, "GlaSSLess");
+               MessageDigest md = MessageDigest.getInstance(algo, PROVIDER_NAME);
                md.update(TEST_DATA);
                md.digest();
             }
@@ -140,7 +141,7 @@ public class NativeMemorySoakTest {
          // Soak test
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
             for (String algo : algorithms) {
-               MessageDigest md = MessageDigest.getInstance(algo, "GlaSSLess");
+               MessageDigest md = MessageDigest.getInstance(algo, PROVIDER_NAME);
                md.update(TEST_DATA);
                md.digest();
             }
@@ -166,7 +167,7 @@ public class NativeMemorySoakTest {
       void testAbandonedDigestNoLeak() throws Exception {
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
             md.update(TEST_DATA);
             // Intentionally not calling digest() - simulates abandoned object
          }
@@ -177,7 +178,7 @@ public class NativeMemorySoakTest {
 
          // Soak test - create and abandon digests
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
-            MessageDigest md = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+            MessageDigest md = MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
             md.update(TEST_DATA);
             // Intentionally not calling digest()
 
@@ -207,11 +208,11 @@ public class NativeMemorySoakTest {
 
       void setupCipher() {
          try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "GlaSSLess");
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES", PROVIDER_NAME);
             keyGen.init(256);
             aesKey = keyGen.generateKey();
             // Check if cipher is available
-            Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+            Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
             cipherAvailable = true;
          } catch (Exception e) {
             cipherAvailable = false;
@@ -229,7 +230,7 @@ public class NativeMemorySoakTest {
 
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
             cipher.doFinal(TEST_DATA);
          }
@@ -240,7 +241,7 @@ public class NativeMemorySoakTest {
 
          // Soak test
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
-            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
             cipher.doFinal(TEST_DATA);
 
@@ -271,7 +272,7 @@ public class NativeMemorySoakTest {
 
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
             cipher.update(TEST_DATA);
             // Intentionally not calling doFinal()
@@ -283,7 +284,7 @@ public class NativeMemorySoakTest {
 
          // Soak test
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
-            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+            Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
             cipher.update(TEST_DATA);
             // Intentionally not calling doFinal()
@@ -313,7 +314,7 @@ public class NativeMemorySoakTest {
          byte[] iv = new byte[12];
 
          // Warmup
-         Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+         Cipher cipher = Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             RANDOM.nextBytes(iv);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
@@ -325,7 +326,7 @@ public class NativeMemorySoakTest {
          System.out.println("CipherReinit baseline memory: " + baselineMemory + " KB");
 
          // Soak test - reuse same cipher object
-         cipher = Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+         cipher = Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
             RANDOM.nextBytes(iv);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
@@ -357,7 +358,7 @@ public class NativeMemorySoakTest {
 
       void setupSignature() {
          try {
-            KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+            KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
             ecKeyGen.initialize(256);
             ecKeyPair = ecKeyGen.generateKeyPair();
             signatureAvailable = true;
@@ -374,7 +375,7 @@ public class NativeMemorySoakTest {
 
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
             sig.initSign(ecKeyPair.getPrivate());
             sig.update(TEST_DATA);
             byte[] signature = sig.sign();
@@ -390,7 +391,7 @@ public class NativeMemorySoakTest {
 
          // Soak test
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
-            Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
             sig.initSign(ecKeyPair.getPrivate());
             sig.update(TEST_DATA);
             byte[] signature = sig.sign();
@@ -423,7 +424,7 @@ public class NativeMemorySoakTest {
 
          // Warmup
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
             sig.initSign(ecKeyPair.getPrivate());
             sig.update(TEST_DATA);
             // Intentionally not calling sign()
@@ -435,7 +436,7 @@ public class NativeMemorySoakTest {
 
          // Soak test
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
-            Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+            Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
             sig.initSign(ecKeyPair.getPrivate());
             sig.update(TEST_DATA);
             // Intentionally not calling sign()
@@ -463,7 +464,7 @@ public class NativeMemorySoakTest {
          assumeTrue(signatureAvailable, "EC key generation not available");
 
          // Warmup
-         Signature sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+         Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
          for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             sig.initSign(ecKeyPair.getPrivate());
             sig.update(TEST_DATA);
@@ -475,7 +476,7 @@ public class NativeMemorySoakTest {
          System.out.println("SignatureReinit baseline memory: " + baselineMemory + " KB");
 
          // Soak test - reuse same signature object
-         sig = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+         sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
          for (int i = 0; i < SOAK_ITERATIONS; i++) {
             sig.initSign(ecKeyPair.getPrivate());
             sig.update(TEST_DATA);

@@ -7,9 +7,9 @@ package net.glassless.provider.internal.securerandom;
  */
 public class NativePRNG extends OpenSSLSecureRandom {
 
-    private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-    public NativePRNG() {
-        super();
-    }
+   public NativePRNG() {
+      super();
+   }
 }

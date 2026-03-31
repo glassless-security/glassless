@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -38,11 +40,11 @@ import net.glassless.provider.GlaSSLessProvider;
 public class MacBenchmark {
 
    private static final String NSS_CONFIG = """
-         name = NSS
-         nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
-         nssDbMode = noDb
-         attributes = compatibility
-         """;
+      name = NSS
+      nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
+      nssDbMode = noDb
+      attributes = compatibility
+      """;
 
    // HmacSHA256/512 available in NSS, SHA3 variants may not be
    @Param({"HmacSHA256", "HmacSHA512"})
@@ -75,7 +77,7 @@ public class MacBenchmark {
       jdkMac = Mac.getInstance(algorithm);
       jdkMac.init(keySpec);
 
-      glasslessMac = Mac.getInstance(algorithm, "GlaSSLess");
+      glasslessMac = Mac.getInstance(algorithm, PROVIDER_NAME);
       glasslessMac.init(keySpec);
 
       bcFipsMac = Mac.getInstance(algorithm, "BCFIPS");

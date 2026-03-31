@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/img/glassless.png" alt="GlaSSLess Logo" width="400">
+  <img src="docs/img/glassless.png" alt="GlaSSLess Logo" width="800">
 </p>
 
 <p align="center">
@@ -75,28 +75,28 @@ System.out.println("FIPS Mode: " + provider.isFIPSMode());
 
 Comprehensive documentation is available in the `docs` classifier JAR and in `src/main/asciidoc/`:
 
-| Document | Description |
-|----------|-------------|
+| Document                                                  | Description                                     |
+|-----------------------------------------------------------|-------------------------------------------------|
 | [Installation Guide](src/main/asciidoc/installation.adoc) | Setup, configuration, and provider registration |
-| [Usage Guide](src/main/asciidoc/usage.adoc) | Code examples for all supported operations |
-| [Supported Algorithms](src/main/asciidoc/algorithms.adoc) | Complete list of 370+ algorithms |
-| [Post-Quantum Cryptography](src/main/asciidoc/pqc.adoc) | ML-KEM, ML-DSA, SLH-DSA, and hybrid KEMs |
-| [Performance](src/main/asciidoc/performance.adoc) | Benchmark results and optimization guidance |
-| [Development](src/main/asciidoc/development.adoc) | Contributing and architecture guide |
+| [Usage Guide](src/main/asciidoc/usage.adoc)               | Code examples for all supported operations      |
+| [Supported Algorithms](src/main/asciidoc/algorithms.adoc) | Complete list of 370+ algorithms                |
+| [Post-Quantum Cryptography](src/main/asciidoc/pqc.adoc)   | ML-KEM, ML-DSA, SLH-DSA, and hybrid KEMs        |
+| [Performance](src/main/asciidoc/performance.adoc)         | Benchmark results and optimization guidance     |
+| [Development](src/main/asciidoc/development.adoc)         | Contributing and architecture guide             |
 
 ## Supported Algorithms
 
 GlaSSLess provides 370+ cryptographic algorithms:
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| Message Digests | 18 | SHA-256, SHA-512, SHA3-256, BLAKE2b-512 |
-| Ciphers | 143 | AES-GCM, ChaCha20-Poly1305, Camellia |
-| MACs | 20 | HMAC-SHA256, KMAC256, Poly1305 |
-| Signatures | 48 | ECDSA, EdDSA, RSA-PSS, ML-DSA, SLH-DSA |
-| KEMs | 6 | ML-KEM-768, X25519MLKEM768 |
-| KDFs | 14 | HKDF, PBKDF2, TLS13-KDF, Argon2 |
-| Key Agreement | 5 | ECDH, X25519, X448 |
+| Category        | Count | Examples                                |
+|-----------------|-------|-----------------------------------------|
+| Message Digests | 18    | SHA-256, SHA-512, SHA3-256, BLAKE2b-512 |
+| Ciphers         | 143   | AES-GCM, ChaCha20-Poly1305, Camellia    |
+| MACs            | 20    | HMAC-SHA256, KMAC256, Poly1305          |
+| Signatures      | 48    | ECDSA, EdDSA, RSA-PSS, ML-DSA, SLH-DSA  |
+| KEMs            | 6     | ML-KEM-768, X25519MLKEM768              |
+| KDFs            | 14    | HKDF, PBKDF2, TLS13-KDF, Argon2         |
+| Key Agreement   | 5     | ECDH, X25519, X448                      |
 
 See [Supported Algorithms](src/main/asciidoc/algorithms.adoc) for the complete list.
 
@@ -104,10 +104,10 @@ See [Supported Algorithms](src/main/asciidoc/algorithms.adoc) for the complete l
 
 GlaSSLess supports NIST-standardized post-quantum algorithms (requires OpenSSL 3.5+):
 
-| Standard | Algorithm | Type |
-|----------|-----------|------|
-| FIPS 203 | ML-KEM-512/768/1024 | Key Encapsulation |
-| FIPS 204 | ML-DSA-44/65/87 | Digital Signature |
+| Standard | Algorithm             | Type              |
+|----------|-----------------------|-------------------|
+| FIPS 203 | ML-KEM-512/768/1024   | Key Encapsulation |
+| FIPS 204 | ML-DSA-44/65/87       | Digital Signature |
 | FIPS 205 | SLH-DSA (12 variants) | Digital Signature |
 
 **Hybrid KEMs** (X25519MLKEM768, X448MLKEM1024) combine classical and post-quantum cryptography for defense-in-depth.
@@ -118,11 +118,11 @@ See [Post-Quantum Cryptography](src/main/asciidoc/pqc.adoc) for details, includi
 
 GlaSSLess excels at asymmetric cryptography while JDK excels at symmetric operations:
 
-| GlaSSLess is faster | JDK is faster |
-|---------------------|---------------|
-| ECDH Key Agreement (~5x) | SHA-256 small data (~6x) |
-| Ed25519 Signing (~8x) | HMAC-SHA256 small data (~10x) |
-| EC Key Generation (~2x) | ML-KEM operations (~1.5x) |
+| GlaSSLess is faster      | JDK is faster                 |
+|--------------------------|-------------------------------|
+| ECDH Key Agreement (~5x) | SHA-256 small data (~6x)      |
+| Ed25519 Signing (~8x)    | HMAC-SHA256 small data (~10x) |
+| EC Key Generation (~2x)  | ML-KEM operations (~1.5x)     |
 
 ### Hybrid Mode (Recommended)
 
@@ -132,11 +132,11 @@ Enable **hybrid mode** to get the best of both worlds - GlaSSLess automatically 
 glassless.hybrid.enabled=true
 ```
 
-| Mixed Workload | Throughput | Comparison |
-|----------------|------------|------------|
+| Mixed Workload  | Throughput      | Comparison   |
+|-----------------|-----------------|--------------|
 | **Hybrid Mode** | **26.5 ops/ms** | Best overall |
-| Pure GlaSSLess | 25.2 ops/ms | 5% slower |
-| Pure JDK | 3.2 ops/ms | 8x slower |
+| Pure GlaSSLess  | 25.2 ops/ms     | 5% slower    |
+| Pure JDK        | 3.2 ops/ms      | 8x slower    |
 
 Hybrid mode is automatically disabled when FIPS mode is active.
 

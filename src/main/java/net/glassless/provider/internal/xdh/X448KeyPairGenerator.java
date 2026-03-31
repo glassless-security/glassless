@@ -7,11 +7,11 @@ import java.security.spec.NamedParameterSpec;
  */
 public class X448KeyPairGenerator extends XDHKeyPairGenerator {
 
-    public X448KeyPairGenerator() {
-        try {
-            initialize(NamedParameterSpec.X448, null);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+   public X448KeyPairGenerator() {
+      try {
+         initialize(NamedParameterSpec.X448, null);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
 }

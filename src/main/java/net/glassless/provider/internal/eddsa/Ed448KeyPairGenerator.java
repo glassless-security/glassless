@@ -7,12 +7,12 @@ import java.security.spec.NamedParameterSpec;
  */
 public class Ed448KeyPairGenerator extends EdDSAKeyPairGenerator {
 
-    public Ed448KeyPairGenerator() {
-        try {
-            initialize(NamedParameterSpec.ED448, null);
-        } catch (Exception e) {
-            // Should never happen
-            throw new RuntimeException(e);
-        }
-    }
+   public Ed448KeyPairGenerator() {
+      try {
+         initialize(NamedParameterSpec.ED448, null);
+      } catch (Exception e) {
+         // Should never happen
+         throw new RuntimeException(e);
+      }
+   }
 }

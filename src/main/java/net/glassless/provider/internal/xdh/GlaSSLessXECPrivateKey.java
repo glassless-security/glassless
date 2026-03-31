@@ -11,68 +11,67 @@ import java.util.Optional;
  */
 public class GlaSSLessXECPrivateKey implements XECPrivateKey {
 
-    private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-    private final NamedParameterSpec params;
-    private final byte[] scalar;
-    private final byte[] encoded;
+   private final NamedParameterSpec params;
+   private final byte[] scalar;
+   private final byte[] encoded;
 
-    public GlaSSLessXECPrivateKey(NamedParameterSpec params, byte[] scalar, byte[] encoded) {
-        this.params = params;
-        this.scalar = scalar.clone();
-        this.encoded = encoded.clone();
-    }
+   public GlaSSLessXECPrivateKey(NamedParameterSpec params, byte[] scalar, byte[] encoded) {
+      this.params = params;
+      this.scalar = scalar.clone();
+      this.encoded = encoded.clone();
+   }
 
-    @Override
-    public String getAlgorithm() {
-        return "XDH";
-    }
+   @Override
+   public String getAlgorithm() {
+      return "XDH";
+   }
 
-    @Override
-    public String getFormat() {
-        return "PKCS#8";
-    }
+   @Override
+   public String getFormat() {
+      return "PKCS#8";
+   }
 
-    @Override
-    public byte[] getEncoded() {
-        return encoded.clone();
-    }
+   @Override
+   public byte[] getEncoded() {
+      return encoded.clone();
+   }
 
-    @Override
-    public AlgorithmParameterSpec getParams() {
-        return params;
-    }
+   @Override
+   public AlgorithmParameterSpec getParams() {
+      return params;
+   }
 
-    @Override
-    public Optional<byte[]> getScalar() {
-        return Optional.of(scalar.clone());
-    }
+   @Override
+   public Optional<byte[]> getScalar() {
+      return Optional.of(scalar.clone());
+   }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof XECPrivateKey other)) return false;
-        if (!params.getName().equals(((NamedParameterSpec) other.getParams()).getName())) return false;
-        Optional<byte[]> otherScalar = other.getScalar();
-        if (otherScalar.isEmpty()) return false;
-        return Arrays.equals(scalar, otherScalar.get());
-    }
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (!(obj instanceof XECPrivateKey other)) return false;
+      if (!params.getName().equals(((NamedParameterSpec) other.getParams()).getName())) return false;
+      Optional<byte[]> otherScalar = other.getScalar();
+      return otherScalar.filter(bytes -> Arrays.equals(scalar, bytes)).isPresent();
+   }
 
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(encoded);
-    }
+   @Override
+   public int hashCode() {
+      return Arrays.hashCode(encoded);
+   }
 
-    @Override
-    public String toString() {
-        return "GlaSSLessXECPrivateKey [algorithm=" + params.getName() + "]";
-    }
+   @Override
+   public String toString() {
+      return "GlaSSLessXECPrivateKey [algorithm=" + params.getName() + "]";
+   }
 
-    /**
-     * Clears the private key material from memory.
-     */
-    public void destroy() {
-        Arrays.fill(scalar, (byte) 0);
-        Arrays.fill(encoded, (byte) 0);
-    }
+   /**
+    * Clears the private key material from memory.
+    */
+   public void destroy() {
+      Arrays.fill(scalar, (byte) 0);
+      Arrays.fill(encoded, (byte) 0);
+   }
 }

@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
@@ -35,11 +37,11 @@ import net.glassless.provider.GlaSSLessProvider;
 public class MessageDigestBenchmark {
 
    private static final String NSS_CONFIG = """
-         name = NSS
-         nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
-         nssDbMode = noDb
-         attributes = compatibility
-         """;
+      name = NSS
+      nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
+      nssDbMode = noDb
+      attributes = compatibility
+      """;
 
    @Param({"SHA-256", "SHA-512"})
    private String algorithm;
@@ -80,7 +82,7 @@ public class MessageDigestBenchmark {
       }
 
       jdkDigest = MessageDigest.getInstance(algorithm);
-      glasslessDigest = MessageDigest.getInstance(algorithm, "GlaSSLess");
+      glasslessDigest = MessageDigest.getInstance(algorithm, PROVIDER_NAME);
       bcFipsDigest = MessageDigest.getInstance(algorithm, "BCFIPS");
    }
 

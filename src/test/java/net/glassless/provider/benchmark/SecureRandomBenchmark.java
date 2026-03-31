@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -58,7 +60,7 @@ public class SecureRandomBenchmark {
 
       buffer = new byte[byteCount];
       jdkRandom = SecureRandom.getInstance("NativePRNG");
-      glasslessRandom = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+      glasslessRandom = SecureRandom.getInstance("NativePRNG", PROVIDER_NAME);
       // BC FIPS uses DEFAULT as its standard DRBG
       bcFipsRandom = SecureRandom.getInstance("DEFAULT", "BCFIPS");
 

@@ -10,22 +10,22 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 public abstract class AbstractRSAPSSSignature extends AbstractSignature {
 
-    protected AbstractRSAPSSSignature(String digestAlgorithm) {
-        super(digestAlgorithm, KeyType.RSA_PSS);
-    }
+   protected AbstractRSAPSSSignature(String digestAlgorithm) {
+      super(digestAlgorithm, KeyType.RSA_PSS);
+   }
 
-    @Override
-    protected void configureContext(MemorySegment pkeyCtx) throws Throwable {
-        // Set RSA padding to PSS
-        int result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, OpenSSLCrypto.RSA_PKCS1_PSS_PADDING);
-        if (result <= 0) {
-            throw new IllegalStateException("Failed to set RSA-PSS padding");
-        }
+   @Override
+   protected void configureContext(MemorySegment pkeyCtx) throws Throwable {
+      // Set RSA padding to PSS
+      int result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, OpenSSLCrypto.RSA_PKCS1_PSS_PADDING);
+      if (result <= 0) {
+         throw new IllegalStateException("Failed to set RSA-PSS padding");
+      }
 
-        // Set salt length to digest length (standard for RSASSA-PSS)
-        result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_pss_saltlen(pkeyCtx, OpenSSLCrypto.RSA_PSS_SALTLEN_DIGEST);
-        if (result <= 0) {
-            throw new IllegalStateException("Failed to set RSA-PSS salt length");
-        }
-    }
+      // Set salt length to digest length (standard for RSASSA-PSS)
+      result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_pss_saltlen(pkeyCtx, OpenSSLCrypto.RSA_PSS_SALTLEN_DIGEST);
+      if (result <= 0) {
+         throw new IllegalStateException("Failed to set RSA-PSS salt length");
+      }
+   }
 }

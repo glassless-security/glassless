@@ -24,99 +24,99 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
-    private static final int DEFAULT_KEY_SIZE = 2048;
-    private static final int MIN_KEY_SIZE = 512;
-    private static final int MAX_KEY_SIZE = 16384;
+   private static final int DEFAULT_KEY_SIZE = 2048;
+   private static final int MIN_KEY_SIZE = 512;
+   private static final int MAX_KEY_SIZE = 16384;
 
-    private int keySize = DEFAULT_KEY_SIZE;
-    private SecureRandom random;
+   private int keySize = DEFAULT_KEY_SIZE;
+   private SecureRandom random;
 
-    @Override
-    public void initialize(int keysize, SecureRandom random) {
-        if (keysize < MIN_KEY_SIZE || keysize > MAX_KEY_SIZE) {
-            throw new InvalidParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
-        }
-        this.keySize = keysize;
-        this.random = random;
-    }
+   @Override
+   public void initialize(int keysize, SecureRandom random) {
+      if (keysize < MIN_KEY_SIZE || keysize > MAX_KEY_SIZE) {
+         throw new InvalidParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
+      }
+      this.keySize = keysize;
+      this.random = random;
+   }
 
-    @Override
-    public void initialize(AlgorithmParameterSpec params, SecureRandom random)
-            throws InvalidAlgorithmParameterException {
-        if (params instanceof RSAKeyGenParameterSpec rsaParams) {
-           int keysize = rsaParams.getKeysize();
-            if (keysize < MIN_KEY_SIZE || keysize > MAX_KEY_SIZE) {
-                throw new InvalidAlgorithmParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
+   @Override
+   public void initialize(AlgorithmParameterSpec params, SecureRandom random)
+      throws InvalidAlgorithmParameterException {
+      if (params instanceof RSAKeyGenParameterSpec rsaParams) {
+         int keysize = rsaParams.getKeysize();
+         if (keysize < MIN_KEY_SIZE || keysize > MAX_KEY_SIZE) {
+            throw new InvalidAlgorithmParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
+         }
+         this.keySize = keysize;
+         this.random = random;
+      } else if (params != null) {
+         throw new InvalidAlgorithmParameterException("Unsupported parameter spec: " + params.getClass().getName());
+      }
+   }
+
+   @Override
+   public KeyPair generateKeyPair() {
+      try (Arena arena = Arena.ofConfined()) {
+         // Create RSA key generation context
+         MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "RSA", MemorySegment.NULL, arena);
+         if (ctx.equals(MemorySegment.NULL)) {
+            throw new ProviderException("Failed to create EVP_PKEY_CTX for RSA");
+         }
+
+         try {
+            // Initialize for key generation
+            int result = OpenSSLCrypto.EVP_PKEY_keygen_init(ctx);
+            if (result <= 0) {
+               throw new ProviderException("EVP_PKEY_keygen_init failed");
             }
-            this.keySize = keysize;
-            this.random = random;
-        } else if (params != null) {
-            throw new InvalidAlgorithmParameterException("Unsupported parameter spec: " + params.getClass().getName());
-        }
-    }
 
-    @Override
-    public KeyPair generateKeyPair() {
-        try (Arena arena = Arena.ofConfined()) {
-            // Create RSA key generation context
-            MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "RSA", MemorySegment.NULL, arena);
-            if (ctx.equals(MemorySegment.NULL)) {
-                throw new ProviderException("Failed to create EVP_PKEY_CTX for RSA");
+            // Set key size
+            result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, keySize);
+            if (result <= 0) {
+               throw new ProviderException("EVP_PKEY_CTX_set_rsa_keygen_bits failed");
+            }
+
+            // Generate the key pair
+            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+            result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
+            if (result <= 0) {
+               throw new ProviderException("EVP_PKEY_keygen failed");
+            }
+
+            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
+            if (pkey.equals(MemorySegment.NULL)) {
+               throw new ProviderException("Generated key is null");
             }
 
             try {
-                // Initialize for key generation
-                int result = OpenSSLCrypto.EVP_PKEY_keygen_init(ctx);
-                if (result <= 0) {
-                    throw new ProviderException("EVP_PKEY_keygen_init failed");
-                }
+               // Export private key to DER format (PKCS#8)
+               byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey, arena);
+               PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 
-                // Set key size
-                result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, keySize);
-                if (result <= 0) {
-                    throw new ProviderException("EVP_PKEY_CTX_set_rsa_keygen_bits failed");
-                }
+               // Export public key to DER format (SubjectPublicKeyInfo / X.509)
+               byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey, arena);
+               X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
 
-                // Generate the key pair
-                MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-                result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
-                if (result <= 0) {
-                    throw new ProviderException("EVP_PKEY_keygen failed");
-                }
+               // Use standard KeyFactory to create the key objects
+               KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+               PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
+               PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
 
-                MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey.equals(MemorySegment.NULL)) {
-                    throw new ProviderException("Generated key is null");
-                }
-
-                try {
-                    // Export private key to DER format (PKCS#8)
-                    byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey, arena);
-                    PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-
-                    // Export public key to DER format (SubjectPublicKeyInfo / X.509)
-                    byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey, arena);
-                    X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
-
-                    // Use standard KeyFactory to create the key objects
-                    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                    PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
-                    PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
-
-                    return new KeyPair(publicKey, privateKey);
-
-                } finally {
-                    OpenSSLCrypto.EVP_PKEY_free(pkey);
-                }
+               return new KeyPair(publicKey, privateKey);
 
             } finally {
-                OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
+               OpenSSLCrypto.EVP_PKEY_free(pkey);
             }
 
-        } catch (ProviderException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new ProviderException("Error generating RSA key pair", e);
-        }
-    }
+         } finally {
+            OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
+         }
+
+      } catch (ProviderException e) {
+         throw e;
+      } catch (Throwable e) {
+         throw new ProviderException("Error generating RSA key pair", e);
+      }
+   }
 }

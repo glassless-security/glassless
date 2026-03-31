@@ -9,19 +9,318 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
-import net.glassless.provider.internal.cipher.*;
-import net.glassless.provider.internal.digest.*;
-import net.glassless.provider.internal.hybridkem.*;
-import net.glassless.provider.internal.keyagreement.*;
-import net.glassless.provider.internal.keyfactory.*;
-import net.glassless.provider.internal.keygen.*;
-import net.glassless.provider.internal.keypairgen.*;
-import net.glassless.provider.internal.mac.*;
-import net.glassless.provider.internal.mldsa.*;
-import net.glassless.provider.internal.mlkem.*;
-import net.glassless.provider.internal.secretkeyfactory.*;
-import net.glassless.provider.internal.signature.*;
-import net.glassless.provider.internal.slhdsa.*;
+import net.glassless.provider.internal.cipher.AES_128CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128CcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128GcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_128WrapCipher;
+import net.glassless.provider.internal.cipher.AES_128WrapPadCipher;
+import net.glassless.provider.internal.cipher.AES_128XtsNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192GcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_192WrapCipher;
+import net.glassless.provider.internal.cipher.AES_192WrapPadCipher;
+import net.glassless.provider.internal.cipher.AES_256CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256CcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256GcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.AES_256WrapCipher;
+import net.glassless.provider.internal.cipher.AES_256WrapPadCipher;
+import net.glassless.provider.internal.cipher.AES_256XtsNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128GcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_128OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192GcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_192OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256GcmNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256GcmPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIA_256OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_128OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_192OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.Camellia_256OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.ChaCha20Cipher;
+import net.glassless.provider.internal.cipher.ChaCha20Poly1305Cipher;
+import net.glassless.provider.internal.cipher.DESedeCbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.DESedeCbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.DESedeEcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.DESedeEcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA1AndAES_128Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA1AndAES_256Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA224AndAES_128Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA224AndAES_256Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA256AndAES_128Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA256AndAES_256Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA384AndAES_128Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA384AndAES_256Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA512AndAES_128Cipher;
+import net.glassless.provider.internal.cipher.PBEWithHmacSHA512AndAES_256Cipher;
+import net.glassless.provider.internal.cipher.RSAEcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.RSAEcbOAEPWithSHA1AndMGF1PaddingCipher;
+import net.glassless.provider.internal.cipher.RSAEcbOAEPWithSHA256AndMGF1PaddingCipher;
+import net.glassless.provider.internal.cipher.RSAEcbPKCS1PaddingCipher;
+import net.glassless.provider.internal.cipher.SM4CbcNoPaddingCipher;
+import net.glassless.provider.internal.cipher.SM4CbcPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.SM4CfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.SM4CfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.SM4CtrNoPaddingCipher;
+import net.glassless.provider.internal.cipher.SM4CtrPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.SM4EcbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.SM4EcbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.SM4OfbNoPaddingCipher;
+import net.glassless.provider.internal.cipher.SM4OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.digest.BLAKE2b512Digest;
+import net.glassless.provider.internal.digest.BLAKE2s256Digest;
+import net.glassless.provider.internal.digest.MD5Digest;
+import net.glassless.provider.internal.digest.RIPEMD160Digest;
+import net.glassless.provider.internal.digest.SHA1Digest;
+import net.glassless.provider.internal.digest.SHA3_224Digest;
+import net.glassless.provider.internal.digest.SHA3_256Digest;
+import net.glassless.provider.internal.digest.SHA3_384Digest;
+import net.glassless.provider.internal.digest.SHA3_512Digest;
+import net.glassless.provider.internal.digest.SHA512_224Digest;
+import net.glassless.provider.internal.digest.SHA512_256Digest;
+import net.glassless.provider.internal.digest.SHAKE128Digest;
+import net.glassless.provider.internal.digest.SHAKE256Digest;
+import net.glassless.provider.internal.digest.SHA_224Digest;
+import net.glassless.provider.internal.digest.SHA_256Digest;
+import net.glassless.provider.internal.digest.SHA_384Digest;
+import net.glassless.provider.internal.digest.SHA_512Digest;
+import net.glassless.provider.internal.digest.SM3Digest;
+import net.glassless.provider.internal.hybridkem.HybridKEMKeyFactory;
+import net.glassless.provider.internal.hybridkem.X25519MLKEM768;
+import net.glassless.provider.internal.hybridkem.X25519MLKEM768KeyPairGenerator;
+import net.glassless.provider.internal.hybridkem.X448MLKEM1024;
+import net.glassless.provider.internal.hybridkem.X448MLKEM1024KeyPairGenerator;
+import net.glassless.provider.internal.keyagreement.DHKeyAgreement;
+import net.glassless.provider.internal.keyagreement.ECDHKeyAgreement;
+import net.glassless.provider.internal.keyfactory.DHKeyFactory;
+import net.glassless.provider.internal.keyfactory.DSAKeyFactory;
+import net.glassless.provider.internal.keyfactory.ECKeyFactory;
+import net.glassless.provider.internal.keyfactory.RSAKeyFactory;
+import net.glassless.provider.internal.keygen.AESKeyGenerator;
+import net.glassless.provider.internal.keygen.DESedeKeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA1KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA224KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA256KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA384KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA3_224KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA3_256KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA3_384KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA3_512KeyGenerator;
+import net.glassless.provider.internal.keygen.HmacSHA512KeyGenerator;
+import net.glassless.provider.internal.keypairgen.DHKeyPairGenerator;
+import net.glassless.provider.internal.keypairgen.DSAKeyPairGenerator;
+import net.glassless.provider.internal.keypairgen.ECKeyPairGenerator;
+import net.glassless.provider.internal.keypairgen.RSAKeyPairGenerator;
+import net.glassless.provider.internal.mac.AESCMACMac;
+import net.glassless.provider.internal.mac.AESGMACMac;
+import net.glassless.provider.internal.mac.HmacPBESHA1;
+import net.glassless.provider.internal.mac.HmacPBESHA224;
+import net.glassless.provider.internal.mac.HmacPBESHA256;
+import net.glassless.provider.internal.mac.HmacPBESHA384;
+import net.glassless.provider.internal.mac.HmacPBESHA512;
+import net.glassless.provider.internal.mac.HmacSHA1;
+import net.glassless.provider.internal.mac.HmacSHA224;
+import net.glassless.provider.internal.mac.HmacSHA256;
+import net.glassless.provider.internal.mac.HmacSHA384;
+import net.glassless.provider.internal.mac.HmacSHA3_224;
+import net.glassless.provider.internal.mac.HmacSHA3_256;
+import net.glassless.provider.internal.mac.HmacSHA3_384;
+import net.glassless.provider.internal.mac.HmacSHA3_512;
+import net.glassless.provider.internal.mac.HmacSHA512;
+import net.glassless.provider.internal.mac.KMAC128Mac;
+import net.glassless.provider.internal.mac.KMAC256Mac;
+import net.glassless.provider.internal.mac.Poly1305Mac;
+import net.glassless.provider.internal.mac.SipHashMac;
+import net.glassless.provider.internal.mldsa.MLDSA44KeyPairGenerator;
+import net.glassless.provider.internal.mldsa.MLDSA44Signature;
+import net.glassless.provider.internal.mldsa.MLDSA65KeyPairGenerator;
+import net.glassless.provider.internal.mldsa.MLDSA65Signature;
+import net.glassless.provider.internal.mldsa.MLDSA87KeyPairGenerator;
+import net.glassless.provider.internal.mldsa.MLDSA87Signature;
+import net.glassless.provider.internal.mldsa.MLDSAKeyFactory;
+import net.glassless.provider.internal.mldsa.MLDSAKeyPairGenerator;
+import net.glassless.provider.internal.mldsa.MLDSASignature;
+import net.glassless.provider.internal.mlkem.MLKEM;
+import net.glassless.provider.internal.mlkem.MLKEM1024;
+import net.glassless.provider.internal.mlkem.MLKEM1024KeyPairGenerator;
+import net.glassless.provider.internal.mlkem.MLKEM512;
+import net.glassless.provider.internal.mlkem.MLKEM512KeyPairGenerator;
+import net.glassless.provider.internal.mlkem.MLKEM768;
+import net.glassless.provider.internal.mlkem.MLKEM768KeyPairGenerator;
+import net.glassless.provider.internal.mlkem.MLKEMKeyFactory;
+import net.glassless.provider.internal.mlkem.MLKEMKeyPairGenerator;
+import net.glassless.provider.internal.secretkeyfactory.AESSecretKeyFactory;
+import net.glassless.provider.internal.secretkeyfactory.DESedeSecretKeyFactory;
+import net.glassless.provider.internal.secretkeyfactory.PBESecretKeyFactory;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA1AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA1AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA224AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA224AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA256AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA256AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA384AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA384AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA512AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA512AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA512_224AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA512_224AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA512_256AndAES_128;
+import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA512_256AndAES_256;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA1;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA1And8BIT;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA224;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA224And8BIT;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA256;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA256And8BIT;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA384;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA384And8BIT;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA3_224;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA3_256;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA3_384;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA3_512;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA512;
+import net.glassless.provider.internal.secretkeyfactory.PBKDF2WithHmacSHA512And8BIT;
+import net.glassless.provider.internal.secretkeyfactory.ScryptSecretKeyFactory;
+import net.glassless.provider.internal.signature.SHA1withDSASignature;
+import net.glassless.provider.internal.signature.SHA1withECDSASignature;
+import net.glassless.provider.internal.signature.SHA1withRSASignature;
+import net.glassless.provider.internal.signature.SHA1withRSAandMGF1Signature;
+import net.glassless.provider.internal.signature.SHA224withDSASignature;
+import net.glassless.provider.internal.signature.SHA224withECDSASignature;
+import net.glassless.provider.internal.signature.SHA224withRSASignature;
+import net.glassless.provider.internal.signature.SHA224withRSAandMGF1Signature;
+import net.glassless.provider.internal.signature.SHA256withDSASignature;
+import net.glassless.provider.internal.signature.SHA256withECDSASignature;
+import net.glassless.provider.internal.signature.SHA256withRSASignature;
+import net.glassless.provider.internal.signature.SHA256withRSAandMGF1Signature;
+import net.glassless.provider.internal.signature.SHA384withDSASignature;
+import net.glassless.provider.internal.signature.SHA384withECDSASignature;
+import net.glassless.provider.internal.signature.SHA384withRSASignature;
+import net.glassless.provider.internal.signature.SHA384withRSAandMGF1Signature;
+import net.glassless.provider.internal.signature.SHA3_224withECDSASignature;
+import net.glassless.provider.internal.signature.SHA3_256withECDSASignature;
+import net.glassless.provider.internal.signature.SHA3_384withECDSASignature;
+import net.glassless.provider.internal.signature.SHA3_512withECDSASignature;
+import net.glassless.provider.internal.signature.SHA512_224withRSASignature;
+import net.glassless.provider.internal.signature.SHA512_224withRSAandMGF1Signature;
+import net.glassless.provider.internal.signature.SHA512_256withRSASignature;
+import net.glassless.provider.internal.signature.SHA512_256withRSAandMGF1Signature;
+import net.glassless.provider.internal.signature.SHA512withDSASignature;
+import net.glassless.provider.internal.signature.SHA512withECDSASignature;
+import net.glassless.provider.internal.signature.SHA512withRSASignature;
+import net.glassless.provider.internal.signature.SHA512withRSAandMGF1Signature;
+import net.glassless.provider.internal.slhdsa.SLHDSAKeyFactory;
+import net.glassless.provider.internal.slhdsa.SLHDSAKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSASignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_128fKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_128fSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_128sKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_128sSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_192fKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_192fSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_192sKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_192sSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_256fKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_256fSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_256sKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHA2_256sSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_128fKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_128fSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_128sKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_128sSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_192fKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_192fSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_192sKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_192sSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_256fKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_256fSignature;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_256sKeyPairGenerator;
+import net.glassless.provider.internal.slhdsa.SLHDSA_SHAKE_256sSignature;
 
 /**
  * OpenSSL-based JCA Provider using Java's Foreign Function &amp; Memory API.
@@ -118,7 +417,7 @@ public class GlaSSLessProvider extends Provider {
     * Checks if a service should be registered based on hybrid mode settings.
     *
     * @param serviceType the JCA service type (e.g., "MessageDigest", "Mac")
-    * @param algorithm the algorithm name
+    * @param algorithm   the algorithm name
     * @return true if the service should be registered, false if delegated
     */
    private boolean shouldRegisterService(String serviceType, String algorithm) {
@@ -165,7 +464,7 @@ public class GlaSSLessProvider extends Provider {
     * exceptions when OpenSSL is not installed.
     *
     * @return the provider position if successfully registered, or -1 if OpenSSL is
-    *         not available or registration failed
+    * not available or registration failed
     */
    public static int registerIfAvailable() {
       if (!isOpenSSLAvailable()) {
@@ -769,7 +1068,7 @@ public class GlaSSLessProvider extends Provider {
    private void registerPQCKeyPairGeneratorServices() {
       // ML-KEM (FIPS 203) - Key Encapsulation Mechanism
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512") &&
-          shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-512")) {
+         shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-512")) {
          putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-512",
             MLKEM512KeyPairGenerator.class.getName(),
             List.of("MLKEM512", "OID.2.16.840.1.101.3.4.4.1", "2.16.840.1.101.3.4.4.1"), null));
@@ -787,7 +1086,7 @@ public class GlaSSLessProvider extends Provider {
          }
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024") &&
-          shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-1024")) {
+         shouldRegisterService(KEY_PAIR_GENERATOR, "ML-KEM-1024")) {
          putService(new Service(this, KEY_PAIR_GENERATOR, "ML-KEM-1024",
             MLKEM1024KeyPairGenerator.class.getName(),
             List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
@@ -1164,7 +1463,7 @@ public class GlaSSLessProvider extends Provider {
       }
 
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem512") &&
-          shouldRegisterService(KEM, "ML-KEM-512")) {
+         shouldRegisterService(KEM, "ML-KEM-512")) {
          putService(new Service(this, KEM, "ML-KEM-512",
             MLKEM512.class.getName(),
             List.of("MLKEM512", "OID.2.16.840.1.101.3.4.4.1", "2.16.840.1.101.3.4.4.1"), null));
@@ -1182,7 +1481,7 @@ public class GlaSSLessProvider extends Provider {
          }
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mlkem1024") &&
-          shouldRegisterService(KEM, "ML-KEM-1024")) {
+         shouldRegisterService(KEM, "ML-KEM-1024")) {
          putService(new Service(this, KEM, "ML-KEM-1024",
             MLKEM1024.class.getName(),
             List.of("MLKEM1024", "OID.2.16.840.1.101.3.4.4.3", "2.16.840.1.101.3.4.4.3"), null));
@@ -1192,7 +1491,7 @@ public class GlaSSLessProvider extends Provider {
       // Note: Only X25519 and X448 variants are supported because OpenSSL 3.5 doesn't provide
       // raw key export for EC-based hybrids (SecP256r1MLKEM768, SecP384r1MLKEM1024)
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768") &&
-          OpenSSLCrypto.isRawKeyAvailable()) {
+         OpenSSLCrypto.isRawKeyAvailable()) {
          putService(new Service(this, KEM, "X25519MLKEM768",
             X25519MLKEM768.class.getName(),
             List.of("X25519-MLKEM-768"), null));
@@ -1204,7 +1503,7 @@ public class GlaSSLessProvider extends Provider {
             List.of("X25519-MLKEM-768"), null));
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X448MLKEM1024") &&
-          OpenSSLCrypto.isRawKeyAvailable()) {
+         OpenSSLCrypto.isRawKeyAvailable()) {
          putService(new Service(this, KEM, "X448MLKEM1024",
             X448MLKEM1024.class.getName(),
             List.of("X448-MLKEM-1024"), null));
@@ -1219,29 +1518,29 @@ public class GlaSSLessProvider extends Provider {
       // supported because OpenSSL 3.5 doesn't provide raw key export for these types.
    }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(PROVIDER_NAME);
-        builder.append(" version ");
-        builder.append(getProviderVersion());
-        builder.append(" [OpenSSL ");
-        builder.append(OpenSSLCrypto.getOpenSSLVersion());
-        if (fipsMode) {
-            builder.append(", FIPS");
-        }
-        if (hybridMode) {
-            builder.append(", Hybrid");
-        }
-        builder.append("]");
-        return builder.toString();
-    }
+   @Override
+   public String toString() {
+      StringBuilder builder = new StringBuilder(PROVIDER_NAME);
+      builder.append(" version ");
+      builder.append(getProviderVersion());
+      builder.append(" [OpenSSL ");
+      builder.append(OpenSSLCrypto.getOpenSSLVersion());
+      if (fipsMode) {
+         builder.append(", FIPS");
+      }
+      if (hybridMode) {
+         builder.append(", Hybrid");
+      }
+      builder.append("]");
+      return builder.toString();
+   }
 
-    /**
+   /**
     * Main method to display provider information.
     *
     * @param args command line arguments. Use "--verbose" or "-v" to list all algorithms.
     */
-   public static void main(String[] args) {
+   static void main(String[] args) {
       boolean verbose = false;
       for (String arg : args) {
          if ("--verbose".equals(arg) || "-v".equals(arg)) {

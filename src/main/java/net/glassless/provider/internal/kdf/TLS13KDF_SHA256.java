@@ -6,7 +6,7 @@ import javax.crypto.KDFParameters;
 
 /**
  * TLS 1.3 KDF implementation using SHA-256.
- *
+ * <p>
  * This is the default hash for TLS 1.3 cipher suites using AES-128.
  */
 public class TLS13KDF_SHA256 extends AbstractTLS13KDF {

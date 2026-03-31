@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Provider;
@@ -37,11 +39,11 @@ import net.glassless.provider.GlaSSLessProvider;
 public class KeyPairGeneratorBenchmark {
 
    private static final String NSS_CONFIG = """
-         name = NSS
-         nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
-         nssDbMode = noDb
-         attributes = compatibility
-         """;
+      name = NSS
+      nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
+      nssDbMode = noDb
+      attributes = compatibility
+      """;
 
    // Note: Ed25519/X25519 not available in BC FIPS 2.x
    @Param({"EC-P256", "EC-P384", "RSA-2048", "RSA-4096"})
@@ -78,7 +80,7 @@ public class KeyPairGeneratorBenchmark {
          jdkKeyPairGen = KeyPairGenerator.getInstance("EC");
          jdkKeyPairGen.initialize(new ECGenParameterSpec(curve));
 
-         glasslessKeyPairGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
          glasslessKeyPairGen.initialize(new ECGenParameterSpec(curve));
 
          bcFipsKeyPairGen = KeyPairGenerator.getInstance("EC", "BCFIPS");
@@ -98,7 +100,7 @@ public class KeyPairGeneratorBenchmark {
          jdkKeyPairGen = KeyPairGenerator.getInstance("RSA");
          jdkKeyPairGen.initialize(keySize);
 
-         glasslessKeyPairGen = KeyPairGenerator.getInstance("RSA", "GlaSSLess");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
          glasslessKeyPairGen.initialize(keySize);
 
          bcFipsKeyPairGen = KeyPairGenerator.getInstance("RSA", "BCFIPS");

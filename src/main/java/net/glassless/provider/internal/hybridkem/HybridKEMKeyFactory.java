@@ -44,15 +44,15 @@ public class HybridKEMKeyFactory extends KeyFactorySpi {
    @Override
    @SuppressWarnings("unchecked")
    protected <T extends KeySpec> T engineGetKeySpec(Key key, Class<T> keySpec)
-         throws InvalidKeySpecException {
+      throws InvalidKeySpecException {
       if (key instanceof GlaSSLessHybridKEMPublicKey pubKey) {
          if (X509EncodedKeySpec.class.isAssignableFrom(keySpec) ||
-             EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+            EncodedKeySpec.class.isAssignableFrom(keySpec)) {
             return (T) new X509EncodedKeySpec(pubKey.getEncoded());
          }
       } else if (key instanceof GlaSSLessHybridKEMPrivateKey privKey) {
          if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec) ||
-             EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+            EncodedKeySpec.class.isAssignableFrom(keySpec)) {
             return (T) new PKCS8EncodedKeySpec(privKey.getEncoded());
          }
       }

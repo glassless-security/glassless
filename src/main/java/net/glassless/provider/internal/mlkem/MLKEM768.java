@@ -7,7 +7,7 @@ package net.glassless.provider.internal.mlkem;
  */
 public class MLKEM768 extends MLKEM {
 
-    public MLKEM768() {
-        super("mlkem768", "ML-KEM-768", 32);
-    }
+   public MLKEM768() {
+      super("mlkem768", "ML-KEM-768", 32);
+   }
 }

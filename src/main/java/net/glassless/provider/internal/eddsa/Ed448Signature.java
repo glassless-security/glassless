@@ -5,7 +5,7 @@ package net.glassless.provider.internal.eddsa;
  */
 public class Ed448Signature extends EdDSASignature {
 
-    public Ed448Signature() {
-        super("Ed448");
-    }
+   public Ed448Signature() {
+      super("Ed448");
+   }
 }

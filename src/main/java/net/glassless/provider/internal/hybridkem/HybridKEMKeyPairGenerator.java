@@ -47,12 +47,12 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
       // Keysize is not meaningful for hybrid KEMs, use NamedParameterSpec instead
       throw new InvalidParameterException(
          "Hybrid KEMs do not use key size. Use initialize(AlgorithmParameterSpec, SecureRandom) with " +
-         "NamedParameterSpec(\"X25519MLKEM768\") or similar.");
+            "NamedParameterSpec(\"X25519MLKEM768\") or similar.");
    }
 
    @Override
    public void initialize(AlgorithmParameterSpec params, SecureRandom random)
-         throws InvalidAlgorithmParameterException {
+      throws InvalidAlgorithmParameterException {
       if (params instanceof NamedParameterSpec nps) {
          String name = normalizeAlgorithmName(nps.getName());
          switch (name) {
@@ -74,7 +74,7 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
             }
             default -> throw new InvalidAlgorithmParameterException(
                "Unsupported hybrid KEM variant: " + nps.getName() +
-               ". Supported: X25519MLKEM768, X448MLKEM1024, SecP256r1MLKEM768, SecP384r1MLKEM1024");
+                  ". Supported: X25519MLKEM768, X448MLKEM1024, SecP256r1MLKEM768, SecP384r1MLKEM1024");
          }
       } else if (params != null) {
          throw new InvalidAlgorithmParameterException(

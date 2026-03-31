@@ -227,12 +227,12 @@ if (provider.isFIPSMode()) {
     System.out.println("Running in FIPS mode");
 
     // These will work
-    MessageDigest sha256 = MessageDigest.getInstance("SHA-256", "GlaSSLess");
-    Signature ecdsa = Signature.getInstance("SHA256withECDSA", "GlaSSLess");
+    MessageDigest sha256 = MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
+    Signature ecdsa = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
 
     // This will throw NoSuchAlgorithmException
     try {
-        MessageDigest md5 = MessageDigest.getInstance("MD5", "GlaSSLess");
+        MessageDigest md5 = MessageDigest.getInstance("MD5", PROVIDER_NAME);
     } catch (NoSuchAlgorithmException e) {
         System.out.println("MD5 correctly excluded in FIPS mode");
     }

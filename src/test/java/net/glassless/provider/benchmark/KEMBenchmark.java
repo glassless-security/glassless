@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
@@ -77,8 +79,8 @@ public class KEMBenchmark {
       glasslessAvailable = OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", opensslName);
 
       if (glasslessAvailable) {
-         glasslessKeyPairGen = KeyPairGenerator.getInstance(algorithm, "GlaSSLess");
-         glasslessKEM = KEM.getInstance(algorithm, "GlaSSLess");
+         glasslessKeyPairGen = KeyPairGenerator.getInstance(algorithm, PROVIDER_NAME);
+         glasslessKEM = KEM.getInstance(algorithm, PROVIDER_NAME);
 
          // Pre-generate a key pair for encapsulation/decapsulation benchmarks
          glasslessKeyPair = glasslessKeyPairGen.generateKeyPair();

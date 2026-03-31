@@ -6,7 +6,7 @@ package net.glassless.provider.internal.mac;
  */
 public class Poly1305Mac extends AbstractMac {
 
-    public Poly1305Mac() {
-        super("Poly1305", 16);  // Poly1305 produces a 128-bit (16 byte) tag
-    }
+   public Poly1305Mac() {
+      super("Poly1305", 16);  // Poly1305 produces a 128-bit (16 byte) tag
+   }
 }

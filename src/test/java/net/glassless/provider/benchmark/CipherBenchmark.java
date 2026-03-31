@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -41,11 +43,11 @@ import net.glassless.provider.GlaSSLessProvider;
 public class CipherBenchmark {
 
    private static final String NSS_CONFIG = """
-         name = NSS
-         nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
-         nssDbMode = noDb
-         attributes = compatibility
-         """;
+      name = NSS
+      nssLibraryDirectory = /usr/lib/x86_64-linux-gnu
+      nssDbMode = noDb
+      attributes = compatibility
+      """;
 
    // AES/CBC is available across all providers including NSS
    @Param({"AES/GCM/NoPadding", "AES/CBC/PKCS5Padding"})
@@ -106,10 +108,10 @@ public class CipherBenchmark {
          jdkDecrypt = Cipher.getInstance(algorithm);
          jdkDecrypt.init(Cipher.DECRYPT_MODE, key, gcmSpec);
 
-         glasslessEncrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessEncrypt = Cipher.getInstance(algorithm, PROVIDER_NAME);
          glasslessEncrypt.init(Cipher.ENCRYPT_MODE, key, gcmSpec);
 
-         glasslessDecrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessDecrypt = Cipher.getInstance(algorithm, PROVIDER_NAME);
          glasslessDecrypt.init(Cipher.DECRYPT_MODE, key, gcmSpec);
 
          bcFipsEncrypt = Cipher.getInstance(algorithm, "BCFIPS");
@@ -148,10 +150,10 @@ public class CipherBenchmark {
          jdkDecrypt = Cipher.getInstance(algorithm);
          jdkDecrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
-         glasslessEncrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessEncrypt = Cipher.getInstance(algorithm, PROVIDER_NAME);
          glasslessEncrypt.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
-         glasslessDecrypt = Cipher.getInstance(algorithm, "GlaSSLess");
+         glasslessDecrypt = Cipher.getInstance(algorithm, PROVIDER_NAME);
          glasslessDecrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
          bcFipsEncrypt = Cipher.getInstance(algorithm, "BCFIPS");

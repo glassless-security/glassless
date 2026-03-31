@@ -7,7 +7,7 @@ package net.glassless.provider.internal.mlkem;
  */
 public class MLKEM512 extends MLKEM {
 
-    public MLKEM512() {
-        super("mlkem512", "ML-KEM-512", 32);
-    }
+   public MLKEM512() {
+      super("mlkem512", "ML-KEM-512", 32);
+   }
 }

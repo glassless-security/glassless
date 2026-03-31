@@ -10,68 +10,67 @@ import java.util.Optional;
  */
 public class GlaSSLessEdECPrivateKey implements EdECPrivateKey {
 
-    private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-    private final NamedParameterSpec params;
-    private final byte[] keyBytes;
-    private final byte[] encoded;
+   private final NamedParameterSpec params;
+   private final byte[] keyBytes;
+   private final byte[] encoded;
 
-    public GlaSSLessEdECPrivateKey(NamedParameterSpec params, byte[] keyBytes, byte[] encoded) {
-        this.params = params;
-        this.keyBytes = keyBytes.clone();
-        this.encoded = encoded.clone();
-    }
+   public GlaSSLessEdECPrivateKey(NamedParameterSpec params, byte[] keyBytes, byte[] encoded) {
+      this.params = params;
+      this.keyBytes = keyBytes.clone();
+      this.encoded = encoded.clone();
+   }
 
-    @Override
-    public String getAlgorithm() {
-        return "EdDSA";
-    }
+   @Override
+   public String getAlgorithm() {
+      return "EdDSA";
+   }
 
-    @Override
-    public String getFormat() {
-        return "PKCS#8";
-    }
+   @Override
+   public String getFormat() {
+      return "PKCS#8";
+   }
 
-    @Override
-    public byte[] getEncoded() {
-        return encoded.clone();
-    }
+   @Override
+   public byte[] getEncoded() {
+      return encoded.clone();
+   }
 
-    @Override
-    public NamedParameterSpec getParams() {
-        return params;
-    }
+   @Override
+   public NamedParameterSpec getParams() {
+      return params;
+   }
 
-    @Override
-    public Optional<byte[]> getBytes() {
-        return Optional.of(keyBytes.clone());
-    }
+   @Override
+   public Optional<byte[]> getBytes() {
+      return Optional.of(keyBytes.clone());
+   }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof EdECPrivateKey other)) return false;
-        if (!params.getName().equals(other.getParams().getName())) return false;
-        Optional<byte[]> otherBytes = other.getBytes();
-        if (otherBytes.isEmpty()) return false;
-        return Arrays.equals(keyBytes, otherBytes.get());
-    }
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (!(obj instanceof EdECPrivateKey other)) return false;
+      if (!params.getName().equals(other.getParams().getName())) return false;
+      Optional<byte[]> otherBytes = other.getBytes();
+      return otherBytes.filter(bytes -> Arrays.equals(keyBytes, bytes)).isPresent();
+   }
 
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(encoded);
-    }
+   @Override
+   public int hashCode() {
+      return Arrays.hashCode(encoded);
+   }
 
-    @Override
-    public String toString() {
-        return "GlaSSLessEdECPrivateKey [algorithm=" + params.getName() + "]";
-    }
+   @Override
+   public String toString() {
+      return "GlaSSLessEdECPrivateKey [algorithm=" + params.getName() + "]";
+   }
 
-    /**
-     * Clears the private key material from memory.
-     */
-    public void destroy() {
-        Arrays.fill(keyBytes, (byte) 0);
-        Arrays.fill(encoded, (byte) 0);
-    }
+   /**
+    * Clears the private key material from memory.
+    */
+   public void destroy() {
+      Arrays.fill(keyBytes, (byte) 0);
+      Arrays.fill(encoded, (byte) 0);
+   }
 }

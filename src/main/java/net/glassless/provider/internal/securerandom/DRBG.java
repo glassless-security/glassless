@@ -7,9 +7,9 @@ package net.glassless.provider.internal.securerandom;
  */
 public class DRBG extends OpenSSLSecureRandom {
 
-    private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-    public DRBG() {
-        super();
-    }
+   public DRBG() {
+      super();
+   }
 }

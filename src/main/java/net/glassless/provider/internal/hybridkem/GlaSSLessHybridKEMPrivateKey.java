@@ -132,8 +132,8 @@ public class GlaSSLessHybridKEMPrivateKey implements PrivateKey, Destroyable {
       if (!(obj instanceof GlaSSLessHybridKEMPrivateKey other)) return false;
       if (destroyed || other.destroyed) return false;
       return algorithm.equals(other.algorithm) &&
-             opensslName.equals(other.opensslName) &&
-             Arrays.equals(rawKey, other.rawKey);
+         opensslName.equals(other.opensslName) &&
+         Arrays.equals(rawKey, other.rawKey);
    }
 
    @Override

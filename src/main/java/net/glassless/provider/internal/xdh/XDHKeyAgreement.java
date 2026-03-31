@@ -24,145 +24,145 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 public class XDHKeyAgreement extends KeyAgreementSpi {
 
-    private final String expectedCurve;  // null means accept any XDH curve
-    private NamedParameterSpec params;
-    private byte[] privateKeyEncoded;
-    private byte[] sharedSecret;
+   private final String expectedCurve;  // null means accept any XDH curve
+   private NamedParameterSpec params;
+   private byte[] privateKeyEncoded;
+   private byte[] sharedSecret;
 
-    public XDHKeyAgreement() {
-        this(null);
-    }
+   public XDHKeyAgreement() {
+      this(null);
+   }
 
-    protected XDHKeyAgreement(String expectedCurve) {
-        this.expectedCurve = expectedCurve;
-    }
+   protected XDHKeyAgreement(String expectedCurve) {
+      this.expectedCurve = expectedCurve;
+   }
 
-    @Override
-    protected void engineInit(Key key, SecureRandom random) throws InvalidKeyException {
-        if (!(key instanceof XECPrivateKey xecKey)) {
-            throw new InvalidKeyException("XECPrivateKey required, got: " +
-                (key == null ? "null" : key.getClass().getName()));
-        }
+   @Override
+   protected void engineInit(Key key, SecureRandom random) throws InvalidKeyException {
+      if (!(key instanceof XECPrivateKey xecKey)) {
+         throw new InvalidKeyException("XECPrivateKey required, got: " +
+            (key == null ? "null" : key.getClass().getName()));
+      }
 
-        AlgorithmParameterSpec keyParams = xecKey.getParams();
-        if (!(keyParams instanceof NamedParameterSpec nps)) {
-            throw new InvalidKeyException("NamedParameterSpec required in key");
-        }
+      AlgorithmParameterSpec keyParams = xecKey.getParams();
+      if (!(keyParams instanceof NamedParameterSpec nps)) {
+         throw new InvalidKeyException("NamedParameterSpec required in key");
+      }
 
-        validateCurve(nps.getName());
-        this.params = nps;
-        this.privateKeyEncoded = key.getEncoded();
-        this.sharedSecret = null;
+      validateCurve(nps.getName());
+      this.params = nps;
+      this.privateKeyEncoded = key.getEncoded();
+      this.sharedSecret = null;
 
-        if (this.privateKeyEncoded == null) {
-            throw new InvalidKeyException("Private key encoding is null");
-        }
-    }
+      if (this.privateKeyEncoded == null) {
+         throw new InvalidKeyException("Private key encoding is null");
+      }
+   }
 
-    @Override
-    protected void engineInit(Key key, AlgorithmParameterSpec params, SecureRandom random)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
-        if (params != null) {
-            throw new InvalidAlgorithmParameterException("No parameters expected for XDH key agreement");
-        }
-        engineInit(key, random);
-    }
+   @Override
+   protected void engineInit(Key key, AlgorithmParameterSpec params, SecureRandom random)
+      throws InvalidKeyException, InvalidAlgorithmParameterException {
+      if (params != null) {
+         throw new InvalidAlgorithmParameterException("No parameters expected for XDH key agreement");
+      }
+      engineInit(key, random);
+   }
 
-    private void validateCurve(String curveName) throws InvalidKeyException {
-        if (expectedCurve != null && !expectedCurve.equalsIgnoreCase(curveName)) {
-            throw new InvalidKeyException("Key curve " + curveName +
-                " does not match expected curve " + expectedCurve);
-        }
-        if (!curveName.equalsIgnoreCase("X25519") && !curveName.equalsIgnoreCase("X448")) {
-            throw new InvalidKeyException("Unsupported XDH curve: " + curveName);
-        }
-    }
+   private void validateCurve(String curveName) throws InvalidKeyException {
+      if (expectedCurve != null && !expectedCurve.equalsIgnoreCase(curveName)) {
+         throw new InvalidKeyException("Key curve " + curveName +
+            " does not match expected curve " + expectedCurve);
+      }
+      if (!curveName.equalsIgnoreCase("X25519") && !curveName.equalsIgnoreCase("X448")) {
+         throw new InvalidKeyException("Unsupported XDH curve: " + curveName);
+      }
+   }
 
-    @Override
-    protected Key engineDoPhase(Key key, boolean lastPhase) throws InvalidKeyException, IllegalStateException {
-        if (privateKeyEncoded == null) {
-            throw new IllegalStateException("Key agreement not initialized");
-        }
+   @Override
+   protected Key engineDoPhase(Key key, boolean lastPhase) throws InvalidKeyException, IllegalStateException {
+      if (privateKeyEncoded == null) {
+         throw new IllegalStateException("Key agreement not initialized");
+      }
 
-        if (!lastPhase) {
-            throw new IllegalStateException("XDH key agreement requires exactly one phase");
-        }
+      if (!lastPhase) {
+         throw new IllegalStateException("XDH key agreement requires exactly one phase");
+      }
 
-        if (!(key instanceof XECPublicKey xecKey)) {
-            throw new InvalidKeyException("XECPublicKey required, got: " +
-                (key == null ? "null" : key.getClass().getName()));
-        }
+      if (!(key instanceof XECPublicKey xecKey)) {
+         throw new InvalidKeyException("XECPublicKey required, got: " +
+            (key == null ? "null" : key.getClass().getName()));
+      }
 
-        // Verify the public key uses the same curve
-        AlgorithmParameterSpec keyParams = xecKey.getParams();
-        if (keyParams instanceof NamedParameterSpec nps) {
-            if (!params.getName().equalsIgnoreCase(nps.getName())) {
-                throw new InvalidKeyException("Public key curve " + nps.getName() +
-                    " does not match private key curve " + params.getName());
-            }
-        }
+      // Verify the public key uses the same curve
+      AlgorithmParameterSpec keyParams = xecKey.getParams();
+      if (keyParams instanceof NamedParameterSpec nps) {
+         if (!params.getName().equalsIgnoreCase(nps.getName())) {
+            throw new InvalidKeyException("Public key curve " + nps.getName() +
+               " does not match private key curve " + params.getName());
+         }
+      }
 
-        byte[] publicKeyEncoded = key.getEncoded();
-        if (publicKeyEncoded == null) {
-            throw new InvalidKeyException("Public key encoding is null");
-        }
+      byte[] publicKeyEncoded = key.getEncoded();
+      if (publicKeyEncoded == null) {
+         throw new InvalidKeyException("Public key encoding is null");
+      }
 
-        // Derive the shared secret
-        try (Arena arena = Arena.ofConfined()) {
-            // Load the private key
-            MemorySegment privateKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded, arena);
-            if (privateKey.equals(MemorySegment.NULL)) {
-                throw new InvalidKeyException("Failed to load private key");
+      // Derive the shared secret
+      try (Arena arena = Arena.ofConfined()) {
+         // Load the private key
+         MemorySegment privateKey = OpenSSLCrypto.loadPrivateKey(0, privateKeyEncoded, arena);
+         if (privateKey.equals(MemorySegment.NULL)) {
+            throw new InvalidKeyException("Failed to load private key");
+         }
+
+         try {
+            // Load the public key
+            MemorySegment publicKey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded, arena);
+            if (publicKey.equals(MemorySegment.NULL)) {
+               throw new InvalidKeyException("Failed to load public key");
             }
 
             try {
-                // Load the public key
-                MemorySegment publicKey = OpenSSLCrypto.loadPublicKey(publicKeyEncoded, arena);
-                if (publicKey.equals(MemorySegment.NULL)) {
-                    throw new InvalidKeyException("Failed to load public key");
-                }
-
-                try {
-                    // Derive the shared secret
-                    this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privateKey, publicKey, arena);
-                } finally {
-                    OpenSSLCrypto.EVP_PKEY_free(publicKey);
-                }
+               // Derive the shared secret
+               this.sharedSecret = OpenSSLCrypto.deriveSharedSecret(privateKey, publicKey, arena);
             } finally {
-                OpenSSLCrypto.EVP_PKEY_free(privateKey);
+               OpenSSLCrypto.EVP_PKEY_free(publicKey);
             }
-        } catch (InvalidKeyException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new ProviderException("XDH key agreement failed", e);
-        }
+         } finally {
+            OpenSSLCrypto.EVP_PKEY_free(privateKey);
+         }
+      } catch (InvalidKeyException e) {
+         throw e;
+      } catch (Throwable e) {
+         throw new ProviderException("XDH key agreement failed", e);
+      }
 
-        return null;  // XDH doesn't return intermediate keys
-    }
+      return null;  // XDH doesn't return intermediate keys
+   }
 
-    @Override
-    protected byte[] engineGenerateSecret() throws IllegalStateException {
-        if (sharedSecret == null) {
-            throw new IllegalStateException("No shared secret available - call doPhase first");
-        }
-        byte[] result = sharedSecret;
-        sharedSecret = null;  // Clear after use
-        return result;
-    }
+   @Override
+   protected byte[] engineGenerateSecret() throws IllegalStateException {
+      if (sharedSecret == null) {
+         throw new IllegalStateException("No shared secret available - call doPhase first");
+      }
+      byte[] result = sharedSecret;
+      sharedSecret = null;  // Clear after use
+      return result;
+   }
 
-    @Override
-    protected int engineGenerateSecret(byte[] sharedSecret, int offset) throws IllegalStateException {
-        byte[] secret = engineGenerateSecret();
-        if (offset + secret.length > sharedSecret.length) {
-            throw new IllegalStateException("Output buffer too small");
-        }
-        System.arraycopy(secret, 0, sharedSecret, offset, secret.length);
-        return secret.length;
-    }
+   @Override
+   protected int engineGenerateSecret(byte[] sharedSecret, int offset) throws IllegalStateException {
+      byte[] secret = engineGenerateSecret();
+      if (offset + secret.length > sharedSecret.length) {
+         throw new IllegalStateException("Output buffer too small");
+      }
+      System.arraycopy(secret, 0, sharedSecret, offset, secret.length);
+      return secret.length;
+   }
 
-    @Override
-    protected SecretKey engineGenerateSecret(String algorithm) throws IllegalStateException, NoSuchAlgorithmException {
-        byte[] secret = engineGenerateSecret();
-        return new SecretKeySpec(secret, algorithm);
-    }
+   @Override
+   protected SecretKey engineGenerateSecret(String algorithm) throws IllegalStateException, NoSuchAlgorithmException {
+      byte[] secret = engineGenerateSecret();
+      return new SecretKeySpec(secret, algorithm);
+   }
 }

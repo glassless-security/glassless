@@ -9,7 +9,7 @@ import javax.crypto.KDFParameters;
  */
 public class HKDF_SHA512 extends AbstractHKDF {
 
-    public HKDF_SHA512(KDFParameters params) throws InvalidAlgorithmParameterException {
-        super(params, "HKDF-SHA512", "SHA512", 64);
-    }
+   public HKDF_SHA512(KDFParameters params) throws InvalidAlgorithmParameterException {
+      super(params, "HKDF-SHA512", "SHA512", 64);
+   }
 }

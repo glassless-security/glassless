@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for TLS Pseudo-Random Function (PRF).
- *
+ * <p>
  * TLS PRF is used in TLS 1.0-1.2 for key derivation from the
  * master secret. TLS 1.2 uses SHA-256 by default.
  */
@@ -19,9 +19,9 @@ public class TLSPRFParameterSpec implements AlgorithmParameterSpec {
    /**
     * Creates a TLSPRFParameterSpec.
     *
-    * @param secret the secret (e.g., master secret or pre-master secret)
-    * @param label the label string (e.g., "key expansion")
-    * @param seed the seed (typically client_random + server_random)
+    * @param secret    the secret (e.g., master secret or pre-master secret)
+    * @param label     the label string (e.g., "key expansion")
+    * @param seed      the seed (typically client_random + server_random)
     * @param keyLength the desired key length in bytes
     */
    public TLSPRFParameterSpec(byte[] secret, String label, byte[] seed, int keyLength) {

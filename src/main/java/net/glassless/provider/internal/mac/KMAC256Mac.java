@@ -6,7 +6,7 @@ package net.glassless.provider.internal.mac;
  */
 public class KMAC256Mac extends AbstractMac {
 
-    public KMAC256Mac() {
-        super("KMAC256", 64);  // Default output length is 512 bits (64 bytes)
-    }
+   public KMAC256Mac() {
+      super("KMAC256", 64);  // Default output length is 512 bits (64 bytes)
+   }
 }

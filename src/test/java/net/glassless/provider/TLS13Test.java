@@ -1,11 +1,16 @@
 package net.glassless.provider;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -92,7 +97,7 @@ public class TLS13Test {
       void testLargeDataTransfer() throws Exception {
          // Generate 100KB of random data
          byte[] largeData = new byte[100 * 1024];
-         SecureRandom random = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+         SecureRandom random = SecureRandom.getInstance("NativePRNG", PROVIDER_NAME);
          random.nextBytes(largeData);
 
          KeyStore[] stores = generateKeyStoreWithKeytool("EC", 256, "SHA256withECDSA");
@@ -130,7 +135,7 @@ public class TLS13Test {
 
                   // Send back hash as acknowledgment
                   java.security.MessageDigest md =
-                        java.security.MessageDigest.getInstance("SHA-256", "GlaSSLess");
+                        java.security.MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
                   byte[] hash = md.digest(data);
                   out.write(hash);
                   out.flush();
@@ -167,7 +172,7 @@ public class TLS13Test {
 
             // Verify hash
             java.security.MessageDigest md =
-                  java.security.MessageDigest.getInstance("SHA-256", "GlaSSLess");
+                  java.security.MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
             byte[] expectedHash = md.digest(largeData);
             assertArrayEquals(expectedHash, receivedHash, "Data integrity check failed");
          }
@@ -211,12 +216,12 @@ public class TLS13Test {
       @Timeout(30)
       void testGlaSSLessAlgorithmsUsed() throws Exception {
          // Test that we can get algorithms from GlaSSLess
-         assertNotNull(java.security.MessageDigest.getInstance("SHA-256", "GlaSSLess"));
-         assertNotNull(javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess"));
-         assertNotNull(javax.crypto.Mac.getInstance("HmacSHA256", "GlaSSLess"));
-         assertNotNull(KeyPairGenerator.getInstance("EC", "GlaSSLess"));
-         assertNotNull(java.security.Signature.getInstance("SHA256withECDSA", "GlaSSLess"));
-         assertNotNull(SecureRandom.getInstance("NativePRNG", "GlaSSLess"));
+         assertNotNull(java.security.MessageDigest.getInstance("SHA-256", PROVIDER_NAME));
+         assertNotNull(javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME));
+         assertNotNull(javax.crypto.Mac.getInstance("HmacSHA256", PROVIDER_NAME));
+         assertNotNull(KeyPairGenerator.getInstance("EC", PROVIDER_NAME));
+         assertNotNull(java.security.Signature.getInstance("SHA256withECDSA", PROVIDER_NAME));
+         assertNotNull(SecureRandom.getInstance("NativePRNG", PROVIDER_NAME));
       }
 
       @Test
@@ -224,7 +229,7 @@ public class TLS13Test {
       @Timeout(10)
       void testHKDFKeyDerivation() throws Exception {
          // TLS 1.3 uses HKDF for key derivation
-         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
          assertNotNull(hkdf);
 
          byte[] ikm = "input-key-material".getBytes();
@@ -248,14 +253,14 @@ public class TLS13Test {
       @Timeout(10)
       void testAESGCMEncryption() throws Exception {
          // TLS 1.3 uses AES-GCM for bulk encryption
-         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
 
-         javax.crypto.KeyGenerator keyGen = javax.crypto.KeyGenerator.getInstance("AES", "GlaSSLess");
+         javax.crypto.KeyGenerator keyGen = javax.crypto.KeyGenerator.getInstance("AES", PROVIDER_NAME);
          keyGen.init(256);
          javax.crypto.SecretKey key = keyGen.generateKey();
 
          byte[] iv = new byte[12];
-         SecureRandom.getInstance("NativePRNG", "GlaSSLess").nextBytes(iv);
+         SecureRandom.getInstance("NativePRNG", PROVIDER_NAME).nextBytes(iv);
 
          javax.crypto.spec.GCMParameterSpec gcmSpec = new javax.crypto.spec.GCMParameterSpec(128, iv);
 
@@ -293,11 +298,11 @@ public class TLS13Test {
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
          // Server generates hybrid key pair
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KeyPair serverKeyPair = kpg.generateKeyPair();
 
          // Client encapsulates shared secret using server's public key
-         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
          KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
          KEM.Encapsulated encapsulated = encapsulator.encapsulate();
 
@@ -316,7 +321,7 @@ public class TLS13Test {
             "X25519MLKEM768 shared secret should be 64 bytes");
 
          // Derive TLS 1.3 traffic keys using HKDF (as per RFC 8446)
-         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
 
          // Simulate TLS 1.3 key schedule: extract -> expand for client/server keys
          byte[] earlySecret = new byte[32]; // All zeros for initial extraction
@@ -343,9 +348,9 @@ public class TLS13Test {
             "Derived keys must match on both sides");
 
          // Test actual encryption/decryption with derived keys
-         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", "GlaSSLess");
+         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES_256/GCM/NoPadding", PROVIDER_NAME);
          byte[] iv = new byte[12];
-         SecureRandom.getInstance("NativePRNG", "GlaSSLess").nextBytes(iv);
+         SecureRandom.getInstance("NativePRNG", PROVIDER_NAME).nextBytes(iv);
          javax.crypto.spec.GCMParameterSpec gcmSpec = new javax.crypto.spec.GCMParameterSpec(128, iv);
 
          // Client encrypts
@@ -370,11 +375,11 @@ public class TLS13Test {
             "X448MLKEM1024 requires OpenSSL 3.5+");
 
          // Server generates hybrid key pair
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X448MLKEM1024", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X448MLKEM1024", PROVIDER_NAME);
          KeyPair serverKeyPair = kpg.generateKeyPair();
 
          // Client encapsulates
-         KEM kem = KEM.getInstance("X448MLKEM1024", "GlaSSLess");
+         KEM kem = KEM.getInstance("X448MLKEM1024", PROVIDER_NAME);
          KEM.Encapsulator encapsulator = kem.newEncapsulator(serverKeyPair.getPublic());
          KEM.Encapsulated encapsulated = encapsulator.encapsulate();
 
@@ -387,7 +392,7 @@ public class TLS13Test {
             "Shared secrets must match");
 
          // Derive traffic keys using HKDF-SHA384 (appropriate for higher security)
-         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA384", "GlaSSLess");
+         javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA384", PROVIDER_NAME);
          byte[] salt = new byte[48];
          byte[] info = "tls13 x448mlkem1024 test".getBytes();
 
@@ -411,8 +416,8 @@ public class TLS13Test {
          assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "X25519MLKEM768"),
             "X25519MLKEM768 requires OpenSSL 3.5+");
 
-         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
-         KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+         KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
+         KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
 
          // Simulate multiple handshakes (e.g., different clients connecting)
          for (int i = 0; i < 5; i++) {
@@ -500,7 +505,7 @@ public class TLS13Test {
 
       SSLContext ctx = SSLContext.getInstance("TLSv1.3");
       ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(),
-            SecureRandom.getInstance("NativePRNG", "GlaSSLess"));
+            SecureRandom.getInstance("NativePRNG", PROVIDER_NAME));
 
       return ctx;
    }
@@ -511,7 +516,7 @@ public class TLS13Test {
 
       SSLContext ctx = SSLContext.getInstance("TLSv1.3");
       ctx.init(null, tmf.getTrustManagers(),
-            SecureRandom.getInstance("NativePRNG", "GlaSSLess"));
+            SecureRandom.getInstance("NativePRNG", PROVIDER_NAME));
 
       return ctx;
    }
@@ -554,7 +559,7 @@ public class TLS13Test {
                int len = ((lenBytes[0] & 0xFF) << 24) | ((lenBytes[1] & 0xFF) << 16)
                      | ((lenBytes[2] & 0xFF) << 8) | (lenBytes[3] & 0xFF);
                byte[] data = in.readNBytes(len);
-               receivedMessage.set(new String(data, "UTF-8"));
+               receivedMessage.set(new String(data, StandardCharsets.UTF_8));
 
                // Echo back
                out.write(lenBytes);
@@ -580,7 +585,7 @@ public class TLS13Test {
          InputStream in = clientSocket.getInputStream();
 
          // Send message
-         byte[] msgBytes = TEST_MESSAGE.getBytes("UTF-8");
+         byte[] msgBytes = TEST_MESSAGE.getBytes(StandardCharsets.UTF_8);
          out.write(new byte[]{
             (byte) (msgBytes.length >> 24),
             (byte) (msgBytes.length >> 16),
@@ -595,7 +600,7 @@ public class TLS13Test {
          int len = ((lenBytes[0] & 0xFF) << 24) | ((lenBytes[1] & 0xFF) << 16)
                | ((lenBytes[2] & 0xFF) << 8) | (lenBytes[3] & 0xFF);
          byte[] data = in.readNBytes(len);
-         echoedMessage = new String(data, "UTF-8");
+         echoedMessage = new String(data, StandardCharsets.UTF_8);
       }
 
       serverThread.join(30000);

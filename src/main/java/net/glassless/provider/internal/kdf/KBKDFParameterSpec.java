@@ -5,17 +5,23 @@ import java.util.Arrays;
 
 /**
  * Parameter specification for Key-Based Key Derivation Function (SP 800-108).
- *
+ * <p>
  * KBKDF is a NIST-approved KDF that derives keys from an existing key
  * using a pseudorandom function (typically HMAC or CMAC).
  */
 public class KBKDFParameterSpec implements AlgorithmParameterSpec {
 
-   /** Counter mode (most common) */
+   /**
+    * Counter mode (most common)
+    */
    public static final String MODE_COUNTER = "counter";
-   /** Feedback mode */
+   /**
+    * Feedback mode
+    */
    public static final String MODE_FEEDBACK = "feedback";
-   /** Double-pipeline mode */
+   /**
+    * Double-pipeline mode
+    */
    public static final String MODE_PIPELINE = "pipeline";
 
    private final byte[] key;
@@ -27,10 +33,10 @@ public class KBKDFParameterSpec implements AlgorithmParameterSpec {
    /**
     * Creates a KBKDFParameterSpec.
     *
-    * @param key the input key (Ki)
-    * @param label the label (optional, can be null)
-    * @param context the context (optional, can be null)
-    * @param mode the KDF mode (counter, feedback, or pipeline)
+    * @param key       the input key (Ki)
+    * @param label     the label (optional, can be null)
+    * @param context   the context (optional, can be null)
+    * @param mode      the KDF mode (counter, feedback, or pipeline)
     * @param keyLength the desired key length in bytes
     */
    public KBKDFParameterSpec(byte[] key, byte[] label, byte[] context, String mode, int keyLength) {
@@ -54,9 +60,9 @@ public class KBKDFParameterSpec implements AlgorithmParameterSpec {
    /**
     * Creates a KBKDFParameterSpec with counter mode (default).
     *
-    * @param key the input key
-    * @param label the label
-    * @param context the context
+    * @param key       the input key
+    * @param label     the label
+    * @param context   the context
     * @param keyLength the desired key length in bytes
     */
    public KBKDFParameterSpec(byte[] key, byte[] label, byte[] context, int keyLength) {

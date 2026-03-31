@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Provider;
@@ -83,10 +85,10 @@ public class SignatureBenchmark {
       jdkVerifier.initVerify(keyPair.getPublic());
 
       // GlaSSLess signer/verifier
-      glasslessSigner = Signature.getInstance(algorithm, "GlaSSLess");
+      glasslessSigner = Signature.getInstance(algorithm, PROVIDER_NAME);
       glasslessSigner.initSign(keyPair.getPrivate());
 
-      glasslessVerifier = Signature.getInstance(algorithm, "GlaSSLess");
+      glasslessVerifier = Signature.getInstance(algorithm, PROVIDER_NAME);
       glasslessVerifier.initVerify(keyPair.getPublic());
 
       // BC FIPS signer/verifier

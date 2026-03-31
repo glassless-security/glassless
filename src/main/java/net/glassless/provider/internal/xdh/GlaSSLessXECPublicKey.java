@@ -11,58 +11,58 @@ import java.util.Arrays;
  */
 public class GlaSSLessXECPublicKey implements XECPublicKey {
 
-    private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-    private final NamedParameterSpec params;
-    private final BigInteger u;
-    private final byte[] encoded;
+   private final NamedParameterSpec params;
+   private final BigInteger u;
+   private final byte[] encoded;
 
-    public GlaSSLessXECPublicKey(NamedParameterSpec params, BigInteger u, byte[] encoded) {
-        this.params = params;
-        this.u = u;
-        this.encoded = encoded.clone();
-    }
+   public GlaSSLessXECPublicKey(NamedParameterSpec params, BigInteger u, byte[] encoded) {
+      this.params = params;
+      this.u = u;
+      this.encoded = encoded.clone();
+   }
 
-    @Override
-    public String getAlgorithm() {
-        return "XDH";
-    }
+   @Override
+   public String getAlgorithm() {
+      return "XDH";
+   }
 
-    @Override
-    public String getFormat() {
-        return "X.509";
-    }
+   @Override
+   public String getFormat() {
+      return "X.509";
+   }
 
-    @Override
-    public byte[] getEncoded() {
-        return encoded.clone();
-    }
+   @Override
+   public byte[] getEncoded() {
+      return encoded.clone();
+   }
 
-    @Override
-    public AlgorithmParameterSpec getParams() {
-        return params;
-    }
+   @Override
+   public AlgorithmParameterSpec getParams() {
+      return params;
+   }
 
-    @Override
-    public BigInteger getU() {
-        return u;
-    }
+   @Override
+   public BigInteger getU() {
+      return u;
+   }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof XECPublicKey other)) return false;
-        return u.equals(other.getU()) &&
-               params.getName().equals(((NamedParameterSpec) other.getParams()).getName());
-    }
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (!(obj instanceof XECPublicKey other)) return false;
+      return u.equals(other.getU()) &&
+         params.getName().equals(((NamedParameterSpec) other.getParams()).getName());
+   }
 
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(encoded);
-    }
+   @Override
+   public int hashCode() {
+      return Arrays.hashCode(encoded);
+   }
 
-    @Override
-    public String toString() {
-        return "GlaSSLessXECPublicKey [algorithm=" + params.getName() + "]";
-    }
+   @Override
+   public String toString() {
+      return "GlaSSLessXECPublicKey [algorithm=" + params.getName() + "]";
+   }
 }

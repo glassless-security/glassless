@@ -1,5 +1,7 @@
 package net.glassless.provider.benchmark;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -112,7 +114,7 @@ public class HybridModeBenchmark {
 
       // MessageDigest - JDK excels at small data
       jdkSha256 = MessageDigest.getInstance("SHA-256");
-      glasslessSha256 = MessageDigest.getInstance("SHA-256", "GlaSSLess");
+      glasslessSha256 = MessageDigest.getInstance("SHA-256", PROVIDER_NAME);
 
       // Mac - JDK excels at small data
       byte[] keyBytes = new byte[32];
@@ -121,12 +123,12 @@ public class HybridModeBenchmark {
 
       jdkHmacSha256 = Mac.getInstance("HmacSHA256");
       jdkHmacSha256.init(hmacKey);
-      glasslessHmacSha256 = Mac.getInstance("HmacSHA256", "GlaSSLess");
+      glasslessHmacSha256 = Mac.getInstance("HmacSHA256", PROVIDER_NAME);
       glasslessHmacSha256.init(hmacKey);
 
       // SecureRandom - JDK excels at small buffers
       jdkSecureRandom = SecureRandom.getInstance("NativePRNG");
-      glasslessSecureRandom = SecureRandom.getInstance("NativePRNG", "GlaSSLess");
+      glasslessSecureRandom = SecureRandom.getInstance("NativePRNG", PROVIDER_NAME);
 
       // === Setup GlaSSLess-optimized operations ===
 
@@ -137,10 +139,10 @@ public class HybridModeBenchmark {
       jdkEcdh = KeyAgreement.getInstance("ECDH");
       jdkEcdh.init(jdkEcKeyPair.getPrivate());
 
-      glasslessEcKeyPairGen = KeyPairGenerator.getInstance("EC", "GlaSSLess");
+      glasslessEcKeyPairGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
       glasslessEcKeyPairGen.initialize(256);
       glasslessEcKeyPair = glasslessEcKeyPairGen.generateKeyPair();
-      glasslessEcdh = KeyAgreement.getInstance("ECDH", "GlaSSLess");
+      glasslessEcdh = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
       glasslessEcdh.init(glasslessEcKeyPair.getPrivate());
 
       // Ed25519 Signature - GlaSSLess is ~8x faster
@@ -149,9 +151,9 @@ public class HybridModeBenchmark {
       jdkEd25519 = Signature.getInstance("Ed25519");
       jdkEd25519.initSign(jdkEd25519KeyPair.getPrivate());
 
-      KeyPairGenerator glasslessEd25519Gen = KeyPairGenerator.getInstance("Ed25519", "GlaSSLess");
+      KeyPairGenerator glasslessEd25519Gen = KeyPairGenerator.getInstance("Ed25519", PROVIDER_NAME);
       glasslessEd25519KeyPair = glasslessEd25519Gen.generateKeyPair();
-      glasslessEd25519 = Signature.getInstance("Ed25519", "GlaSSLess");
+      glasslessEd25519 = Signature.getInstance("Ed25519", PROVIDER_NAME);
       glasslessEd25519.initSign(glasslessEd25519KeyPair.getPrivate());
 
       // ML-KEM - JDK is faster (if available)
@@ -163,9 +165,9 @@ public class HybridModeBenchmark {
             jdkMlKem = KEM.getInstance("ML-KEM-768");
             jdkMlKemEncapsulator = jdkMlKem.newEncapsulator(jdkMlKemKeyPair.getPublic());
 
-            KeyPairGenerator glasslessMlKemGen = KeyPairGenerator.getInstance("ML-KEM-768", "GlaSSLess");
+            KeyPairGenerator glasslessMlKemGen = KeyPairGenerator.getInstance("ML-KEM-768", PROVIDER_NAME);
             KeyPair glasslessMlKemKeyPair = glasslessMlKemGen.generateKeyPair();
-            glasslessMlKem = KEM.getInstance("ML-KEM-768", "GlaSSLess");
+            glasslessMlKem = KEM.getInstance("ML-KEM-768", PROVIDER_NAME);
             glasslessMlKemEncapsulator = glasslessMlKem.newEncapsulator(glasslessMlKemKeyPair.getPublic());
 
             mlKemAvailable = true;

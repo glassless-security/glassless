@@ -98,14 +98,14 @@ import net.glassless.provider.GlaSSLessProvider;
 Security.addProvider(new GlaSSLessProvider());
 
 // Server: Generate hybrid key pair
-KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
 KeyPair serverKeyPair = kpg.generateKeyPair();
 
 // Server sends public key to client...
 PublicKey serverPublicKey = serverKeyPair.getPublic();
 
 // Client: Encapsulate a shared secret
-KEM kem = KEM.getInstance("X25519MLKEM768", "GlaSSLess");
+KEM kem = KEM.getInstance("X25519MLKEM768", PROVIDER_NAME);
 KEM.Encapsulator encapsulator = kem.newEncapsulator(serverPublicKey);
 KEM.Encapsulated encapsulated = encapsulator.encapsulate();
 
@@ -134,7 +134,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.HKDFParameterSpec;
 
 // After key exchange, derive an AES-256 key
-KDF hkdf = KDF.getInstance("HKDF-SHA256", "GlaSSLess");
+KDF hkdf = KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
 
 byte[] info = "my-application v1.0".getBytes();
 HKDFParameterSpec params = HKDFParameterSpec
@@ -182,7 +182,7 @@ byte[] publicKeyBytes = serverKeyPair.getPublic().getEncoded();
 byte[] privateKeyBytes = serverKeyPair.getPrivate().getEncoded();
 
 // Reconstruct keys using KeyFactory
-KeyFactory kf = KeyFactory.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyFactory kf = KeyFactory.getInstance("X25519MLKEM768", PROVIDER_NAME);
 
 // For public key
 X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(publicKeyBytes);
@@ -265,7 +265,7 @@ import net.glassless.provider.GlaSSLessProvider;
 Security.insertProviderAt(new GlaSSLessProvider(), 1);
 
 // Verify FIPS mode is active
-GlaSSLessProvider provider = (GlaSSLessProvider) Security.getProvider("GlaSSLess");
+GlaSSLessProvider provider = (GlaSSLessProvider) Security.getProvider(PROVIDER_NAME);
 assert provider.isFIPSMode() : "OpenSSL FIPS provider is not enabled";
 
 // From this point, all TLS 1.3 connections that negotiate X25519MLKEM768
@@ -354,7 +354,7 @@ ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
 // Server generates and sends hybrid public key
-KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", "GlaSSLess");
+KeyPairGenerator kpg = KeyPairGenerator.getInstance("X25519MLKEM768", PROVIDER_NAME);
 KeyPair keyPair = kpg.generateKeyPair();
 out.writeObject(keyPair.getPublic().getEncoded());
 

@@ -1,10 +1,10 @@
 package net.glassless.provider.internal.algparamgen;
 
+import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.math.BigInteger;
-import java.security.AlgorithmParameterGeneratorSpi;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
@@ -20,116 +20,69 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * AlgorithmParameterGenerator for DSA.
  * Generates DSA domain parameters (p, q, g) using OpenSSL.
  */
-public class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi {
+public class DSAParameterGenerator extends AbstractParameterGenerator {
 
-    private int primePBits = 2048;  // Default key size
-    private int primeQBits = 256;   // Default q size
-    private SecureRandom random;
+   private int primePBits = 2048;
+   private int primeQBits = 256;
+   private SecureRandom random;
 
-    @Override
-    protected void engineInit(int size, SecureRandom random) {
-        // Validate size
-        if (size < 512 || size > 8192) {
-            throw new InvalidParameterException("Key size must be between 512 and 8192 bits");
-        }
-        if (size % 64 != 0) {
-            throw new InvalidParameterException("Key size must be a multiple of 64");
-        }
+   public DSAParameterGenerator() {
+      super("DSA");
+   }
 
-        this.primePBits = size;
-        // Set Q size based on P size (following FIPS 186-4)
-        if (size <= 1024) {
-            this.primeQBits = 160;
-        } else if (size <= 2048) {
-            this.primeQBits = 256;
-        } else {
-            this.primeQBits = 256; // For larger sizes, use 256-bit Q
-        }
-        this.random = random;
-    }
+   @Override
+   protected void engineInit(int size, SecureRandom random) {
+      if (size < 512 || size > 8192) {
+         throw new InvalidParameterException("Key size must be between 512 and 8192 bits");
+      }
+      if (size % 64 != 0) {
+         throw new InvalidParameterException("Key size must be a multiple of 64");
+      }
+      this.primePBits = size;
+      if (size <= 1024) {
+         this.primeQBits = 160;
+      } else {
+         this.primeQBits = 256;
+      }
+      this.random = random;
+   }
 
-    @Override
-    protected void engineInit(AlgorithmParameterSpec genParamSpec, SecureRandom random)
-            throws InvalidAlgorithmParameterException {
-        if (genParamSpec instanceof DSAGenParameterSpec dsaGenSpec) {
-            this.primePBits = dsaGenSpec.getPrimePLength();
-            this.primeQBits = dsaGenSpec.getSubprimeQLength();
-            this.random = random;
-        } else {
-            throw new InvalidAlgorithmParameterException(
-                "Unsupported parameter spec: " + (genParamSpec == null ? "null" : genParamSpec.getClass().getName()));
-        }
-    }
+   @Override
+   protected void engineInit(AlgorithmParameterSpec genParamSpec, SecureRandom random)
+      throws InvalidAlgorithmParameterException {
+      if (genParamSpec instanceof DSAGenParameterSpec dsaGenSpec) {
+         this.primePBits = dsaGenSpec.getPrimePLength();
+         this.primeQBits = dsaGenSpec.getSubprimeQLength();
+         this.random = random;
+      } else {
+         throw new InvalidAlgorithmParameterException(
+            "Unsupported parameter spec: " + (genParamSpec == null ? "null" : genParamSpec.getClass().getName()));
+      }
+   }
 
-    @Override
-    protected AlgorithmParameters engineGenerateParameters() {
-        try (Arena arena = Arena.ofConfined()) {
-            // Create EVP_PKEY_CTX for DSA parameter generation
-            MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
-                MemorySegment.NULL,
-                "DSA",
-                MemorySegment.NULL,
-                arena
-            );
-            if (ctx.equals(MemorySegment.NULL)) {
-                throw new ProviderException("Failed to create EVP_PKEY_CTX for DSA");
-            }
+   @Override
+   protected void configureParameters(MemorySegment ctx) throws Throwable {
+      int result = OpenSSLCrypto.EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, primePBits);
+      if (result != 1) {
+         throw new ProviderException("Failed to set DSA key size");
+      }
 
-            try {
-                // Initialize for parameter generation
-                int result = OpenSSLCrypto.EVP_PKEY_paramgen_init(ctx);
-                if (result != 1) {
-                    throw new ProviderException("EVP_PKEY_paramgen_init failed");
-                }
+      result = OpenSSLCrypto.EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, primeQBits);
+      if (result != 1) {
+         throw new ProviderException("Failed to set DSA Q size");
+      }
+   }
 
-                // Set the key size (pbits)
-                result = OpenSSLCrypto.EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, primePBits);
-                if (result != 1) {
-                    throw new ProviderException("Failed to set DSA key size");
-                }
+   @Override
+   protected AlgorithmParameters extractParameters(MemorySegment pkey, Arena arena) throws Throwable {
+      BigInteger p = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "p", arena);
+      BigInteger q = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "q", arena);
+      BigInteger g = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "g", arena);
 
-                // Set the Q size (qbits)
-                result = OpenSSLCrypto.EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, primeQBits);
-                if (result != 1) {
-                    throw new ProviderException("Failed to set DSA Q size");
-                }
+      DSAParameterSpec dsaSpec = new DSAParameterSpec(p, q, g);
 
-                // Generate parameters
-                MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-                result = OpenSSLCrypto.EVP_PKEY_paramgen(ctx, pkeyPtr);
-                if (result != 1) {
-                    throw new ProviderException("EVP_PKEY_paramgen failed");
-                }
-
-                MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-                if (pkey.equals(MemorySegment.NULL)) {
-                    throw new ProviderException("Generated parameter key is null");
-                }
-
-                try {
-                    // Extract p, q, g from the generated parameters
-                    BigInteger p = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "p", arena);
-                    BigInteger q = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "q", arena);
-                    BigInteger g = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "g", arena);
-
-                    // Create DSAParameterSpec
-                    DSAParameterSpec dsaSpec = new DSAParameterSpec(p, q, g);
-
-                    // Create and initialize AlgorithmParameters
-                    AlgorithmParameters params = AlgorithmParameters.getInstance("DSA", "GlaSSLess");
-                    params.init(dsaSpec);
-
-                    return params;
-                } finally {
-                    OpenSSLCrypto.EVP_PKEY_free(pkey);
-                }
-            } finally {
-                OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
-            }
-        } catch (ProviderException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new ProviderException("Error generating DSA parameters", e);
-        }
-    }
+      AlgorithmParameters params = AlgorithmParameters.getInstance("DSA", PROVIDER_NAME);
+      params.init(dsaSpec);
+      return params;
+   }
 }

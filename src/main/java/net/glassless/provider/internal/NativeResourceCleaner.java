@@ -107,12 +107,11 @@ public final class NativeResourceCleaner {
    /**
     * Registers a cleanup action that will be executed when the given object is garbage collected.
     *
-    * @param obj the object to monitor for garbage collection
+    * @param obj    the object to monitor for garbage collection
     * @param action the cleanup action to run
-    * @return a Cleaner.Cleanable that can be used to clean up early if desired
     */
-   public static Cleaner.Cleanable register(Object obj, Runnable action) {
-      return CLEANER.register(obj, action);
+   public static void register(Object obj, Runnable action) {
+      CLEANER.register(obj, action);
    }
 
    /**
@@ -205,8 +204,8 @@ public final class NativeResourceCleaner {
       /**
        * Registers the cleanup action for the given object.
        */
-      public Cleaner.Cleanable registerFor(Object obj) {
-         return NativeResourceCleaner.register(obj, build());
+      public void registerFor(Object obj) {
+         NativeResourceCleaner.register(obj, build());
       }
    }
 

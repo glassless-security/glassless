@@ -6,7 +6,7 @@ package net.glassless.provider.internal.mlkem;
  */
 public class MLKEM512KeyPairGenerator extends MLKEMKeyPairGenerator {
 
-    public MLKEM512KeyPairGenerator() {
-        super(MLKEM512, "ML-KEM-512");
-    }
+   public MLKEM512KeyPairGenerator() {
+      super(MLKEM512, "ML-KEM-512");
+   }
 }
