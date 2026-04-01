@@ -13,14 +13,14 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 
-import net.glassless.provider.internal.OpenSSLCrypto;
-
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Tests for Deterministic ECDSA (RFC 6979 / FIPS 186-5).
