@@ -1,16 +1,11 @@
 package net.glassless.provider.internal.keypairgen;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGeneratorSpi;
-import java.security.PrivateKey;
 import java.security.ProviderException;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -57,62 +52,18 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    @Override
    public KeyPair generateKeyPair() {
-      try (Arena arena = Arena.ofConfined()) {
-         // Create RSA key generation context
-         MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "RSA", MemorySegment.NULL, arena);
-         if (ctx.equals(MemorySegment.NULL)) {
-            throw new ProviderException("Failed to create EVP_PKEY_CTX for RSA");
-         }
-
-         try {
-            // Initialize for key generation
-            int result = OpenSSLCrypto.EVP_PKEY_keygen_init(ctx);
-            if (result <= 0) {
-               throw new ProviderException("EVP_PKEY_keygen_init failed");
-            }
-
-            // Set key size
-            result = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, keySize);
-            if (result <= 0) {
-               throw new ProviderException("EVP_PKEY_CTX_set_rsa_keygen_bits failed");
-            }
-
-            // Generate the key pair
-            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-            result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
-            if (result <= 0) {
-               throw new ProviderException("EVP_PKEY_keygen failed");
-            }
-
-            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-            if (pkey.equals(MemorySegment.NULL)) {
-               throw new ProviderException("Generated key is null");
-            }
-
-            try {
-               // Export private key to DER format (PKCS#8)
-               byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey, arena);
-               PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-
-               // Export public key to DER format (SubjectPublicKeyInfo / X.509)
-               byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey, arena);
-               X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
-
-               // Use standard KeyFactory to create the key objects
-               KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-               PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
-               PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
-
-               return new KeyPair(publicKey, privateKey);
-
-            } finally {
-               OpenSSLCrypto.EVP_PKEY_free(pkey);
-            }
-
-         } finally {
-            OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
-         }
-
+      try {
+         byte[][] keys = OpenSSLCrypto.generateKeyPair("RSA",
+            ctx -> {
+               int r = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, keySize);
+               if (r <= 0) {
+                  throw new ProviderException("EVP_PKEY_CTX_set_rsa_keygen_bits failed");
+               }
+            });
+         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+         return new KeyPair(
+            keyFactory.generatePublic(new X509EncodedKeySpec(keys[0])),
+            keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keys[1])));
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {

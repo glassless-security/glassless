@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.slhdsa;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 import java.security.KeyPair;
@@ -146,54 +143,11 @@ public class SLHDSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    @Override
    public KeyPair generateKeyPair() {
-      try (Arena arena = Arena.ofConfined()) {
-         // Create EVP_PKEY_CTX for SLH-DSA key generation
-         MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
-            MemorySegment.NULL,
-            algorithmName,
-            MemorySegment.NULL,
-            arena
-         );
-         if (ctx.equals(MemorySegment.NULL)) {
-            throw new ProviderException("Failed to create EVP_PKEY_CTX for " + algorithmName +
-               ". SLH-DSA requires OpenSSL 3.5+");
-         }
-
-         try {
-            // Initialize for key generation
-            int result = OpenSSLCrypto.EVP_PKEY_keygen_init(ctx);
-            if (result != 1) {
-               throw new ProviderException("EVP_PKEY_keygen_init failed for " + algorithmName);
-            }
-
-            // Generate the key pair
-            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-            result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
-            if (result != 1) {
-               throw new ProviderException("EVP_PKEY_keygen failed for " + algorithmName);
-            }
-
-            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-            if (pkey.equals(MemorySegment.NULL)) {
-               throw new ProviderException("Generated key is null");
-            }
-
-            try {
-               // Export keys in DER format
-               byte[] publicKeyEncoded = OpenSSLCrypto.exportPublicKey(pkey, arena);
-               byte[] privateKeyEncoded = OpenSSLCrypto.exportPrivateKey(pkey, arena);
-
-               // Create key objects
-               GlaSSLessSLHDSAPublicKey publicKey = new GlaSSLessSLHDSAPublicKey(jcaAlgorithm, publicKeyEncoded);
-               GlaSSLessSLHDSAPrivateKey privateKey = new GlaSSLessSLHDSAPrivateKey(jcaAlgorithm, privateKeyEncoded);
-
-               return new KeyPair(publicKey, privateKey);
-            } finally {
-               OpenSSLCrypto.EVP_PKEY_free(pkey);
-            }
-         } finally {
-            OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
-         }
+      try {
+         byte[][] keys = OpenSSLCrypto.generateKeyPair(algorithmName, null);
+         return new KeyPair(
+            new GlaSSLessSLHDSAPublicKey(jcaAlgorithm, keys[0]),
+            new GlaSSLessSLHDSAPrivateKey(jcaAlgorithm, keys[1]));
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {

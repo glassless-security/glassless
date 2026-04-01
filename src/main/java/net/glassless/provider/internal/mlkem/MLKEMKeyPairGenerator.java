@@ -1,8 +1,5 @@
 package net.glassless.provider.internal.mlkem;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 import java.security.KeyPair;
@@ -93,54 +90,11 @@ public class MLKEMKeyPairGenerator extends KeyPairGeneratorSpi {
 
    @Override
    public KeyPair generateKeyPair() {
-      try (Arena arena = Arena.ofConfined()) {
-         // Create EVP_PKEY_CTX for ML-KEM key generation
-         MemorySegment ctx = OpenSSLCrypto.EVP_PKEY_CTX_new_from_name(
-            MemorySegment.NULL,
-            algorithmName,
-            MemorySegment.NULL,
-            arena
-         );
-         if (ctx.equals(MemorySegment.NULL)) {
-            throw new ProviderException("Failed to create EVP_PKEY_CTX for " + algorithmName +
-               ". ML-KEM requires OpenSSL 3.5+");
-         }
-
-         try {
-            // Initialize for key generation
-            int result = OpenSSLCrypto.EVP_PKEY_keygen_init(ctx);
-            if (result != 1) {
-               throw new ProviderException("EVP_PKEY_keygen_init failed for " + algorithmName);
-            }
-
-            // Generate the key pair
-            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
-            result = OpenSSLCrypto.EVP_PKEY_keygen(ctx, pkeyPtr);
-            if (result != 1) {
-               throw new ProviderException("EVP_PKEY_keygen failed for " + algorithmName);
-            }
-
-            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
-            if (pkey.equals(MemorySegment.NULL)) {
-               throw new ProviderException("Generated key is null");
-            }
-
-            try {
-               // Export keys in DER format
-               byte[] publicKeyEncoded = OpenSSLCrypto.exportPublicKey(pkey, arena);
-               byte[] privateKeyEncoded = OpenSSLCrypto.exportPrivateKey(pkey, arena);
-
-               // Create key objects
-               GlaSSLessMLKEMPublicKey publicKey = new GlaSSLessMLKEMPublicKey(jcaAlgorithm, publicKeyEncoded);
-               GlaSSLessMLKEMPrivateKey privateKey = new GlaSSLessMLKEMPrivateKey(jcaAlgorithm, privateKeyEncoded);
-
-               return new KeyPair(publicKey, privateKey);
-            } finally {
-               OpenSSLCrypto.EVP_PKEY_free(pkey);
-            }
-         } finally {
-            OpenSSLCrypto.EVP_PKEY_CTX_free(ctx);
-         }
+      try {
+         byte[][] keys = OpenSSLCrypto.generateKeyPair(algorithmName, null);
+         return new KeyPair(
+            new GlaSSLessMLKEMPublicKey(jcaAlgorithm, keys[0]),
+            new GlaSSLessMLKEMPrivateKey(jcaAlgorithm, keys[1]));
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {

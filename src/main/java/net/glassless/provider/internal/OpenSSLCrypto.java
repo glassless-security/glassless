@@ -2439,4 +2439,65 @@ public class OpenSSLCrypto {
 
       return paramIndex + 1;
    }
+
+   /**
+    * Functional interface for configuring an EVP_PKEY_CTX after keygen_init.
+    */
+   @FunctionalInterface
+   public interface KeyGenConfigurator {
+      void configure(MemorySegment ctx) throws Throwable;
+   }
+
+   /**
+    * Generates a key pair using the named algorithm, returning exported
+    * public and private key bytes. Handles the full EVP_PKEY_CTX lifecycle.
+    *
+    * @param algorithmName OpenSSL algorithm name
+    * @param configurator  optional context configurator called after keygen_init (may be null)
+    * @return array of [publicKeyBytes, privateKeyBytes]
+    */
+   public static byte[][] generateKeyPair(String algorithmName, KeyGenConfigurator configurator) throws Throwable {
+      try (Arena arena = Arena.ofConfined()) {
+         MemorySegment ctx = EVP_PKEY_CTX_new_from_name(
+            MemorySegment.NULL, algorithmName, MemorySegment.NULL, arena);
+         if (ctx.equals(MemorySegment.NULL)) {
+            throw new java.security.ProviderException(
+               "Failed to create EVP_PKEY_CTX for " + algorithmName);
+         }
+
+         try {
+            int result = EVP_PKEY_keygen_init(ctx);
+            if (result <= 0) {
+               throw new java.security.ProviderException(
+                  "EVP_PKEY_keygen_init failed for " + algorithmName);
+            }
+
+            if (configurator != null) {
+               configurator.configure(ctx);
+            }
+
+            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+            result = EVP_PKEY_keygen(ctx, pkeyPtr);
+            if (result <= 0) {
+               throw new java.security.ProviderException(
+                  "EVP_PKEY_keygen failed for " + algorithmName);
+            }
+
+            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
+            if (pkey.equals(MemorySegment.NULL)) {
+               throw new java.security.ProviderException("Generated key is null");
+            }
+
+            try {
+               byte[] publicKeyBytes = exportPublicKey(pkey, arena);
+               byte[] privateKeyBytes = exportPrivateKey(pkey, arena);
+               return new byte[][]{publicKeyBytes, privateKeyBytes};
+            } finally {
+               EVP_PKEY_free(pkey);
+            }
+         } finally {
+            EVP_PKEY_CTX_free(ctx);
+         }
+      }
+   }
 }
