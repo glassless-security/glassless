@@ -1114,7 +1114,9 @@ public class GlaSSLessProvider extends Provider {
       }
 
       // LMS (RFC 8554 / NIST SP 800-208) - Leighton-Micali Signature (verification only)
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS")) {
+      // OpenSSL 3.6.x has LMS KEYMGMT but uses an incompatible SPKI encoding; requires 4.0+
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS") &&
+         (!OpenSSLCrypto.isVersionAtLeast(3, 6, 0) || OpenSSLCrypto.isVersionAtLeast(4, 0, 0))) {
          putService(new Service(this, SIGNATURE, "LMS",
             LMSSignature.class.getName(),
             List.of("HSS", "id-alg-hss-lms-hashsig",
@@ -1397,7 +1399,9 @@ public class GlaSSLessProvider extends Provider {
       }
 
       // LMS (RFC 8554 / NIST SP 800-208) - verification only, no private keys
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS")) {
+      // OpenSSL 3.6.x has LMS KEYMGMT but uses an incompatible SPKI encoding; requires 4.0+
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS") &&
+         (!OpenSSLCrypto.isVersionAtLeast(3, 6, 0) || OpenSSLCrypto.isVersionAtLeast(4, 0, 0))) {
          putService(new Service(this, KEY_FACTORY, "LMS",
             LMSKeyFactory.class.getName(),
             List.of("HSS", "id-alg-hss-lms-hashsig",

@@ -39,7 +39,11 @@ public class LMSTest {
 
    private static void assumeLMSAvailable() {
       assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "LMS"),
-         "LMS requires OpenSSL 3.6+ with LMS support (enable-lms)");
+         "LMS requires OpenSSL with LMS support (enable-lms)");
+      // OpenSSL 3.6.x has LMS KEYMGMT available but uses a different SPKI encoding
+      // that is incompatible with the ACVP test vectors. The format stabilized in 4.0.
+      assumeTrue(!OpenSSLCrypto.isVersionAtLeast(3, 6, 0) || OpenSSLCrypto.isVersionAtLeast(4, 0, 0),
+         "LMS SPKI format in OpenSSL 3.6.x is incompatible; requires 3.5.x or 4.0+");
    }
 
    // ACVP test vector: LMS_SHA256_M24_H5, LMOTS_SHA256_N24_W1
