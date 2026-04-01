@@ -21,11 +21,11 @@ jobs:
           - java: '25'
             os: ubuntu-24.04-arm
             arch: arm64
-          - java: '26-ea'
+          - java: '27-ea'
             os: ubuntu-latest
             arch: amd64
             experimental: true
-          - java: '26-ea'
+          - java: '27-ea'
             os: ubuntu-24.04-arm
             arch: arm64
             experimental: true
