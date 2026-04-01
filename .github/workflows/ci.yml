@@ -8,26 +8,49 @@ on:
 
 jobs:
   build:
-    name: Build and Test (JDK ${{ matrix.java }}, ${{ matrix.arch }})
+    name: "Test (JDK ${{ matrix.java }}, ${{ matrix.arch }}, OpenSSL ${{ matrix.openssl }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        java: ['25']
         include:
+          # Baseline: system OpenSSL (3.0.x) on both architectures
           - java: '25'
             os: ubuntu-latest
             arch: amd64
+            openssl: 'system'
           - java: '25'
             os: ubuntu-24.04-arm
             arch: arm64
+            openssl: 'system'
+
+          # OpenSSL 3.5.5 (current LTS)
+          - java: '25'
+            os: ubuntu-latest
+            arch: amd64
+            openssl: '3.5.5'
+
+          # OpenSSL 3.6.1 (current stable)
+          - java: '25'
+            os: ubuntu-latest
+            arch: amd64
+            openssl: '3.6.1'
           - java: '27-ea'
             os: ubuntu-latest
             arch: amd64
+            openssl: '3.6.1'
+            experimental: true
+
+          # OpenSSL 4.0.0-beta1 (upcoming)
+          - java: '25'
+            os: ubuntu-latest
+            arch: amd64
+            openssl: '4.0.0-beta1'
             experimental: true
           - java: '27-ea'
-            os: ubuntu-24.04-arm
-            arch: arm64
+            os: ubuntu-latest
+            arch: amd64
+            openssl: '4.0.0-beta1'
             experimental: true
 
     continue-on-error: ${{ matrix.experimental || false }}
@@ -36,6 +59,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # --- Build OpenSSL from source (skipped for 'system') ---
+      - name: Cache OpenSSL ${{ matrix.openssl }}
+        if: matrix.openssl != 'system'
+        id: cache-openssl
+        uses: actions/cache@v4
+        with:
+          path: ~/openssl-${{ matrix.openssl }}
+          key: openssl-${{ matrix.openssl }}-${{ runner.arch }}-v1
+
+      - name: Build OpenSSL ${{ matrix.openssl }}
+        if: matrix.openssl != 'system' && steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential
+          curl -fsSL "https://github.com/openssl/openssl/releases/download/openssl-${{ matrix.openssl }}/openssl-${{ matrix.openssl }}.tar.gz" \
+            | tar xz
+          cd "openssl-${{ matrix.openssl }}"
+          EXTRA_FLAGS=""
+          # LMS is disabled by default in OpenSSL 3.6+
+          MAJOR_MINOR=$(echo "${{ matrix.openssl }}" | grep -oP '^\d+\.\d+')
+          if [ "$(echo -e "3.6\n${MAJOR_MINOR}" | sort -V | head -1)" = "3.6" ]; then
+            EXTRA_FLAGS="enable-lms"
+          fi
+          ./Configure --prefix="$HOME/openssl-${{ matrix.openssl }}" --libdir=lib \
+            no-apps no-docs no-tests $EXTRA_FLAGS
+          make -j"$(nproc)"
+          make install_sw
+
+      - name: Set OpenSSL environment
+        if: matrix.openssl != 'system'
+        run: |
+          LIBCRYPTO=$(find "$HOME/openssl-${{ matrix.openssl }}/lib" -name 'libcrypto.so.*' \
+            -not -name '*.a' | sort -V | tail -1)
+          echo "Found libcrypto: ${LIBCRYPTO}"
+          echo "LIBCRYPTO_PATH=${LIBCRYPTO}" >> "$GITHUB_ENV"
+          echo "OPENSSL_LIB_DIR=$HOME/openssl-${{ matrix.openssl }}/lib" >> "$GITHUB_ENV"
+
+      # --- JDK setup ---
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
@@ -43,14 +103,25 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build and test
+      # --- Test ---
+      - name: Build and test (system OpenSSL)
+        if: matrix.openssl == 'system'
         run: mvn -B verify
 
+      - name: Build and test (OpenSSL ${{ matrix.openssl }})
+        if: matrix.openssl != 'system'
+        env:
+          LD_LIBRARY_PATH: ${{ env.OPENSSL_LIB_DIR }}
+        run: >-
+          mvn -B verify
+          -Dglassless.libcrypto.path=${{ env.LIBCRYPTO_PATH }}
+
+      # --- Upload results ---
       - name: Upload test results
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: test-results-jdk-${{ matrix.java }}-${{ matrix.arch }}
+          name: test-results-jdk-${{ matrix.java }}-${{ matrix.arch }}-openssl-${{ matrix.openssl }}
           path: target/surefire-reports/
           retention-days: 7
 
