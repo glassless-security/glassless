@@ -177,7 +177,7 @@ public abstract class AbstractMac extends MacSpi {
             MemorySegment keySegment = arena.allocate(ValueLayout.JAVA_BYTE, keyBytes.length);
             keySegment.asByteBuffer().put(keyBytes);
 
-            OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
+            var unused = OpenSSLCrypto.EVP_MAC_init(evpMacCtx, keySegment, keyBytes.length, paramsSegment);
          } catch (Throwable e) {
             // Ignore reset errors
          }

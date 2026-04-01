@@ -465,7 +465,7 @@ public class GlaSSLessProvider extends Provider {
       try {
          // Attempt to load OpenSSL and get the version string
          // This will trigger the static initializer in OpenSSLCrypto
-         OpenSSLCrypto.getOpenSSLVersion();
+         var unused = OpenSSLCrypto.getOpenSSLVersion();
          return true;
       } catch (Throwable e) {
          return false;

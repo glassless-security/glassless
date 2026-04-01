@@ -262,7 +262,10 @@ abstract class AbstractCipher extends CipherSpi {
                // Extract tag from the end of input
                MemorySegment inputTagSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, tagLength);
                inputTagSegment.asByteBuffer().put(input, inputOffset + inputLen - tagLength, tagLength);
-               OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x11, tagLength, inputTagSegment); // 0x11 is EVP_CTRL_GCM_SET_TAG
+               int setTagResult = OpenSSLCrypto.EVP_CIPHER_CTX_ctrl(evpCipherCtx, 0x11, tagLength, inputTagSegment); // 0x11 is EVP_CTRL_GCM_SET_TAG
+               if (setTagResult <= 0) {
+                  throw new BadPaddingException("Failed to set AEAD tag");
+               }
 
                // Adjust input length to exclude the tag
                actualInputLen = inputLen - tagLength;

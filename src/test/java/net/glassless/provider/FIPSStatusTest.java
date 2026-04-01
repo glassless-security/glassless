@@ -45,15 +45,17 @@ public class FIPSStatusTest {
       @Test
       @DisplayName("FIPS status can be queried")
       void testFIPSStatusQuery() {
-         // Should not throw
-         FIPSStatus.isFIPSEnabled();
+         // Should not throw, result depends on OpenSSL configuration
+         var fipsEnabled = FIPSStatus.isFIPSEnabled();
+         assertNotNull(Boolean.valueOf(fipsEnabled));
       }
 
       @Test
       @DisplayName("FIPS provider availability can be queried")
       void testFIPSProviderAvailability() {
-         // Should not throw
-         FIPSStatus.isFIPSProviderAvailable();
+         // Should not throw, result depends on OpenSSL configuration
+         var fipsAvailable = FIPSStatus.isFIPSProviderAvailable();
+         assertNotNull(Boolean.valueOf(fipsAvailable));
       }
 
       @Test

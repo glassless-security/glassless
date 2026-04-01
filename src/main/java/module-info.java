@@ -1,4 +1,6 @@
 module net.glassless.provider {
+   requires static com.google.errorprone.annotations;
+
    exports net.glassless.provider;
    opens net.glassless.provider.internal.cipher to java.base;
    opens net.glassless.provider.internal.digest to java.base;
