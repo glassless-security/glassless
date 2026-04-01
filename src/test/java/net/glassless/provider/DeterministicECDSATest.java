@@ -13,6 +13,9 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 
+import net.glassless.provider.internal.OpenSSLCrypto;
+
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,8 @@ public class DeterministicECDSATest {
    @BeforeAll
    public static void setUp() {
       Security.addProvider(new GlaSSLessProvider());
+      Assumptions.assumeTrue(OpenSSLCrypto.isVersionAtLeast(3, 2, 0),
+         "Deterministic ECDSA (RFC 6979) requires OpenSSL 3.2+");
    }
 
    private KeyPair generateKeyPair(String curve) throws Exception {

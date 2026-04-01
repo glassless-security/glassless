@@ -981,14 +981,16 @@ public class GlaSSLessProvider extends Provider {
       putService(new Service(this, SIGNATURE, "SHA3-512withECDSA", SHA3_512withECDSASignature.class.getName(),
          List.of("OID.2.16.840.1.101.3.4.3.12", "2.16.840.1.101.3.4.3.12"), null));
 
-      // Deterministic ECDSA (RFC 6979 / FIPS 186-5) - FIPS approved
-      putService(new Service(this, SIGNATURE, "SHA224withDetECDSA", SHA224withDetECDSASignature.class.getName(), null, null));
-      putService(new Service(this, SIGNATURE, "SHA256withDetECDSA", SHA256withDetECDSASignature.class.getName(), null, null));
-      putService(new Service(this, SIGNATURE, "SHA384withDetECDSA", SHA384withDetECDSASignature.class.getName(), null, null));
-      putService(new Service(this, SIGNATURE, "SHA512withDetECDSA", SHA512withDetECDSASignature.class.getName(), null, null));
-      putService(new Service(this, SIGNATURE, "SHA3-256withDetECDSA", SHA3_256withDetECDSASignature.class.getName(), null, null));
-      putService(new Service(this, SIGNATURE, "SHA3-384withDetECDSA", SHA3_384withDetECDSASignature.class.getName(), null, null));
-      putService(new Service(this, SIGNATURE, "SHA3-512withDetECDSA", SHA3_512withDetECDSASignature.class.getName(), null, null));
+      // Deterministic ECDSA (RFC 6979 / FIPS 186-5) - requires OpenSSL 3.2+ for nonce-type parameter
+      if (OpenSSLCrypto.isVersionAtLeast(3, 2, 0)) {
+         putService(new Service(this, SIGNATURE, "SHA224withDetECDSA", SHA224withDetECDSASignature.class.getName(), null, null));
+         putService(new Service(this, SIGNATURE, "SHA256withDetECDSA", SHA256withDetECDSASignature.class.getName(), null, null));
+         putService(new Service(this, SIGNATURE, "SHA384withDetECDSA", SHA384withDetECDSASignature.class.getName(), null, null));
+         putService(new Service(this, SIGNATURE, "SHA512withDetECDSA", SHA512withDetECDSASignature.class.getName(), null, null));
+         putService(new Service(this, SIGNATURE, "SHA3-256withDetECDSA", SHA3_256withDetECDSASignature.class.getName(), null, null));
+         putService(new Service(this, SIGNATURE, "SHA3-384withDetECDSA", SHA3_384withDetECDSASignature.class.getName(), null, null));
+         putService(new Service(this, SIGNATURE, "SHA3-512withDetECDSA", SHA3_512withDetECDSASignature.class.getName(), null, null));
+      }
 
       // RSA with SHA-512 truncated - FIPS approved
       putService(new Service(this, SIGNATURE, "SHA512/224withRSA", SHA512_224withRSASignature.class.getName(),

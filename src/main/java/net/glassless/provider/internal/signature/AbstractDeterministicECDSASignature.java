@@ -17,6 +17,11 @@ abstract class AbstractDeterministicECDSASignature extends AbstractSignature {
 
    @Override
    protected void configureContext(MemorySegment pkeyCtx) throws Throwable {
+      if (!OpenSSLCrypto.isVersionAtLeast(3, 2, 0)) {
+         throw new ProviderException(
+            "Deterministic ECDSA (RFC 6979) requires OpenSSL 3.2+, found: " +
+            OpenSSLCrypto.getOpenSSLVersion());
+      }
       MemorySegment params = OpenSSLCrypto.createNonceTypeParams(1, arena);
       int result = OpenSSLCrypto.EVP_PKEY_CTX_set_params(pkeyCtx, params);
       if (result != 1) {
