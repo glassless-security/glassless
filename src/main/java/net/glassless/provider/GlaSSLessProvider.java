@@ -1031,20 +1031,26 @@ public class GlaSSLessProvider extends Provider {
 
    private void registerPQCSignatureServices() {
       // ML-DSA (FIPS 204) - Module-Lattice Digital Signature Algorithm
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44") &&
+         shouldRegisterService(SIGNATURE, "ML-DSA-44")) {
          putService(new Service(this, SIGNATURE, "ML-DSA-44",
             MLDSA44Signature.class.getName(),
             List.of("MLDSA44", "OID.2.16.840.1.101.3.4.3.17", "2.16.840.1.101.3.4.3.17"), null));
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa65")) {
-         putService(new Service(this, SIGNATURE, "ML-DSA-65",
-            MLDSA65Signature.class.getName(),
-            List.of("MLDSA65", "OID.2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.18"), null));
+         if (shouldRegisterService(SIGNATURE, "ML-DSA-65")) {
+            putService(new Service(this, SIGNATURE, "ML-DSA-65",
+               MLDSA65Signature.class.getName(),
+               List.of("MLDSA65", "OID.2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.18"), null));
+         }
          // Register generic ML-DSA signature
-         putService(new Service(this, SIGNATURE, "ML-DSA",
-            MLDSASignature.class.getName(), List.of("MLDSA"), null));
+         if (shouldRegisterService(SIGNATURE, "ML-DSA")) {
+            putService(new Service(this, SIGNATURE, "ML-DSA",
+               MLDSASignature.class.getName(), List.of("MLDSA"), null));
+         }
       }
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87") &&
+         shouldRegisterService(SIGNATURE, "ML-DSA-87")) {
          putService(new Service(this, SIGNATURE, "ML-DSA-87",
             MLDSA87Signature.class.getName(),
             List.of("MLDSA87", "OID.2.16.840.1.101.3.4.3.19", "2.16.840.1.101.3.4.3.19"), null));
@@ -1173,20 +1179,26 @@ public class GlaSSLessProvider extends Provider {
       }
 
       // ML-DSA (FIPS 204) - Digital Signature Algorithm
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa44") &&
+         shouldRegisterService(KEY_PAIR_GENERATOR, "ML-DSA-44")) {
          putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-44",
             MLDSA44KeyPairGenerator.class.getName(),
             List.of("MLDSA44", "OID.2.16.840.1.101.3.4.3.17", "2.16.840.1.101.3.4.3.17"), null));
       }
       if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa65")) {
-         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-65",
-            MLDSA65KeyPairGenerator.class.getName(),
-            List.of("MLDSA65", "OID.2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.18"), null));
+         if (shouldRegisterService(KEY_PAIR_GENERATOR, "ML-DSA-65")) {
+            putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-65",
+               MLDSA65KeyPairGenerator.class.getName(),
+               List.of("MLDSA65", "OID.2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.18"), null));
+         }
          // Register generic ML-DSA pointing to the most common variant
-         putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA",
-            MLDSAKeyPairGenerator.class.getName(), List.of("MLDSA"), null));
+         if (shouldRegisterService(KEY_PAIR_GENERATOR, "ML-DSA")) {
+            putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA",
+               MLDSAKeyPairGenerator.class.getName(), List.of("MLDSA"), null));
+         }
       }
-      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87")) {
+      if (OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", "mldsa87") &&
+         shouldRegisterService(KEY_PAIR_GENERATOR, "ML-DSA-87")) {
          putService(new Service(this, KEY_PAIR_GENERATOR, "ML-DSA-87",
             MLDSA87KeyPairGenerator.class.getName(),
             List.of("MLDSA87", "OID.2.16.840.1.101.3.4.3.19", "2.16.840.1.101.3.4.3.19"), null));
@@ -1611,7 +1623,7 @@ public class GlaSSLessProvider extends Provider {
       StringBuilder builder = new StringBuilder(PROVIDER_NAME);
       builder.append(" version ");
       builder.append(getProviderVersion());
-      builder.append(" [OpenSSL ");
+      builder.append(" [");
       builder.append(OpenSSLCrypto.getOpenSSLVersion());
       if (fipsMode) {
          builder.append(", FIPS");

@@ -19,6 +19,9 @@ import java.util.Set;
  *   <li>HMAC-SHA256/SHA512 (small data &lt;1KB): JDK is ~4-8x faster</li>
  *   <li>SecureRandom (small buffers &lt;64B): JDK is ~2x faster</li>
  *   <li>ML-KEM operations: JDK is ~1.7-2.5x faster</li>
+ *   <li>ML-DSA signing: JDK 27+ is ~4.3x faster</li>
+ *   <li>ML-DSA verification: JDK 27+ is ~1.6x faster</li>
+ *   <li>ML-DSA key generation: JDK 27+ is ~2.5x faster</li>
  * </ul>
  *
  * <p>Configuration is done via Java Security properties:
@@ -31,6 +34,7 @@ import java.util.Set;
  * glassless.hybrid.delegate.Mac=HmacSHA256,HmacSHA512
  * glassless.hybrid.delegate.SecureRandom=NativePRNG,DRBG
  * glassless.hybrid.delegate.KEM=ML-KEM-512,ML-KEM-768,ML-KEM-1024
+ * glassless.hybrid.delegate.Signature=ML-DSA-44,ML-DSA-65,ML-DSA-87
  * </pre>
  *
  * <p><strong>Important:</strong> Hybrid mode is automatically disabled when FIPS mode
@@ -60,8 +64,12 @@ public final class HybridModeConfig {
          // KEM: ML-KEM operations are ~1.7-2.5x faster in JDK
          "KEM", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"),
 
-         // KeyPairGenerator: ML-KEM key generation is ~2x faster in JDK
-         "KeyPairGenerator", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"));
+         // KeyPairGenerator: ML-KEM/ML-DSA key generation is ~2-2.5x faster in JDK (27+)
+         "KeyPairGenerator", Set.of("ML-KEM", "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024",
+            "ML-DSA", "ML-DSA-44", "ML-DSA-65", "ML-DSA-87"),
+
+         // Signature: ML-DSA signing is ~4.3x faster, verification ~1.6x faster in JDK (27+)
+         "Signature", Set.of("ML-DSA", "ML-DSA-44", "ML-DSA-65", "ML-DSA-87"));
    }
 
    // Cached values
