@@ -27,7 +27,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 abstract class AbstractCipher extends CipherSpi {
 
    protected final Arena arena;
-   private final String algorithmName;
+   private String algorithmName;
    private final CipherMode mode;
    private final CipherPadding padding;
    protected final NativeResourceCleaner.ResourceHolder resourceHolder;
@@ -47,6 +47,18 @@ abstract class AbstractCipher extends CipherSpi {
       // Register cleanup for when this object is GC'd
       this.resourceHolder = NativeResourceCleaner.createHolder(this);
       this.resourceHolder.setArena(arena);
+   }
+
+   protected void setAlgorithmName(String algorithmName) {
+      this.algorithmName = algorithmName;
+   }
+
+   /**
+    * Called during engineInit to allow subclasses to resolve the OpenSSL algorithm
+    * name based on the key. Default implementation does nothing.
+    */
+   protected void resolveAlgorithm(Key key) throws InvalidKeyException {
+      // Override in subclasses that need to determine algorithm from key size
    }
 
    @Override
@@ -117,6 +129,7 @@ abstract class AbstractCipher extends CipherSpi {
       }
 
       try {
+         resolveAlgorithm(key);
          evpCipher = OpenSSLCrypto.EVP_get_cipherbyname(algorithmName, arena);
          if (evpCipher.equals(MemorySegment.NULL)) {
             // Fall back to EVP_CIPHER_fetch for newer ciphers (e.g., AES-GCM-SIV)

@@ -9,6 +9,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
+import net.glassless.provider.internal.cipher.AESCipher;
+import net.glassless.provider.internal.cipher.AESWrapCipher;
 import net.glassless.provider.internal.cipher.AES_128CbcNoPaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128CbcPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_128CcmNoPaddingCipher;
@@ -59,6 +61,7 @@ import net.glassless.provider.internal.cipher.AES_256OfbPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.AES_256WrapCipher;
 import net.glassless.provider.internal.cipher.AES_256WrapPadCipher;
 import net.glassless.provider.internal.cipher.AES_256XtsNoPaddingCipher;
+import net.glassless.provider.internal.cipher.ARIACipher;
 import net.glassless.provider.internal.cipher.ARIA_128CbcNoPaddingCipher;
 import net.glassless.provider.internal.cipher.ARIA_128CbcPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.ARIA_128CfbNoPaddingCipher;
@@ -95,6 +98,7 @@ import net.glassless.provider.internal.cipher.ARIA_256GcmNoPaddingCipher;
 import net.glassless.provider.internal.cipher.ARIA_256GcmPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.ARIA_256OfbNoPaddingCipher;
 import net.glassless.provider.internal.cipher.ARIA_256OfbPKCS5PaddingCipher;
+import net.glassless.provider.internal.cipher.CamelliaCipher;
 import net.glassless.provider.internal.cipher.Camellia_128CbcNoPaddingCipher;
 import net.glassless.provider.internal.cipher.Camellia_128CbcPKCS5PaddingCipher;
 import net.glassless.provider.internal.cipher.Camellia_128CfbNoPaddingCipher;
@@ -560,6 +564,20 @@ public class GlaSSLessProvider extends Provider {
       // FIPS-approved: AES (all key sizes), RSA
       // NOT FIPS-approved: DESede (3DES), ChaCha20-Poly1305
 
+      // Generic AES (key size determined from key at init time) - FIPS approved
+      putService(new Service(this, CIPHER, "AES/ECB/NoPadding", AESCipher.EcbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/ECB/PKCS5Padding", AESCipher.EcbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CBC/NoPadding", AESCipher.CbcNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CBC/PKCS5Padding", AESCipher.CbcPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CTR/NoPadding", AESCipher.CtrNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CTR/PKCS5Padding", AESCipher.CtrPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CFB/NoPadding", AESCipher.CfbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CFB/PKCS5Padding", AESCipher.CfbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/OFB/NoPadding", AESCipher.OfbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/OFB/PKCS5Padding", AESCipher.OfbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/GCM/NoPadding", AESCipher.GcmNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AES/CCM/NoPadding", AESCipher.CcmNoPadding.class.getName(), null, null));
+
       // AES-128 - FIPS approved
       putService(new Service(this, CIPHER, "AES_128/ECB/NoPadding", AES_128EcbNoPaddingCipher.class.getName(),
          List.of("OID.2.16.840.1.101.3.4.1.1", "2.16.840.1.101.3.4.1.1"), null));
@@ -638,7 +656,10 @@ public class GlaSSLessProvider extends Provider {
          putService(new Service(this, CIPHER, "AES_256/GCM-SIV/NoPadding", AES_256GcmSivNoPaddingCipher.class.getName(), null, null));
       }
 
-      // AES Key Wrap - FIPS approved
+      // AES Key Wrap - FIPS approved (generic, key size determined at init time)
+      putService(new Service(this, CIPHER, "AESWrap", AESWrapCipher.Wrap.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "AESWrapPad", AESWrapCipher.WrapPad.class.getName(), null, null));
+      // AES Key Wrap - key-size-specific variants
       putService(new Service(this, CIPHER, "AESWrap_128", AES_128WrapCipher.class.getName(),
          List.of("OID.2.16.840.1.101.3.4.1.5", "2.16.840.1.101.3.4.1.5"), null));
       putService(new Service(this, CIPHER, "AESWrap_192", AES_192WrapCipher.class.getName(),
@@ -710,6 +731,17 @@ public class GlaSSLessProvider extends Provider {
    }
 
    private void registerCamelliaCiphers() {
+      // Generic Camellia (key size determined from key at init time)
+      putService(new Service(this, CIPHER, "Camellia/ECB/NoPadding", CamelliaCipher.EcbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/ECB/PKCS5Padding", CamelliaCipher.EcbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/CBC/NoPadding", CamelliaCipher.CbcNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/CBC/PKCS5Padding", CamelliaCipher.CbcPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/CTR/NoPadding", CamelliaCipher.CtrNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/CTR/PKCS5Padding", CamelliaCipher.CtrPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/CFB/NoPadding", CamelliaCipher.CfbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/CFB/PKCS5Padding", CamelliaCipher.CfbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/OFB/NoPadding", CamelliaCipher.OfbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "Camellia/OFB/PKCS5Padding", CamelliaCipher.OfbPKCS5Padding.class.getName(), null, null));
       // Camellia-128
       putService(new Service(this, CIPHER, "Camellia_128/ECB/NoPadding", Camellia_128EcbNoPaddingCipher.class.getName(), null, null));
       putService(new Service(this, CIPHER, "Camellia_128/ECB/PKCS5Padding", Camellia_128EcbPKCS5PaddingCipher.class.getName(), null, null));
@@ -746,6 +778,18 @@ public class GlaSSLessProvider extends Provider {
    }
 
    private void registerARIACiphers() {
+      // Generic ARIA (key size determined from key at init time)
+      putService(new Service(this, CIPHER, "ARIA/ECB/NoPadding", ARIACipher.EcbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/ECB/PKCS5Padding", ARIACipher.EcbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/CBC/NoPadding", ARIACipher.CbcNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/CBC/PKCS5Padding", ARIACipher.CbcPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/CTR/NoPadding", ARIACipher.CtrNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/CTR/PKCS5Padding", ARIACipher.CtrPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/CFB/NoPadding", ARIACipher.CfbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/CFB/PKCS5Padding", ARIACipher.CfbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/OFB/NoPadding", ARIACipher.OfbNoPadding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/OFB/PKCS5Padding", ARIACipher.OfbPKCS5Padding.class.getName(), null, null));
+      putService(new Service(this, CIPHER, "ARIA/GCM/NoPadding", ARIACipher.GcmNoPadding.class.getName(), null, null));
       // ARIA-128
       putService(new Service(this, CIPHER, "ARIA_128/ECB/NoPadding", ARIA_128EcbNoPaddingCipher.class.getName(), null, null));
       putService(new Service(this, CIPHER, "ARIA_128/ECB/PKCS5Padding", ARIA_128EcbPKCS5PaddingCipher.class.getName(), null, null));
