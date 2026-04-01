@@ -134,7 +134,6 @@ public class OpenSSLCrypto {
 
    // Method handles for version info
    private static MethodHandle OpenSSL_version;
-   private static MethodHandle OpenSSL_version_num;
 
    // Method handles for KEM (Key Encapsulation Mechanism) - OpenSSL 3.2+
    private static MethodHandle EVP_PKEY_encapsulate_init;
@@ -666,11 +665,11 @@ public class OpenSSLCrypto {
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
          );
          // unsigned long OpenSSL_version_num(void)
-         OpenSSL_version_num = linker.downcallHandle(
+         MethodHandle openSSL_version_num = linker.downcallHandle(
             libcrypto.find("OpenSSL_version_num").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.JAVA_LONG)
          );
-         opensslVersionNum = (long) OpenSSL_version_num.invokeExact();
+         opensslVersionNum = (long) openSSL_version_num.invokeExact();
 
          // KEM (Key Encapsulation Mechanism) functions - OpenSSL 3.2+
          EVP_PKEY_encapsulate_init = optionalHandle(linker, libcrypto,
@@ -1925,7 +1924,7 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.ADDRESS, offset, keyKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, keyValueSegment);
-      params.set(ValueLayout.JAVA_LONG, offset + 24, (long) key.length);
+      params.set(ValueLayout.JAVA_LONG, offset + 24, key.length);
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
       paramIndex++;
 
@@ -1942,7 +1941,7 @@ public class OpenSSLCrypto {
          params.set(ValueLayout.ADDRESS, offset, saltKeySegment);
          params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
          params.set(ValueLayout.ADDRESS, offset + 16, saltValueSegment);
-         params.set(ValueLayout.JAVA_LONG, offset + 24, (long) salt.length);
+         params.set(ValueLayout.JAVA_LONG, offset + 24, salt.length);
          params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
          paramIndex++;
       }
@@ -1960,7 +1959,7 @@ public class OpenSSLCrypto {
          params.set(ValueLayout.ADDRESS, offset, infoKeySegment);
          params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
          params.set(ValueLayout.ADDRESS, offset + 16, infoValueSegment);
-         params.set(ValueLayout.JAVA_LONG, offset + 24, (long) info.length);
+         params.set(ValueLayout.JAVA_LONG, offset + 24, info.length);
          params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
          paramIndex++;
       }
@@ -2003,7 +2002,7 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.ADDRESS, offset, passKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, passValueSegment);
-      params.set(ValueLayout.JAVA_LONG, offset + 24, (long) password.length);
+      params.set(ValueLayout.JAVA_LONG, offset + 24, password.length);
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
       paramIndex++;
 
@@ -2019,7 +2018,7 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.ADDRESS, offset, saltKeySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, saltValueSegment);
-      params.set(ValueLayout.JAVA_LONG, offset + 24, (long) salt.length);
+      params.set(ValueLayout.JAVA_LONG, offset + 24, salt.length);
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
       paramIndex++;
 
@@ -2369,7 +2368,7 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.ADDRESS, offset, keySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_UTF8_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, valueSegment);
-      params.set(ValueLayout.JAVA_LONG, offset + 24, (long) valueBytes.length);
+      params.set(ValueLayout.JAVA_LONG, offset + 24, valueBytes.length);
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
 
       return paramIndex + 1;
@@ -2387,7 +2386,7 @@ public class OpenSSLCrypto {
       params.set(ValueLayout.ADDRESS, offset, keySegment);
       params.set(ValueLayout.JAVA_INT, offset + 8, OSSL_PARAM_OCTET_STRING);
       params.set(ValueLayout.ADDRESS, offset + 16, valueSegment);
-      params.set(ValueLayout.JAVA_LONG, offset + 24, (long) value.length);
+      params.set(ValueLayout.JAVA_LONG, offset + 24, value.length);
       params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
 
       return paramIndex + 1;

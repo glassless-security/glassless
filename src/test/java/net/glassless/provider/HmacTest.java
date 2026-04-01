@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.SecureRandom;
 import java.security.Security;
@@ -216,7 +217,7 @@ public class HmacTest {
                     break;
                 }
             }
-            assertEquals(true, different, "Different salts should produce different MAC values");
+           assertTrue(different, "Different salts should produce different MAC values");
         }
     }
 }

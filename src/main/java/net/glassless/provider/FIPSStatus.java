@@ -81,11 +81,7 @@ public final class FIPSStatus {
       }
 
       // 3. Check system crypto policy (RHEL/Fedora)
-      if (isSystemCryptoPolicyFIPS()) {
-         return true;
-      }
-
-      return false;
+      return isSystemCryptoPolicyFIPS();
    }
 
    /**

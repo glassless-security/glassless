@@ -3,8 +3,8 @@ package net.glassless.provider;
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -135,8 +135,7 @@ public class KeyAgreementTest {
             byte[] aliceCharlieSecret = ka2.generateSecret();
 
             // The two shared secrets should be different
-            assertTrue(!Arrays.equals(aliceBobSecret, aliceCharlieSecret),
-                    "Shared secrets with different parties should be different");
+           assertFalse(Arrays.equals(aliceBobSecret, aliceCharlieSecret), "Shared secrets with different parties should be different");
         }
 
         @Test
@@ -204,7 +203,7 @@ public class KeyAgreementTest {
 
             assertNotNull(secretWithBob);
             assertNotNull(secretWithCharlie);
-            assertTrue(!Arrays.equals(secretWithBob, secretWithCharlie));
+            assertFalse(Arrays.equals(secretWithBob, secretWithCharlie));
         }
 
         @Test

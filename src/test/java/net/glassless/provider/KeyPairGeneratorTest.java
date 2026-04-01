@@ -2,6 +2,8 @@ package net.glassless.provider;
 
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -48,8 +50,8 @@ public class KeyPairGeneratorTest {
             assertNotNull(keyPair.getPublic());
             assertNotNull(keyPair.getPrivate());
 
-            assertTrue(keyPair.getPublic() instanceof RSAPublicKey);
-            assertTrue(keyPair.getPrivate() instanceof RSAPrivateKey);
+           assertInstanceOf(RSAPublicKey.class, keyPair.getPublic());
+           assertInstanceOf(RSAPrivateKey.class, keyPair.getPrivate());
 
             RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
             assertEquals(keySize, publicKey.getModulus().bitLength());
@@ -113,7 +115,7 @@ public class KeyPairGeneratorTest {
             RSAPublicKey pub2 = (RSAPublicKey) keyPair2.getPublic();
 
             // Different key pairs should have different moduli
-            assertTrue(!pub1.getModulus().equals(pub2.getModulus()));
+           assertFalse(pub1.getModulus().equals(pub2.getModulus()));
         }
     }
 
@@ -134,8 +136,8 @@ public class KeyPairGeneratorTest {
             assertNotNull(keyPair.getPublic());
             assertNotNull(keyPair.getPrivate());
 
-            assertTrue(keyPair.getPublic() instanceof ECPublicKey);
-            assertTrue(keyPair.getPrivate() instanceof ECPrivateKey);
+           assertInstanceOf(ECPublicKey.class, keyPair.getPublic());
+           assertInstanceOf(ECPrivateKey.class, keyPair.getPrivate());
         }
 
         @ParameterizedTest(name = "EC curve {0}")
@@ -147,8 +149,8 @@ public class KeyPairGeneratorTest {
             KeyPair keyPair = keyGen.generateKeyPair();
 
             assertNotNull(keyPair);
-            assertTrue(keyPair.getPublic() instanceof ECPublicKey);
-            assertTrue(keyPair.getPrivate() instanceof ECPrivateKey);
+           assertInstanceOf(ECPublicKey.class, keyPair.getPublic());
+           assertInstanceOf(ECPrivateKey.class, keyPair.getPrivate());
         }
 
         @Test
@@ -158,7 +160,7 @@ public class KeyPairGeneratorTest {
             KeyPair keyPair = keyGen.generateKeyPair();
 
             assertNotNull(keyPair);
-            assertTrue(keyPair.getPublic() instanceof ECPublicKey);
+           assertInstanceOf(ECPublicKey.class, keyPair.getPublic());
         }
 
         @Test
@@ -204,7 +206,7 @@ public class KeyPairGeneratorTest {
             ECPrivateKey priv2 = (ECPrivateKey) keyPair2.getPrivate();
 
             // Different key pairs should have different private key values
-            assertTrue(!priv1.getS().equals(priv2.getS()));
+            assertFalse(priv1.getS().equals(priv2.getS()));
         }
     }
 }

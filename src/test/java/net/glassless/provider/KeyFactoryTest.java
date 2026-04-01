@@ -3,8 +3,8 @@ package net.glassless.provider;
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -64,7 +64,7 @@ public class KeyFactoryTest {
             PublicKey publicKey = kf.generatePublic(spec);
 
             assertNotNull(publicKey);
-            assertTrue(publicKey instanceof RSAPublicKey);
+           assertInstanceOf(RSAPublicKey.class, publicKey);
             assertArrayEquals(encoded, publicKey.getEncoded());
         }
 
@@ -79,7 +79,7 @@ public class KeyFactoryTest {
             PrivateKey privateKey = kf.generatePrivate(spec);
 
             assertNotNull(privateKey);
-            assertTrue(privateKey instanceof RSAPrivateCrtKey);
+           assertInstanceOf(RSAPrivateCrtKey.class, privateKey);
             assertArrayEquals(encoded, privateKey.getEncoded());
         }
 
@@ -94,7 +94,7 @@ public class KeyFactoryTest {
             PublicKey publicKey = kf.generatePublic(spec);
 
             assertNotNull(publicKey);
-            assertTrue(publicKey instanceof RSAPublicKey);
+           assertInstanceOf(RSAPublicKey.class, publicKey);
 
             RSAPublicKey generatedKey = (RSAPublicKey) publicKey;
             assertEquals(rsaPub.getModulus(), generatedKey.getModulus());
@@ -121,7 +121,7 @@ public class KeyFactoryTest {
             PrivateKey privateKey = kf.generatePrivate(spec);
 
             assertNotNull(privateKey);
-            assertTrue(privateKey instanceof RSAPrivateCrtKey);
+           assertInstanceOf(RSAPrivateCrtKey.class, privateKey);
         }
 
         @Test
@@ -167,7 +167,7 @@ public class KeyFactoryTest {
             PublicKey translated = (PublicKey) kf.translateKey(rsaKeyPair.getPublic());
 
             assertNotNull(translated);
-            assertTrue(translated instanceof RSAPublicKey);
+           assertInstanceOf(RSAPublicKey.class, translated);
             assertArrayEquals(rsaKeyPair.getPublic().getEncoded(), translated.getEncoded());
         }
     }
@@ -188,7 +188,7 @@ public class KeyFactoryTest {
             PublicKey publicKey = kf.generatePublic(spec);
 
             assertNotNull(publicKey);
-            assertTrue(publicKey instanceof ECPublicKey);
+           assertInstanceOf(ECPublicKey.class, publicKey);
             assertArrayEquals(encoded, publicKey.getEncoded());
         }
 
@@ -203,7 +203,7 @@ public class KeyFactoryTest {
             PrivateKey privateKey = kf.generatePrivate(spec);
 
             assertNotNull(privateKey);
-            assertTrue(privateKey instanceof ECPrivateKey);
+           assertInstanceOf(ECPrivateKey.class, privateKey);
             assertArrayEquals(encoded, privateKey.getEncoded());
         }
 
@@ -218,7 +218,7 @@ public class KeyFactoryTest {
             PublicKey publicKey = kf.generatePublic(spec);
 
             assertNotNull(publicKey);
-            assertTrue(publicKey instanceof ECPublicKey);
+           assertInstanceOf(ECPublicKey.class, publicKey);
 
             ECPublicKey generatedKey = (ECPublicKey) publicKey;
             assertEquals(ecPub.getW(), generatedKey.getW());
@@ -235,7 +235,7 @@ public class KeyFactoryTest {
             PrivateKey privateKey = kf.generatePrivate(spec);
 
             assertNotNull(privateKey);
-            assertTrue(privateKey instanceof ECPrivateKey);
+           assertInstanceOf(ECPrivateKey.class, privateKey);
 
             ECPrivateKey generatedKey = (ECPrivateKey) privateKey;
             assertEquals(ecPriv.getS(), generatedKey.getS());
@@ -283,7 +283,7 @@ public class KeyFactoryTest {
             PublicKey translated = (PublicKey) kf.translateKey(ecKeyPair.getPublic());
 
             assertNotNull(translated);
-            assertTrue(translated instanceof ECPublicKey);
+            assertInstanceOf(ECPublicKey.class, translated);
             assertArrayEquals(ecKeyPair.getPublic().getEncoded(), translated.getEncoded());
         }
     }

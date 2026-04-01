@@ -127,7 +127,7 @@ public class MLKEM implements KEMSpi {
                // Ignore
             }
          }
-         return encapsulationSize > 0 ? encapsulationSize : 0;
+         return Math.max(encapsulationSize, 0);
       }
    }
 

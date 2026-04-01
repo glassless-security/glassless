@@ -204,7 +204,6 @@ public class OAEPParameters extends AlgorithmParametersSpi {
 
    private String oidToDigestName(String oid) {
       return switch (oid) {
-         case "1.3.14.3.2.26" -> "SHA-1";
          case "2.16.840.1.101.3.4.2.1" -> "SHA-256";
          case "2.16.840.1.101.3.4.2.2" -> "SHA-384";
          case "2.16.840.1.101.3.4.2.3" -> "SHA-512";

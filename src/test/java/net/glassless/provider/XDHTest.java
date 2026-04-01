@@ -3,6 +3,7 @@ package net.glassless.provider;
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,8 +47,8 @@ public class XDHTest {
             assertNotNull(kp.getPublic());
             assertNotNull(kp.getPrivate());
 
-            assertTrue(kp.getPublic() instanceof XECPublicKey);
-            assertTrue(kp.getPrivate() instanceof XECPrivateKey);
+           assertInstanceOf(XECPublicKey.class, kp.getPublic());
+           assertInstanceOf(XECPrivateKey.class, kp.getPrivate());
 
             XECPublicKey pub = (XECPublicKey) kp.getPublic();
             XECPrivateKey priv = (XECPrivateKey) kp.getPrivate();
@@ -91,8 +92,8 @@ public class XDHTest {
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
-            assertTrue(kp.getPublic() instanceof XECPublicKey);
-            assertTrue(kp.getPrivate() instanceof XECPrivateKey);
+           assertInstanceOf(XECPublicKey.class, kp.getPublic());
+           assertInstanceOf(XECPrivateKey.class, kp.getPrivate());
 
             XECPublicKey pub = (XECPublicKey) kp.getPublic();
             XECPrivateKey priv = (XECPrivateKey) kp.getPrivate();

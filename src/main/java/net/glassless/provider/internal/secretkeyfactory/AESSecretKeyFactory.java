@@ -20,7 +20,7 @@ public class AESSecretKeyFactory extends SecretKeyFactorySpi {
       if (keySpec instanceof SecretKeySpec secretKeySpec) {
          String algorithm = secretKeySpec.getAlgorithm();
 
-         if (!algorithm.equals(ALGORITHM) && !algorithm.startsWith("AES")) {
+         if (!algorithm.startsWith("AES")) {
             throw new InvalidKeySpecException("Key algorithm must be AES");
          }
 
@@ -63,7 +63,7 @@ public class AESSecretKeyFactory extends SecretKeyFactorySpi {
       }
 
       String algorithm = key.getAlgorithm();
-      if (algorithm.equals(ALGORITHM) || algorithm.startsWith("AES")) {
+      if (algorithm.startsWith("AES")) {
          if (key instanceof SecretKeySpec) {
             return key;
          }

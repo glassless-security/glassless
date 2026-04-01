@@ -3,6 +3,7 @@ package net.glassless.provider;
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -423,7 +424,7 @@ public class AlgorithmParametersTest {
             assertArrayEquals(salt, retrieved.getSalt());
             assertEquals(iterationCount, retrieved.getIterationCount());
             assertNotNull(retrieved.getParameterSpec());
-            assertTrue(retrieved.getParameterSpec() instanceof IvParameterSpec);
+           assertInstanceOf(IvParameterSpec.class, retrieved.getParameterSpec());
             assertArrayEquals(iv, ((IvParameterSpec) retrieved.getParameterSpec()).getIV());
         }
 

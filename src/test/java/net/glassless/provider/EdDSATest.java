@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,8 +47,8 @@ public class EdDSATest {
             assertNotNull(kp.getPublic());
             assertNotNull(kp.getPrivate());
 
-            assertTrue(kp.getPublic() instanceof EdECPublicKey);
-            assertTrue(kp.getPrivate() instanceof EdECPrivateKey);
+           assertInstanceOf(EdECPublicKey.class, kp.getPublic());
+           assertInstanceOf(EdECPrivateKey.class, kp.getPrivate());
 
             EdECPublicKey pub = (EdECPublicKey) kp.getPublic();
             EdECPrivateKey priv = (EdECPrivateKey) kp.getPrivate();
@@ -88,8 +89,8 @@ public class EdDSATest {
             KeyPair kp = kpg.generateKeyPair();
 
             assertNotNull(kp);
-            assertTrue(kp.getPublic() instanceof EdECPublicKey);
-            assertTrue(kp.getPrivate() instanceof EdECPrivateKey);
+           assertInstanceOf(EdECPublicKey.class, kp.getPublic());
+           assertInstanceOf(EdECPrivateKey.class, kp.getPrivate());
 
             EdECPublicKey pub = (EdECPublicKey) kp.getPublic();
             EdECPrivateKey priv = (EdECPrivateKey) kp.getPrivate();

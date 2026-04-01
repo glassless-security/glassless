@@ -211,7 +211,6 @@ public class PSSParameters extends AlgorithmParametersSpi {
 
    private String oidToDigestName(String oid) {
       return switch (oid) {
-         case "1.3.14.3.2.26" -> "SHA-1";
          case "2.16.840.1.101.3.4.2.1" -> "SHA-256";
          case "2.16.840.1.101.3.4.2.2" -> "SHA-384";
          case "2.16.840.1.101.3.4.2.3" -> "SHA-512";
@@ -271,7 +270,6 @@ public class PSSParameters extends AlgorithmParametersSpi {
 
    private byte[] digestNameToOID(String name) {
       return switch (name) {
-         case "SHA-1", "SHA1" -> new byte[]{0x06, 0x05, 0x2B, 0x0E, 0x03, 0x02, 0x1A};
          case "SHA-256", "SHA256" ->
             new byte[]{0x06, 0x09, 0x60, (byte) 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01};
          case "SHA-384", "SHA384" ->
