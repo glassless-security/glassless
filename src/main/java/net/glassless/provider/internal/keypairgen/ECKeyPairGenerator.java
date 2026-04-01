@@ -12,6 +12,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Locale;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -63,7 +64,7 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
 
    private int getCurveNid(String curveName) {
       // Normalize curve name and map to NID
-      String normalized = curveName.toLowerCase().replace("-", "").replace("_", "");
+      String normalized = curveName.toLowerCase(Locale.ROOT).replace("-", "").replace("_", "");
 
       // P-256 / secp256r1 / prime256v1
       switch (normalized) {

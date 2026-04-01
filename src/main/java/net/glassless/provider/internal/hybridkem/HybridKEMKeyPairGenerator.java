@@ -11,6 +11,7 @@ import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
+import java.util.Locale;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -84,7 +85,7 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
    }
 
    private static String normalizeAlgorithmName(String name) {
-      return name.toUpperCase()
+      return name.toUpperCase(Locale.ROOT)
          .replace("-", "")
          .replace("_", "")
          .replace("ECDHX", "X")  // Handle ECDH prefix

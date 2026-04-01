@@ -8,6 +8,7 @@ import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
+import java.util.Locale;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -63,7 +64,7 @@ public class MLDSAKeyPairGenerator extends KeyPairGeneratorSpi {
    public void initialize(AlgorithmParameterSpec params, SecureRandom random)
       throws InvalidAlgorithmParameterException {
       if (params instanceof NamedParameterSpec nps) {
-         String name = nps.getName().toUpperCase().replace("-", "").replace("_", "");
+         String name = nps.getName().toUpperCase(Locale.ROOT).replace("-", "").replace("_", "");
          switch (name) {
             case "MLDSA44" -> {
                this.algorithmName = MLDSA44;

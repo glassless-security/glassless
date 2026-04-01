@@ -7,6 +7,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
+import java.util.Locale;
 
 public class OpenSSLCrypto {
 
@@ -1701,7 +1702,7 @@ public class OpenSSLCrypto {
     */
    public static boolean isAlgorithmAvailable(String type, String name) {
       try (Arena arena = Arena.ofConfined()) {
-         return switch (type.toUpperCase()) {
+         return switch (type.toUpperCase(Locale.ROOT)) {
             case "MD", "DIGEST" -> {
                MemorySegment md = getDigestHandle(name, arena);
                yield !md.equals(MemorySegment.NULL);

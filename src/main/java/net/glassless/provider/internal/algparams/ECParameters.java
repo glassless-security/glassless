@@ -6,6 +6,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.InvalidParameterSpecException;
+import java.util.Locale;
 
 /**
  * AlgorithmParameters implementation for EC (Elliptic Curve).
@@ -111,7 +112,7 @@ public class ECParameters extends AlgorithmParametersSpi {
    }
 
    private String curveNameToOID(String name) {
-      return switch (name.toLowerCase()) {
+      return switch (name.toLowerCase(Locale.ROOT)) {
          case "secp256r1", "p-256", "prime256v1" -> "1.2.840.10045.3.1.7";
          case "secp384r1", "p-384" -> "1.3.132.0.34";
          case "secp521r1", "p-521" -> "1.3.132.0.35";

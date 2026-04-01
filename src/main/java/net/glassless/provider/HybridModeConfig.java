@@ -4,6 +4,7 @@ import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -158,7 +159,7 @@ public final class HybridModeConfig {
     */
    private static String normalizeAlgorithmName(String algorithm) {
       // Handle common variations: SHA256 vs SHA-256, etc.
-      return algorithm.replace("-", "").toUpperCase();
+      return algorithm.replace("-", "").toUpperCase(Locale.ROOT);
    }
 
    /**

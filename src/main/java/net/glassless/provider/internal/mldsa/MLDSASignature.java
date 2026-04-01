@@ -3,6 +3,7 @@ package net.glassless.provider.internal.mldsa;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Locale;
 
 import net.glassless.provider.internal.AbstractSingleShotSignature;
 
@@ -38,8 +39,8 @@ public class MLDSASignature extends AbstractSingleShotSignature {
       }
 
       if (expectedVariant != null) {
-         String normalizedKey = keyAlgorithm.replace("-", "").replace("_", "").toUpperCase();
-         String normalizedExpected = expectedVariant.replace("-", "").replace("_", "").toUpperCase();
+         String normalizedKey = keyAlgorithm.replace("-", "").replace("_", "").toUpperCase(Locale.ROOT);
+         String normalizedExpected = expectedVariant.replace("-", "").replace("_", "").toUpperCase(Locale.ROOT);
          if (!normalizedKey.contains(normalizedExpected.replace("MLDSA", ""))) {
             throw new InvalidKeyException("Key variant " + keyAlgorithm +
                " does not match expected variant " + expectedVariant);
@@ -64,8 +65,8 @@ public class MLDSASignature extends AbstractSingleShotSignature {
       }
 
       if (expectedVariant != null) {
-         String normalizedKey = keyAlgorithm.replace("-", "").replace("_", "").toUpperCase();
-         String normalizedExpected = expectedVariant.replace("-", "").replace("_", "").toUpperCase();
+         String normalizedKey = keyAlgorithm.replace("-", "").replace("_", "").toUpperCase(Locale.ROOT);
+         String normalizedExpected = expectedVariant.replace("-", "").replace("_", "").toUpperCase(Locale.ROOT);
          if (!normalizedKey.contains(normalizedExpected.replace("MLDSA", ""))) {
             throw new InvalidKeyException("Key variant " + keyAlgorithm +
                " does not match expected variant " + expectedVariant);

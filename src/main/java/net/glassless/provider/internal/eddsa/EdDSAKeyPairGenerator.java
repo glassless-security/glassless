@@ -10,6 +10,7 @@ import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.EdECPoint;
 import java.security.spec.NamedParameterSpec;
+import java.util.Locale;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -55,7 +56,7 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    @Override
    public KeyPair generateKeyPair() {
-      String algorithmName = params.getName().toUpperCase();  // ED25519 or ED448
+      String algorithmName = params.getName().toUpperCase(Locale.ROOT);  // ED25519 or ED448
 
       try {
          byte[][] keys = OpenSSLCrypto.generateKeyPair(algorithmName, null);

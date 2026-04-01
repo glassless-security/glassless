@@ -3,6 +3,7 @@ package net.glassless.provider.internal.slhdsa;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Locale;
 
 import net.glassless.provider.internal.AbstractSingleShotSignature;
 
@@ -79,6 +80,6 @@ public class SLHDSASignature extends AbstractSingleShotSignature {
    }
 
    private String normalizeVariant(String variant) {
-      return variant.toUpperCase().replace("-", "").replace("_", "");
+      return variant.toUpperCase(Locale.ROOT).replace("-", "").replace("_", "");
    }
 }
