@@ -194,8 +194,6 @@ public class PBEParameters extends AlgorithmParametersSpi {
    }
 
    private byte[] encodeDER() {
-      java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-
       // Build PBKDF2-params
       byte[] pbkdf2Params = buildPBKDF2Params();
 

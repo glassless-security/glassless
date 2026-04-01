@@ -36,7 +36,7 @@ public class SLHDSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    protected String algorithmName = SHA2_128F;  // Default
    protected String jcaAlgorithm = "SLH-DSA-SHA2-128f";
-   protected SecureRandom random;
+
 
    public SLHDSAKeyPairGenerator() {
       // Default constructor
@@ -66,7 +66,6 @@ public class SLHDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          default -> throw new InvalidParameterException(
             "Invalid SLH-DSA security level. Use 128, 192, or 256");
       }
-      this.random = random;
    }
 
    @Override
@@ -79,7 +78,6 @@ public class SLHDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidAlgorithmParameterException(
             "NamedParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
-      this.random = random;
    }
 
    protected void setAlgorithm(String normalizedName) throws InvalidAlgorithmParameterException {

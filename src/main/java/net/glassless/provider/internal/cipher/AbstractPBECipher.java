@@ -85,6 +85,11 @@ abstract class AbstractPBECipher extends AbstractCipher {
          throw new InvalidAlgorithmParameterException("PBEParameterSpec required");
       }
 
+      // Ensure we have a SecureRandom instance
+      if (random == null) {
+         random = new SecureRandom();
+      }
+
       // Build an IvParameterSpec for the parent class
       IvParameterSpec ivParamSpec;
       if (ivSpec instanceof IvParameterSpec) {
@@ -92,9 +97,6 @@ abstract class AbstractPBECipher extends AbstractCipher {
       } else {
          // Generate random IV if not provided
          byte[] ivBytes = new byte[IV_LENGTH];
-         if (random == null) {
-            random = new SecureRandom();
-         }
          random.nextBytes(ivBytes);
          ivParamSpec = new IvParameterSpec(ivBytes);
       }

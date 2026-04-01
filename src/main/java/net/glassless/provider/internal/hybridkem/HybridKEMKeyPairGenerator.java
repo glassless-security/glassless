@@ -31,7 +31,7 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
 
    protected String algorithmName = X25519_MLKEM768;  // Default
    protected String jcaAlgorithm = "X25519MLKEM768";
-   protected SecureRandom random;
+
 
    public HybridKEMKeyPairGenerator() {
       // Default constructor
@@ -80,7 +80,7 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidAlgorithmParameterException(
             "NamedParameterSpec required, got: " + params.getClass().getName());
       }
-      this.random = random;
+
    }
 
    private static String normalizeAlgorithmName(String name) {

@@ -33,7 +33,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
    private static final int MAX_KEY_SIZE = 8192;
 
    private int keySize = DEFAULT_KEY_SIZE;
-   private SecureRandom random;
+
 
    @Override
    public void initialize(int keysize, SecureRandom random) {
@@ -45,7 +45,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidParameterException("DH key size must be a multiple of 64");
       }
       this.keySize = keysize;
-      this.random = random;
+
    }
 
    @Override
@@ -58,7 +58,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
             throw new InvalidAlgorithmParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
          }
          this.keySize = pBitLength;
-         this.random = random;
+
       } else if (params != null) {
          throw new InvalidAlgorithmParameterException("Unsupported parameter spec: " + params.getClass().getName());
       }

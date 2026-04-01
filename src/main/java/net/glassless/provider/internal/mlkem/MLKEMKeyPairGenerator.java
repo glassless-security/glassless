@@ -26,7 +26,7 @@ public class MLKEMKeyPairGenerator extends KeyPairGeneratorSpi {
 
    protected String algorithmName = MLKEM768;  // Default to ML-KEM-768
    protected String jcaAlgorithm = "ML-KEM-768";
-   protected SecureRandom random;
+
 
    public MLKEMKeyPairGenerator() {
       // Default constructor
@@ -57,7 +57,6 @@ public class MLKEMKeyPairGenerator extends KeyPairGeneratorSpi {
          default -> throw new InvalidParameterException(
             "Invalid ML-KEM parameter. Use 512, 768, or 1024 (or security levels 128, 192, 256)");
       }
-      this.random = random;
    }
 
    @Override
@@ -85,7 +84,6 @@ public class MLKEMKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidAlgorithmParameterException(
             "NamedParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
-      this.random = random;
    }
 
    @Override

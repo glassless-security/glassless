@@ -24,7 +24,7 @@ public class DSAParameterGenerator extends AbstractParameterGenerator {
 
    private int primePBits = 2048;
    private int primeQBits = 256;
-   private SecureRandom random;
+
 
    public DSAParameterGenerator() {
       super("DSA");
@@ -44,7 +44,7 @@ public class DSAParameterGenerator extends AbstractParameterGenerator {
       } else {
          this.primeQBits = 256;
       }
-      this.random = random;
+
    }
 
    @Override
@@ -53,7 +53,7 @@ public class DSAParameterGenerator extends AbstractParameterGenerator {
       if (genParamSpec instanceof DSAGenParameterSpec dsaGenSpec) {
          this.primePBits = dsaGenSpec.getPrimePLength();
          this.primeQBits = dsaGenSpec.getSubprimeQLength();
-         this.random = random;
+
       } else {
          throw new InvalidAlgorithmParameterException(
             "Unsupported parameter spec: " + (genParamSpec == null ? "null" : genParamSpec.getClass().getName()));

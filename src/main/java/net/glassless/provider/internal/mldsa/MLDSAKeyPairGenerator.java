@@ -26,7 +26,7 @@ public class MLDSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    protected String algorithmName = MLDSA65;  // Default to ML-DSA-65
    protected String jcaAlgorithm = "ML-DSA-65";
-   protected SecureRandom random;
+
 
    public MLDSAKeyPairGenerator() {
       // Default constructor
@@ -57,7 +57,6 @@ public class MLDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          default -> throw new InvalidParameterException(
             "Invalid ML-DSA parameter. Use 44, 65, or 87 (or security levels 128, 192, 256)");
       }
-      this.random = random;
    }
 
    @Override
@@ -85,7 +84,6 @@ public class MLDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidAlgorithmParameterException(
             "NamedParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
-      this.random = random;
    }
 
    @Override

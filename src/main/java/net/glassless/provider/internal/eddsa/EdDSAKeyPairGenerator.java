@@ -19,7 +19,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    private NamedParameterSpec params = NamedParameterSpec.ED25519;  // Default to Ed25519
-   private SecureRandom random;
+
 
    @Override
    public void initialize(int keysize, SecureRandom random) {
@@ -32,7 +32,6 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidParameterException(
             "EdDSA key size must be 255/256 (Ed25519) or 448/456 (Ed448), got: " + keysize);
       }
-      this.random = random;
    }
 
    @Override
@@ -52,7 +51,6 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidAlgorithmParameterException(
             "NamedParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
-      this.random = random;
    }
 
    @Override

@@ -11,7 +11,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 public abstract class AbstractRSAPSSSignature extends AbstractSignature {
 
    protected AbstractRSAPSSSignature(String digestAlgorithm) {
-      super(digestAlgorithm, KeyType.RSA_PSS);
+      super(digestAlgorithm);
    }
 
    @Override

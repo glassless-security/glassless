@@ -25,7 +25,7 @@ public class DHParameterGenerator extends AbstractParameterGenerator {
 
    private int primeSize = 2048;
    private int exponentSize = 256;
-   private SecureRandom random;
+
 
    public DHParameterGenerator() {
       super("DH");
@@ -40,7 +40,7 @@ public class DHParameterGenerator extends AbstractParameterGenerator {
          throw new InvalidParameterException("Prime size must be a multiple of 64");
       }
       this.primeSize = size;
-      this.random = random;
+
    }
 
    @Override
@@ -49,7 +49,7 @@ public class DHParameterGenerator extends AbstractParameterGenerator {
       if (genParamSpec instanceof DHGenParameterSpec dhGenSpec) {
          this.primeSize = dhGenSpec.getPrimeSize();
          this.exponentSize = dhGenSpec.getExponentSize();
-         this.random = random;
+
       } else {
          throw new InvalidAlgorithmParameterException(
             "Unsupported parameter spec: " + (genParamSpec == null ? "null" : genParamSpec.getClass().getName()));

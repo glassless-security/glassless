@@ -23,8 +23,6 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
    private static final int DEFAULT_KEY_SIZE = 256;
 
    private int curveNid = OpenSSLCrypto.NID_X9_62_prime256v1; // Default to P-256
-   private String curveName = "secp256r1";
-   private SecureRandom random;
 
    @Override
    public void initialize(int keysize, SecureRandom random) {
@@ -32,20 +30,17 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
       switch (keysize) {
          case 256:
             this.curveNid = OpenSSLCrypto.NID_X9_62_prime256v1;
-            this.curveName = "secp256r1";
             break;
          case 384:
             this.curveNid = OpenSSLCrypto.NID_secp384r1;
-            this.curveName = "secp384r1";
             break;
          case 521:
             this.curveNid = OpenSSLCrypto.NID_secp521r1;
-            this.curveName = "secp521r1";
             break;
          default:
             throw new InvalidParameterException("Unsupported EC key size: " + keysize + ". Supported sizes: 256, 384, 521");
       }
-      this.random = random;
+
    }
 
    @Override
@@ -60,8 +55,7 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
             throw new InvalidAlgorithmParameterException("Unsupported EC curve: " + name);
          }
          this.curveNid = nid;
-         this.curveName = name;
-         this.random = random;
+
       } else if (params != null) {
          throw new InvalidAlgorithmParameterException("Unsupported parameter spec: " + params.getClass().getName());
       }

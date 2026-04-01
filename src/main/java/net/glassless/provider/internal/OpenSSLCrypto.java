@@ -72,9 +72,6 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_MAC_update;
    private static MethodHandle EVP_MAC_final;
    private static MethodHandle EVP_MAC_CTX_get_mac_size;
-   private static MethodHandle OSSL_PARAM_construct_utf8_string;
-   private static MethodHandle OSSL_PARAM_construct_end;
-
    // Method handles for secure random
    private static MethodHandle RAND_bytes;
    private static MethodHandle RAND_seed;
@@ -413,17 +410,6 @@ public class OpenSSLCrypto {
             libcrypto.find("EVP_MAC_CTX_get_mac_size").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
          );
-         // OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf, size_t bsize)
-         OSSL_PARAM_construct_utf8_string = linker.downcallHandle(
-            libcrypto.find("OSSL_PARAM_construct_utf8_string").orElseThrow(),
-            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
-         );
-         // OSSL_PARAM OSSL_PARAM_construct_end(void)
-         OSSL_PARAM_construct_end = linker.downcallHandle(
-            libcrypto.find("OSSL_PARAM_construct_end").orElseThrow(),
-            FunctionDescriptor.of(ValueLayout.ADDRESS)
-         );
-
          // int RAND_bytes(unsigned char *buf, int num)
          RAND_bytes = linker.downcallHandle(
             libcrypto.find("RAND_bytes").orElseThrow(),

@@ -6,6 +6,6 @@ package net.glassless.provider.internal.hybridkem;
  */
 public class X448MLKEM1024 extends HybridKEM {
    public X448MLKEM1024() {
-      super("X448MLKEM1024", "X448MLKEM1024", 64);
+      super(64);
    }
 }

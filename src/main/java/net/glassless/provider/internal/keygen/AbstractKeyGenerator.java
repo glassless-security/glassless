@@ -22,7 +22,6 @@ public abstract class AbstractKeyGenerator extends KeyGeneratorSpi {
    private final int[] supportedKeySizes; // in bits, null means any size
 
    private int keySize; // in bits
-   private SecureRandom random; // Not used, but required by API
 
    protected AbstractKeyGenerator(String algorithm, int defaultKeySize, int[] supportedKeySizes) {
       this.algorithm = algorithm;
@@ -33,7 +32,6 @@ public abstract class AbstractKeyGenerator extends KeyGeneratorSpi {
 
    @Override
    protected void engineInit(SecureRandom random) {
-      this.random = random;
       this.keySize = defaultKeySize;
    }
 
@@ -58,7 +56,6 @@ public abstract class AbstractKeyGenerator extends KeyGeneratorSpi {
          }
       }
       this.keySize = keysize;
-      this.random = random;
    }
 
    @Override

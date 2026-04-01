@@ -59,6 +59,7 @@
       <version.maven-source-plugin>3.4.0</version.maven-source-plugin>
       <version.maven-surefire-plugin>3.5.4</version.maven-surefire-plugin>
       <version.reproducible-build-maven-plugin>0.17</version.reproducible-build-maven-plugin>
+      <version.spotbugs-maven-plugin>4.9.8.0</version.spotbugs-maven-plugin>
       <version.spotless-maven-plugin>2.44.4</version.spotless-maven-plugin>
       <version.asciidoctor-maven-plugin>3.1.1</version.asciidoctor-maven-plugin>
       <version.maven-assembly-plugin>3.7.1</version.maven-assembly-plugin>
@@ -237,6 +238,18 @@
                   <phase>verify</phase>
                </execution>
             </executions>
+         </plugin>
+         <!-- SpotBugs static analysis -->
+         <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>${version.spotbugs-maven-plugin}</version>
+            <configuration>
+               <effort>Max</effort>
+               <threshold>Low</threshold>
+               <xmlOutput>true</xmlOutput>
+               <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+            </configuration>
          </plugin>
          <!-- AsciiDoc documentation -->
          <plugin>

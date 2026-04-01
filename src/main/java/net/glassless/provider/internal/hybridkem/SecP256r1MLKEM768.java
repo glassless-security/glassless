@@ -6,6 +6,6 @@ package net.glassless.provider.internal.hybridkem;
  */
 public class SecP256r1MLKEM768 extends HybridKEM {
    public SecP256r1MLKEM768() {
-      super("SecP256r1MLKEM768", "SecP256r1MLKEM768", 64);
+      super(64);
    }
 }

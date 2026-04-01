@@ -12,7 +12,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 abstract class AbstractDeterministicECDSASignature extends AbstractSignature {
 
    protected AbstractDeterministicECDSASignature(String digestAlgorithm) {
-      super(digestAlgorithm, KeyType.EC);
+      super(digestAlgorithm);
    }
 
    @Override

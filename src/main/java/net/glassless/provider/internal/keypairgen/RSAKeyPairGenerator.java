@@ -24,7 +24,7 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
    private static final int MAX_KEY_SIZE = 16384;
 
    private int keySize = DEFAULT_KEY_SIZE;
-   private SecureRandom random;
+
 
    @Override
    public void initialize(int keysize, SecureRandom random) {
@@ -32,7 +32,7 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
       }
       this.keySize = keysize;
-      this.random = random;
+
    }
 
    @Override
@@ -44,7 +44,7 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
             throw new InvalidAlgorithmParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
          }
          this.keySize = keysize;
-         this.random = random;
+
       } else if (params != null) {
          throw new InvalidAlgorithmParameterException("Unsupported parameter spec: " + params.getClass().getName());
       }

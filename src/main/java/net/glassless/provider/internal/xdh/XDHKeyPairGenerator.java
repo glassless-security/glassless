@@ -18,7 +18,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 public class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
 
    private NamedParameterSpec params = NamedParameterSpec.X25519;  // Default to X25519
-   private SecureRandom random;
+
 
    @Override
    public void initialize(int keysize, SecureRandom random) {
@@ -31,7 +31,6 @@ public class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidParameterException(
             "XDH key size must be 255/256 (X25519) or 448/456 (X448), got: " + keysize);
       }
-      this.random = random;
    }
 
    @Override
@@ -51,7 +50,6 @@ public class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
          throw new InvalidAlgorithmParameterException(
             "NamedParameterSpec required, got: " + (params == null ? "null" : params.getClass().getName()));
       }
-      this.random = random;
    }
 
    @Override

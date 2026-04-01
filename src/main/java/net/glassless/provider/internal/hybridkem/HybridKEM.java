@@ -24,17 +24,13 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 public class HybridKEM implements KEMSpi {
 
-   protected final String opensslName;
-   protected final String jcaAlgorithm;
    protected final int sharedSecretSize;
 
    public HybridKEM() {
-      this("X25519MLKEM768", "X25519MLKEM768", 64);
+      this(64);
    }
 
-   protected HybridKEM(String opensslName, String jcaAlgorithm, int sharedSecretSize) {
-      this.opensslName = opensslName;
-      this.jcaAlgorithm = jcaAlgorithm;
+   protected HybridKEM(int sharedSecretSize) {
       this.sharedSecretSize = sharedSecretSize;
    }
 
