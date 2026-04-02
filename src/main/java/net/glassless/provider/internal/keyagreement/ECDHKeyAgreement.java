@@ -11,6 +11,7 @@ import java.security.SecureRandom;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 import javax.crypto.KeyAgreementSpi;
 import javax.crypto.SecretKey;
@@ -109,7 +110,8 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
       }
 
       byte[] result = sharedSecret.clone();
-      // Reset for potential reuse
+      // Zeroize and reset for potential reuse
+      Arrays.fill(this.sharedSecret, (byte) 0);
       this.sharedSecret = null;
       this.peerPublicKey = null;
       return result;
@@ -129,7 +131,8 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
       System.arraycopy(this.sharedSecret, 0, sharedSecret, offset, this.sharedSecret.length);
       int len = this.sharedSecret.length;
 
-      // Reset for potential reuse
+      // Zeroize and reset for potential reuse
+      Arrays.fill(this.sharedSecret, (byte) 0);
       this.sharedSecret = null;
       this.peerPublicKey = null;
 
@@ -148,10 +151,15 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
       }
 
       byte[] secret = sharedSecret.clone();
-      // Reset for potential reuse
+      // Zeroize and reset for potential reuse
+      Arrays.fill(this.sharedSecret, (byte) 0);
       this.sharedSecret = null;
       this.peerPublicKey = null;
 
-      return new SecretKeySpec(secret, algorithm);
+      try {
+         return new SecretKeySpec(secret, algorithm);
+      } finally {
+         Arrays.fill(secret, (byte) 0);
+      }
    }
 }

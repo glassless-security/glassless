@@ -7,9 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidParameterException;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.security.spec.ECGenParameterSpec;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
@@ -46,14 +50,14 @@ public class FIPSStatusTest {
       @DisplayName("FIPS status can be queried")
       void testFIPSStatusQuery() {
          // Should not throw, result depends on OpenSSL configuration
-         FIPSStatus.isFIPSEnabled();
+         var unused = FIPSStatus.isFIPSEnabled();
       }
 
       @Test
       @DisplayName("FIPS provider availability can be queried")
       void testFIPSProviderAvailability() {
          // Should not throw, result depends on OpenSSL configuration
-         FIPSStatus.isFIPSProviderAvailable();
+         var unused = FIPSStatus.isFIPSProviderAvailable();
       }
 
       @Test
@@ -335,6 +339,167 @@ public class FIPSStatusTest {
             Security.removeProvider(PROVIDER_NAME);
             Security.addProvider(provider);
          }
+      }
+   }
+
+   @Nested
+   @DisplayName("FIPS Mode Runtime Enforcement Tests")
+   class FIPSRuntimeEnforcementTests {
+
+      private void withSimulatedFIPSMode(ThrowingRunnable test) throws Exception {
+         String original = System.getProperty("glassless.fips.mode");
+         try {
+            System.setProperty("glassless.fips.mode", "true");
+            FIPSStatus.clearCache();
+
+            Security.removeProvider(PROVIDER_NAME);
+            GlaSSLessProvider fipsProvider = new GlaSSLessProvider();
+            Security.addProvider(fipsProvider);
+
+            test.run();
+         } finally {
+            if (original != null) {
+               System.setProperty("glassless.fips.mode", original);
+            } else {
+               System.clearProperty("glassless.fips.mode");
+            }
+            FIPSStatus.clearCache();
+            Security.removeProvider(PROVIDER_NAME);
+            Security.addProvider(provider);
+         }
+      }
+
+      @FunctionalInterface
+      interface ThrowingRunnable {
+         void run() throws Exception;
+      }
+
+      // --- EC curve whitelist tests ---
+
+      @Test
+      @DisplayName("FIPS mode allows P-256")
+      void testFIPSAllowsP256() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            kpg.initialize(new ECGenParameterSpec("secp256r1"));
+            assertNotNull(kpg.generateKeyPair());
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode allows P-384")
+      void testFIPSAllowsP384() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            kpg.initialize(new ECGenParameterSpec("secp384r1"));
+            assertNotNull(kpg.generateKeyPair());
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode allows P-521")
+      void testFIPSAllowsP521() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            kpg.initialize(new ECGenParameterSpec("secp521r1"));
+            assertNotNull(kpg.generateKeyPair());
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode rejects secp256k1")
+      void testFIPSRejectsSecp256k1() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            assertThrows(InvalidAlgorithmParameterException.class,
+               () -> kpg.initialize(new ECGenParameterSpec("secp256k1")));
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode rejects arbitrary curves")
+      void testFIPSRejectsArbitraryCurves() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            assertThrows(InvalidAlgorithmParameterException.class,
+               () -> kpg.initialize(new ECGenParameterSpec("brainpoolP256r1")));
+         });
+      }
+
+      // --- RSA key size enforcement tests ---
+
+      @Test
+      @DisplayName("FIPS mode allows RSA 2048")
+      void testFIPSAllowsRSA2048() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
+            kpg.initialize(2048);
+            assertNotNull(kpg.generateKeyPair());
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode rejects RSA 1024")
+      void testFIPSRejectsRSA1024() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
+            assertThrows(InvalidParameterException.class,
+               () -> kpg.initialize(1024));
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode rejects RSA 512")
+      void testFIPSRejectsRSA512() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
+            assertThrows(InvalidParameterException.class,
+               () -> kpg.initialize(512));
+         });
+      }
+
+      // --- DSA key size enforcement tests ---
+
+      @Test
+      @DisplayName("FIPS mode allows DSA 2048")
+      void testFIPSAllowsDSA2048() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA", PROVIDER_NAME);
+            kpg.initialize(2048);
+            // Just verify initialization succeeds (keygen is slow for DSA)
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode rejects DSA 1024")
+      void testFIPSRejectsDSA1024() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA", PROVIDER_NAME);
+            assertThrows(InvalidParameterException.class,
+               () -> kpg.initialize(1024));
+         });
+      }
+
+      // --- DH key size enforcement tests ---
+
+      @Test
+      @DisplayName("FIPS mode allows DH 2048")
+      void testFIPSAllowsDH2048() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH", PROVIDER_NAME);
+            kpg.initialize(2048);
+            // Just verify initialization succeeds (keygen is slow for DH)
+         });
+      }
+
+      @Test
+      @DisplayName("FIPS mode rejects DH 1024")
+      void testFIPSRejectsDH1024() throws Exception {
+         withSimulatedFIPSMode(() -> {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH", PROVIDER_NAME);
+            assertThrows(InvalidParameterException.class,
+               () -> kpg.initialize(1024));
+         });
       }
    }
 }

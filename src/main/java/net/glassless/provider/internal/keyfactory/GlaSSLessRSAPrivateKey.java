@@ -5,14 +5,18 @@ import java.math.BigInteger;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.util.Arrays;
 
+import javax.security.auth.Destroyable;
+
 /**
  * RSA private key implementation backed by OpenSSL-derived parameters.
  * Implements RSAPrivateCrtKey to provide CRT parameters when available.
  */
-public class GlaSSLessRSAPrivateKey implements RSAPrivateCrtKey {
+public class GlaSSLessRSAPrivateKey implements RSAPrivateCrtKey, Destroyable {
 
    @Serial
    private static final long serialVersionUID = 1L;
+
+   private boolean destroyed = false;
 
    private final BigInteger modulus;
    private final BigInteger publicExponent;
@@ -47,11 +51,13 @@ public class GlaSSLessRSAPrivateKey implements RSAPrivateCrtKey {
 
    @Override
    public String getFormat() {
+      checkDestroyed();
       return encoded != null ? "PKCS#8" : null;
    }
 
    @Override
    public byte[] getEncoded() {
+      checkDestroyed();
       return encoded != null ? encoded.clone() : null;
    }
 
@@ -113,9 +119,24 @@ public class GlaSSLessRSAPrivateKey implements RSAPrivateCrtKey {
       return "GlaSSLessRSAPrivateKey [modulus bitLength=" + modulus.bitLength() + "]";
    }
 
+   @Override
    public void destroy() {
-      if (encoded != null) {
-         Arrays.fill(encoded, (byte) 0);
+      if (!destroyed) {
+         if (encoded != null) {
+            Arrays.fill(encoded, (byte) 0);
+         }
+         destroyed = true;
+      }
+   }
+
+   @Override
+   public boolean isDestroyed() {
+      return destroyed;
+   }
+
+   private void checkDestroyed() {
+      if (destroyed) {
+         throw new IllegalStateException("Key has been destroyed");
       }
    }
 }

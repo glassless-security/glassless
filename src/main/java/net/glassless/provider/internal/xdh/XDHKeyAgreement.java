@@ -12,6 +12,7 @@ import java.security.interfaces.XECPrivateKey;
 import java.security.interfaces.XECPublicKey;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
+import java.util.Arrays;
 
 import javax.crypto.KeyAgreementSpi;
 import javax.crypto.SecretKey;
@@ -51,7 +52,14 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
 
       validateCurve(nps.getName());
       this.params = nps;
+      // Zeroize previous private key before replacing
+      if (this.privateKeyEncoded != null) {
+         Arrays.fill(this.privateKeyEncoded, (byte) 0);
+      }
       this.privateKeyEncoded = key.getEncoded();
+      if (this.sharedSecret != null) {
+         Arrays.fill(this.sharedSecret, (byte) 0);
+      }
       this.sharedSecret = null;
 
       if (this.privateKeyEncoded == null) {
@@ -145,24 +153,35 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
       if (sharedSecret == null) {
          throw new IllegalStateException("No shared secret available - call doPhase first");
       }
-      byte[] result = sharedSecret;
-      sharedSecret = null;  // Clear after use
+      byte[] result = sharedSecret.clone();
+      // Zeroize and clear after use
+      Arrays.fill(sharedSecret, (byte) 0);
+      sharedSecret = null;
       return result;
    }
 
    @Override
    protected int engineGenerateSecret(byte[] sharedSecret, int offset) throws IllegalStateException {
-      byte[] secret = engineGenerateSecret();
-      if (offset + secret.length > sharedSecret.length) {
+      if (this.sharedSecret == null) {
+         throw new IllegalStateException("No shared secret available - call doPhase first");
+      }
+      if (offset + this.sharedSecret.length > sharedSecret.length) {
          throw new IllegalStateException("Output buffer too small");
       }
-      System.arraycopy(secret, 0, sharedSecret, offset, secret.length);
-      return secret.length;
+      System.arraycopy(this.sharedSecret, 0, sharedSecret, offset, this.sharedSecret.length);
+      int len = this.sharedSecret.length;
+      Arrays.fill(this.sharedSecret, (byte) 0);
+      this.sharedSecret = null;
+      return len;
    }
 
    @Override
    protected SecretKey engineGenerateSecret(String algorithm) throws IllegalStateException, NoSuchAlgorithmException {
       byte[] secret = engineGenerateSecret();
-      return new SecretKeySpec(secret, algorithm);
+      try {
+         return new SecretKeySpec(secret, algorithm);
+      } finally {
+         Arrays.fill(secret, (byte) 0);
+      }
    }
 }

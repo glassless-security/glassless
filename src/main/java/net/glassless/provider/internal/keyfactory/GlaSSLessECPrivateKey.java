@@ -6,13 +6,17 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECParameterSpec;
 import java.util.Arrays;
 
+import javax.security.auth.Destroyable;
+
 /**
  * EC private key implementation backed by OpenSSL-derived parameters.
  */
-public class GlaSSLessECPrivateKey implements ECPrivateKey {
+public class GlaSSLessECPrivateKey implements ECPrivateKey, Destroyable {
 
    @Serial
    private static final long serialVersionUID = 1L;
+
+   private boolean destroyed = false;
 
    private final BigInteger s;
    private final ECParameterSpec params;
@@ -31,11 +35,13 @@ public class GlaSSLessECPrivateKey implements ECPrivateKey {
 
    @Override
    public String getFormat() {
+      checkDestroyed();
       return encoded != null ? "PKCS#8" : null;
    }
 
    @Override
    public byte[] getEncoded() {
+      checkDestroyed();
       return encoded != null ? encoded.clone() : null;
    }
 
@@ -66,12 +72,24 @@ public class GlaSSLessECPrivateKey implements ECPrivateKey {
       return "GlaSSLessECPrivateKey [fieldSize=" + params.getCurve().getField().getFieldSize() + "]";
    }
 
-   /**
-    * Clears the private key material from memory.
-    */
+   @Override
    public void destroy() {
-      if (encoded != null) {
-         Arrays.fill(encoded, (byte) 0);
+      if (!destroyed) {
+         if (encoded != null) {
+            Arrays.fill(encoded, (byte) 0);
+         }
+         destroyed = true;
+      }
+   }
+
+   @Override
+   public boolean isDestroyed() {
+      return destroyed;
+   }
+
+   private void checkDestroyed() {
+      if (destroyed) {
+         throw new IllegalStateException("Key has been destroyed");
       }
    }
 }

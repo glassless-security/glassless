@@ -1,6 +1,7 @@
 package net.glassless.provider.internal.keygen;
 
 import java.security.ProviderException;
+import java.util.Arrays;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -20,10 +21,11 @@ public class DESedeKeyGenerator extends AbstractKeyGenerator {
 
    @Override
    protected SecretKey engineGenerateKey() {
+      byte[] keyBytes = null;
       try {
          // DESede always uses 24 bytes (192 bits) to store the key
          // The effective key strength is 168 bits (or 112 for two-key variant)
-         byte[] keyBytes = OpenSSLCrypto.RAND_bytes(24);
+         keyBytes = OpenSSLCrypto.RAND_bytes(24);
 
          // Set parity bits for each byte (DES requirement)
          setParityBits(keyBytes);
@@ -31,6 +33,10 @@ public class DESedeKeyGenerator extends AbstractKeyGenerator {
          return new SecretKeySpec(keyBytes, "DESede");
       } catch (Throwable e) {
          throw new ProviderException("Error generating DESede key", e);
+      } finally {
+         if (keyBytes != null) {
+            Arrays.fill(keyBytes, (byte) 0);
+         }
       }
    }
 

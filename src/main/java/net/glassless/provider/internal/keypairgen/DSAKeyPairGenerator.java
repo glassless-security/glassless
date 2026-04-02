@@ -13,6 +13,7 @@ import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.DSAParameterSpec;
 
+import net.glassless.provider.FIPSStatus;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.keyfactory.DSAKeyFactory;
 import net.glassless.provider.internal.keyfactory.GlaSSLessDSAPublicKey;
@@ -27,15 +28,20 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    private static final int DEFAULT_KEY_SIZE = 2048;
    private static final int MIN_KEY_SIZE = 512;
+   private static final int FIPS_MIN_KEY_SIZE = 2048;
    private static final int MAX_KEY_SIZE = 3072;
 
    private int keySize = DEFAULT_KEY_SIZE;
 
+   private int getMinKeySize() {
+      return FIPSStatus.isFIPSEnabled() ? FIPS_MIN_KEY_SIZE : MIN_KEY_SIZE;
+   }
 
    @Override
    public void initialize(int keysize, SecureRandom random) {
-      if (keysize < MIN_KEY_SIZE || keysize > MAX_KEY_SIZE) {
-         throw new InvalidParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
+      int minSize = getMinKeySize();
+      if (keysize < minSize || keysize > MAX_KEY_SIZE) {
+         throw new InvalidParameterException("Key size must be between " + minSize + " and " + MAX_KEY_SIZE + " bits");
       }
       // DSA key sizes should be multiples of 64
       if (keysize % 64 != 0) {
@@ -51,8 +57,9 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
       if (params instanceof DSAParameterSpec dsaParams) {
          // Extract key size from the P parameter
          int pBitLength = dsaParams.getP().bitLength();
-         if (pBitLength < MIN_KEY_SIZE || pBitLength > MAX_KEY_SIZE) {
-            throw new InvalidAlgorithmParameterException("Key size must be between " + MIN_KEY_SIZE + " and " + MAX_KEY_SIZE + " bits");
+         int minSize = getMinKeySize();
+         if (pBitLength < minSize || pBitLength > MAX_KEY_SIZE) {
+            throw new InvalidAlgorithmParameterException("Key size must be between " + minSize + " and " + MAX_KEY_SIZE + " bits");
          }
          this.keySize = pBitLength;
 

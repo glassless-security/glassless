@@ -14,7 +14,9 @@ import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.util.Locale;
+import java.util.Set;
 
+import net.glassless.provider.FIPSStatus;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.keyfactory.GlaSSLessECPrivateKey;
 import net.glassless.provider.internal.keyfactory.GlaSSLessECPublicKey;
@@ -25,6 +27,13 @@ import net.glassless.provider.internal.keyfactory.GlaSSLessECPublicKey;
 public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
 
    private static final int DEFAULT_KEY_SIZE = 256;
+
+   // FIPS 186-5 approved NIST curves
+   private static final Set<Integer> FIPS_APPROVED_NIDS = Set.of(
+      OpenSSLCrypto.NID_X9_62_prime256v1,  // P-256
+      OpenSSLCrypto.NID_secp384r1,          // P-384
+      OpenSSLCrypto.NID_secp521r1           // P-521
+   );
 
    private int curveNid = OpenSSLCrypto.NID_X9_62_prime256v1; // Default to P-256
    private ECParameterSpec cachedParams; // Cached curve parameters for current NID
@@ -79,40 +88,35 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
       // Normalize curve name and map to NID
       String normalized = curveName.toLowerCase(Locale.ROOT).replace("-", "").replace("_", "");
 
-      // P-256 / secp256r1 / prime256v1
-      switch (normalized) {
-         case "secp256r1", "p256", "prime256v1", "nistp256" -> {
-            return OpenSSLCrypto.NID_X9_62_prime256v1;
-         }
-
+      int nid = switch (normalized) {
+         // P-256 / secp256r1 / prime256v1
+         case "secp256r1", "p256", "prime256v1", "nistp256" -> OpenSSLCrypto.NID_X9_62_prime256v1;
          // P-384 / secp384r1
-         case "secp384r1", "p384", "nistp384" -> {
-            return OpenSSLCrypto.NID_secp384r1;
-         }
-
+         case "secp384r1", "p384", "nistp384" -> OpenSSLCrypto.NID_secp384r1;
          // P-521 / secp521r1
-         case "secp521r1", "p521", "nistp521" -> {
-            return OpenSSLCrypto.NID_secp521r1;
-         }
-
+         case "secp521r1", "p521", "nistp521" -> OpenSSLCrypto.NID_secp521r1;
          // secp256k1 (Bitcoin curve)
-         case "secp256k1" -> {
-            return OpenSSLCrypto.NID_secp256k1;
+         case "secp256k1" -> OpenSSLCrypto.NID_secp256k1;
+         default -> {
+            // Try to look up by OpenSSL name
+            try (Arena arena = Arena.ofConfined()) {
+               int resolved = OpenSSLCrypto.OBJ_sn2nid(curveName, arena);
+               if (resolved != 0) {
+                  yield resolved;
+               }
+               yield OpenSSLCrypto.OBJ_txt2nid(curveName, arena);
+            } catch (Throwable e) {
+               yield 0;
+            }
          }
+      };
+
+      // In FIPS mode, only allow approved NIST curves
+      if (nid != 0 && FIPSStatus.isFIPSEnabled() && !FIPS_APPROVED_NIDS.contains(nid)) {
+         return 0; // Reject non-approved curve
       }
 
-      // Try to look up by OpenSSL name
-      try (Arena arena = Arena.ofConfined()) {
-         int nid = OpenSSLCrypto.OBJ_sn2nid(curveName, arena);
-         if (nid != 0) {
-            return nid;
-         }
-         // Try OID lookup
-         nid = OpenSSLCrypto.OBJ_txt2nid(curveName, arena);
-         return nid;
-      } catch (Throwable e) {
-         return 0;
-      }
+      return nid;
    }
 
    @Override

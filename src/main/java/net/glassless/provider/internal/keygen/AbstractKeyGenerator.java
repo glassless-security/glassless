@@ -5,6 +5,7 @@ import java.security.InvalidParameterException;
 import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 import javax.crypto.KeyGeneratorSpi;
 import javax.crypto.SecretKey;
@@ -60,12 +61,17 @@ public abstract class AbstractKeyGenerator extends KeyGeneratorSpi {
 
    @Override
    protected SecretKey engineGenerateKey() {
+      byte[] keyBytes = null;
       try {
          int keySizeBytes = keySize / 8;
-         byte[] keyBytes = OpenSSLCrypto.RAND_bytes(keySizeBytes);
+         keyBytes = OpenSSLCrypto.RAND_bytes(keySizeBytes);
          return new SecretKeySpec(keyBytes, algorithm);
       } catch (Throwable e) {
          throw new ProviderException("Error generating key", e);
+      } finally {
+         if (keyBytes != null) {
+            Arrays.fill(keyBytes, (byte) 0);
+         }
       }
    }
 }

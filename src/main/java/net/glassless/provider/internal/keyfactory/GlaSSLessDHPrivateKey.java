@@ -6,14 +6,17 @@ import java.util.Arrays;
 
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.spec.DHParameterSpec;
+import javax.security.auth.Destroyable;
 
 /**
  * DH private key implementation backed by OpenSSL-derived parameters.
  */
-public class GlaSSLessDHPrivateKey implements DHPrivateKey {
+public class GlaSSLessDHPrivateKey implements DHPrivateKey, Destroyable {
 
    @Serial
    private static final long serialVersionUID = 1L;
+
+   private boolean destroyed = false;
 
    private final BigInteger x;
    private final DHParameterSpec params;
@@ -32,11 +35,13 @@ public class GlaSSLessDHPrivateKey implements DHPrivateKey {
 
    @Override
    public String getFormat() {
+      checkDestroyed();
       return encoded != null ? "PKCS#8" : null;
    }
 
    @Override
    public byte[] getEncoded() {
+      checkDestroyed();
       return encoded != null ? encoded.clone() : null;
    }
 
@@ -67,9 +72,24 @@ public class GlaSSLessDHPrivateKey implements DHPrivateKey {
       return "GlaSSLessDHPrivateKey [p bitLength=" + params.getP().bitLength() + "]";
    }
 
+   @Override
    public void destroy() {
-      if (encoded != null) {
-         Arrays.fill(encoded, (byte) 0);
+      if (!destroyed) {
+         if (encoded != null) {
+            Arrays.fill(encoded, (byte) 0);
+         }
+         destroyed = true;
+      }
+   }
+
+   @Override
+   public boolean isDestroyed() {
+      return destroyed;
+   }
+
+   private void checkDestroyed() {
+      if (destroyed) {
+         throw new IllegalStateException("Key has been destroyed");
       }
    }
 }
