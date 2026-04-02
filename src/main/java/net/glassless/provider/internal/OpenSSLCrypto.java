@@ -511,10 +511,10 @@ public class OpenSSLCrypto {
             libcrypto.find("EVP_PKEY_keygen").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
          );
-         // int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx, int selection)
+         // int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx)
          EVP_PKEY_fromdata_init = linker.downcallHandle(
             libcrypto.find("EVP_PKEY_fromdata_init").orElseThrow(),
-            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
          );
          // int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection, OSSL_PARAM params[])
          EVP_PKEY_fromdata = linker.downcallHandle(
@@ -1909,6 +1909,13 @@ public class OpenSSLCrypto {
                      System.arraycopy(bnBytes, 1, trimmed, 0, trimmed.length);
                      bnBytes = trimmed;
                   }
+                  // OSSL_PARAM UNSIGNED_INTEGER expects native byte order (little-endian on x86_64).
+                  // BigInteger.toByteArray() returns big-endian, so reverse.
+                  for (int j = 0, k = bnBytes.length - 1; j < k; j++, k--) {
+                     byte tmp = bnBytes[j];
+                     bnBytes[j] = bnBytes[k];
+                     bnBytes[k] = tmp;
+                  }
                   MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, bnBytes.length);
                   seg.asByteBuffer().put(bnBytes);
                   params.set(ValueLayout.ADDRESS, offset, keyName);
@@ -1945,7 +1952,7 @@ public class OpenSSLCrypto {
          throw new IllegalStateException("Failed to create EVP_PKEY_CTX for " + algorithm);
       }
       try {
-         int r = (int) EVP_PKEY_fromdata_init.invokeExact(ctx, selection);
+         int r = (int) EVP_PKEY_fromdata_init.invokeExact(ctx);
          if (r <= 0) {
             throw new IllegalStateException("EVP_PKEY_fromdata_init failed for " + algorithm);
          }
