@@ -58,7 +58,7 @@
       <version.maven-javadoc-plugin>3.12.0</version.maven-javadoc-plugin>
       <version.maven-source-plugin>3.4.0</version.maven-source-plugin>
       <version.maven-surefire-plugin>3.5.5</version.maven-surefire-plugin>
-      <version.reproducible-build-maven-plugin>0.17</version.reproducible-build-maven-plugin>
+
       <version.pmd>7.23.0</version.pmd>
       <version.maven-pmd-plugin>3.28.0</version.maven-pmd-plugin>
       <version.error-prone>2.48.0</version.error-prone>
@@ -194,24 +194,10 @@
                   <manifestEntries>
                      <Automatic-Module-Name>net.glassless.provider</Automatic-Module-Name>
                      <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                     <Build-Revision>${git.commit.id.abbrev}</Build-Revision>
                   </manifestEntries>
                </archive>
             </configuration>
-         </plugin>
-         <!-- Strip non-reproducible data from JAR for byte-identical builds -->
-         <plugin>
-            <groupId>io.github.zlika</groupId>
-            <artifactId>reproducible-build-maven-plugin</artifactId>
-            <version>${version.reproducible-build-maven-plugin}</version>
-            <executions>
-               <execution>
-                  <id>strip-jar</id>
-                  <goals>
-                     <goal>strip-jar</goal>
-                  </goals>
-                  <phase>package</phase>
-               </execution>
-            </executions>
          </plugin>
          <plugin>
             <groupId>com.diffplug.spotless</groupId>
