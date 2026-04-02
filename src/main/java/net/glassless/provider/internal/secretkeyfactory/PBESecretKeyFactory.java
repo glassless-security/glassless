@@ -1,5 +1,6 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
+import java.io.Serial;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
@@ -64,6 +65,7 @@ public class PBESecretKeyFactory extends SecretKeyFactorySpi {
     * Internal PBE SecretKey implementation that holds the password.
     */
    private static class PBESecretKey implements SecretKey {
+      @Serial
       private static final long serialVersionUID = 1L;
 
       private final char[] password;

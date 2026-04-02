@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.lms;
 
+import java.io.Serial;
+
 import net.glassless.provider.internal.AbstractPublicKey;
 
 /**
@@ -9,6 +11,7 @@ import net.glassless.provider.internal.AbstractPublicKey;
  */
 public class GlaSSLessLMSPublicKey extends AbstractPublicKey {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    public GlaSSLessLMSPublicKey(byte[] encoded) {

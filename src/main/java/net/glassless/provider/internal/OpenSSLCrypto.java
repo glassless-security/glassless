@@ -7,7 +7,10 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
+import java.math.BigInteger;
 import java.util.Locale;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
 public class OpenSSLCrypto {
 
@@ -22,6 +25,7 @@ public class OpenSSLCrypto {
    // Method handles for OpenSSL functions
    private static MethodHandle EVP_MD_CTX_new;
    private static MethodHandle EVP_MD_CTX_free;
+   private static MethodHandle EVP_MD_CTX_copy_ex;
    private static MethodHandle EVP_get_digestbyname;
    private static MethodHandle EVP_DigestInit_ex;
    private static MethodHandle EVP_DigestUpdate;
@@ -94,6 +98,8 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_PKEY_CTX_new_from_name;
    private static MethodHandle EVP_PKEY_keygen_init;
    private static MethodHandle EVP_PKEY_keygen;
+   private static MethodHandle EVP_PKEY_fromdata_init;
+   private static MethodHandle EVP_PKEY_fromdata;
    private static MethodHandle EVP_PKEY_CTX_set_rsa_keygen_bits;
    private static MethodHandle EVP_PKEY_CTX_set_ec_paramgen_curve_nid;
    private static MethodHandle i2d_PrivateKey;
@@ -120,6 +126,8 @@ public class OpenSSLCrypto {
    private static MethodHandle BN_bn2bin;
    private static MethodHandle BN_num_bytes;
    private static MethodHandle BN_free;
+   private static MethodHandle EVP_PKEY_get_octet_string_param;
+   private static MethodHandle EVP_PKEY_get_utf8_string_param;
 
    // Method handles for EVP_KDF (HKDF)
    private static MethodHandle EVP_KDF_fetch;
@@ -208,6 +216,10 @@ public class OpenSSLCrypto {
          EVP_MD_CTX_free = linker.downcallHandle(
             libcrypto.find("EVP_MD_CTX_free").orElseThrow(),
             FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
+         );
+         EVP_MD_CTX_copy_ex = linker.downcallHandle(
+            libcrypto.find("EVP_MD_CTX_copy_ex").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
          );
          EVP_get_digestbyname = linker.downcallHandle(
             libcrypto.find("EVP_get_digestbyname").orElseThrow(),
@@ -499,6 +511,16 @@ public class OpenSSLCrypto {
             libcrypto.find("EVP_PKEY_keygen").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
          );
+         // int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx, int selection)
+         EVP_PKEY_fromdata_init = linker.downcallHandle(
+            libcrypto.find("EVP_PKEY_fromdata_init").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
+         );
+         // int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection, OSSL_PARAM params[])
+         EVP_PKEY_fromdata = linker.downcallHandle(
+            libcrypto.find("EVP_PKEY_fromdata").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
+         );
          // int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int mbits)
          EVP_PKEY_CTX_set_rsa_keygen_bits = linker.downcallHandle(
             libcrypto.find("EVP_PKEY_CTX_set_rsa_keygen_bits").orElseThrow(),
@@ -620,6 +642,22 @@ public class OpenSSLCrypto {
             FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
          );
 
+         // int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
+         //    unsigned char *buf, size_t max_buf_sz, size_t *out_len)
+         EVP_PKEY_get_octet_string_param = linker.downcallHandle(
+            libcrypto.find("EVP_PKEY_get_octet_string_param").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+               ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
+         );
+
+         // int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
+         //    char *str, size_t max_buf_sz, size_t *out_len)
+         EVP_PKEY_get_utf8_string_param = linker.downcallHandle(
+            libcrypto.find("EVP_PKEY_get_utf8_string_param").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+               ValueLayout.ADDRESS, ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
+         );
+
          // EVP_KDF functions for HKDF
          // EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm, const char *properties)
          EVP_KDF_fetch = linker.downcallHandle(
@@ -730,6 +768,10 @@ public class OpenSSLCrypto {
 
    public static void EVP_MD_CTX_free(MemorySegment ctx) throws Throwable {
       EVP_MD_CTX_free.invokeExact(ctx);
+   }
+
+   public static int EVP_MD_CTX_copy_ex(MemorySegment out, MemorySegment in) throws Throwable {
+      return (int) EVP_MD_CTX_copy_ex.invokeExact(out, in);
    }
 
    public static int EVP_DigestInit_ex(MemorySegment ctx, MemorySegment type) throws Throwable {
@@ -1562,7 +1604,7 @@ public class OpenSSLCrypto {
     * @return the BigInteger value
     * @throws Throwable if extraction fails
     */
-   public static java.math.BigInteger EVP_PKEY_get_bn_param(MemorySegment pkey, String paramName, Arena arena) throws Throwable {
+   public static BigInteger EVP_PKEY_get_bn_param(MemorySegment pkey, String paramName, Arena arena) throws Throwable {
       // Allocate pointer for BIGNUM
       MemorySegment bnPtr = arena.allocate(ValueLayout.ADDRESS);
 
@@ -1620,6 +1662,341 @@ public class OpenSSLCrypto {
 
    public static void BN_free(MemorySegment bn) throws Throwable {
       BN_free.invokeExact(bn);
+   }
+
+   /**
+    * Gets an octet string parameter from an EVP_PKEY.
+    */
+   public static byte[] EVP_PKEY_get_octet_string_param(MemorySegment pkey, String paramName, int maxLen, Arena arena) throws Throwable {
+      MemorySegment nameSegment = arena.allocateFrom(paramName);
+      MemorySegment buffer = arena.allocate(ValueLayout.JAVA_BYTE, maxLen);
+      MemorySegment outLenSegment = arena.allocate(ValueLayout.JAVA_LONG);
+
+      int result = (int) EVP_PKEY_get_octet_string_param.invokeExact(pkey, nameSegment, buffer, (long) maxLen, outLenSegment);
+      if (result != 1) {
+         throw new IllegalStateException("EVP_PKEY_get_octet_string_param failed for: " + paramName);
+      }
+
+      long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
+      byte[] bytes = new byte[(int) outLen];
+      buffer.asByteBuffer().get(bytes);
+      return bytes;
+   }
+
+   /**
+    * Gets a UTF-8 string parameter from an EVP_PKEY.
+    */
+   public static String EVP_PKEY_get_utf8_string_param(MemorySegment pkey, String paramName, Arena arena) throws Throwable {
+      MemorySegment nameSegment = arena.allocateFrom(paramName);
+      MemorySegment buffer = arena.allocate(ValueLayout.JAVA_BYTE, 256);
+      MemorySegment outLenSegment = arena.allocate(ValueLayout.JAVA_LONG);
+
+      int result = (int) EVP_PKEY_get_utf8_string_param.invokeExact(pkey, nameSegment, buffer, 256L, outLenSegment);
+      if (result != 1) {
+         throw new IllegalStateException("EVP_PKEY_get_utf8_string_param failed for: " + paramName);
+      }
+
+      long outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
+      byte[] bytes = new byte[(int) outLen];
+      buffer.asByteBuffer().get(bytes);
+      return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+   }
+
+   /**
+    * Maps JCA/SECG curve names to OpenSSL NIDs.
+    */
+   private static int curveNameToNid(String curveName, Arena arena) throws Throwable {
+      // Try common JCA names first
+      String normalized = curveName.toLowerCase(java.util.Locale.ROOT);
+      int nid = switch (normalized) {
+         case "secp256r1", "p-256" -> NID_X9_62_prime256v1;
+         case "secp384r1", "p-384" -> NID_secp384r1;
+         case "secp521r1", "p-521" -> NID_secp521r1;
+         case "secp256k1" -> NID_secp256k1;
+         default -> 0;
+      };
+      if (nid != 0) return nid;
+      // Fall back to OpenSSL name lookup
+      nid = OBJ_sn2nid(curveName, arena);
+      if (nid != 0) return nid;
+      return OBJ_txt2nid(curveName, arena);
+   }
+
+   private static final java.util.concurrent.ConcurrentHashMap<Integer, java.security.spec.ECParameterSpec> EC_PARAMS_CACHE =
+      new java.util.concurrent.ConcurrentHashMap<>();
+
+   public static java.security.spec.ECParameterSpec resolveECParameterSpec(String curveName) throws Throwable {
+      try (Arena arena = Arena.ofConfined()) {
+         int nid = curveNameToNid(curveName, arena);
+         if (nid == 0) {
+            throw new IllegalStateException("Unknown EC curve: " + curveName);
+         }
+
+         // Check cache first to avoid keygen just for parameter extraction
+         java.security.spec.ECParameterSpec cached = EC_PARAMS_CACHE.get(nid);
+         if (cached != null) {
+            return cached;
+         }
+
+         MemorySegment ctx = EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, "EC", MemorySegment.NULL, arena);
+         if (ctx.equals(MemorySegment.NULL)) {
+            throw new IllegalStateException("Failed to create EVP_PKEY_CTX for EC");
+         }
+         try {
+            int r = EVP_PKEY_keygen_init(ctx);
+            if (r <= 0) {
+               throw new IllegalStateException("EVP_PKEY_keygen_init failed");
+            }
+            r = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid);
+            if (r <= 0) {
+               throw new IllegalStateException("EVP_PKEY_CTX_set_ec_paramgen_curve_nid failed for curve: " + curveName);
+            }
+
+            MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+            r = EVP_PKEY_keygen(ctx, pkeyPtr);
+            if (r <= 0) {
+               throw new IllegalStateException("EVP_PKEY_keygen failed for curve: " + curveName);
+            }
+            MemorySegment pkey = pkeyPtr.get(ValueLayout.ADDRESS, 0);
+
+            try {
+               java.security.spec.ECParameterSpec spec = extractECParameterSpec(pkey, arena);
+               EC_PARAMS_CACHE.putIfAbsent(nid, spec);
+               return spec;
+            } finally {
+               EVP_PKEY_free(pkey);
+            }
+         } finally {
+            EVP_PKEY_CTX_free(ctx);
+         }
+      }
+   }
+
+   /**
+    * Extracts ECParameterSpec from an existing EC EVP_PKEY.
+    */
+   public static java.security.spec.ECParameterSpec extractECParameterSpec(MemorySegment pkey, Arena arena) throws Throwable {
+      java.math.BigInteger p = EVP_PKEY_get_bn_param(pkey, "p", arena);
+      java.math.BigInteger a = EVP_PKEY_get_bn_param(pkey, "a", arena);
+      java.math.BigInteger b = EVP_PKEY_get_bn_param(pkey, "b", arena);
+      java.math.BigInteger order = EVP_PKEY_get_bn_param(pkey, "order", arena);
+      java.math.BigInteger cofactor = EVP_PKEY_get_bn_param(pkey, "cofactor", arena);
+
+      // Get the generator point (uncompressed: 04 || x || y)
+      byte[] genBytes = EVP_PKEY_get_octet_string_param(pkey, "generator", 256, arena);
+      if (genBytes[0] != 0x04) {
+         throw new IllegalStateException("Expected uncompressed generator point");
+      }
+      int coordLen = (genBytes.length - 1) / 2;
+      byte[] xBytes = new byte[coordLen];
+      byte[] yBytes = new byte[coordLen];
+      System.arraycopy(genBytes, 1, xBytes, 0, coordLen);
+      System.arraycopy(genBytes, 1 + coordLen, yBytes, 0, coordLen);
+      java.math.BigInteger gx = new java.math.BigInteger(1, xBytes);
+      java.math.BigInteger gy = new java.math.BigInteger(1, yBytes);
+
+      java.security.spec.ECFieldFp field = new java.security.spec.ECFieldFp(p);
+      java.security.spec.EllipticCurve curve = new java.security.spec.EllipticCurve(field, a, b);
+      java.security.spec.ECPoint generator = new java.security.spec.ECPoint(gx, gy);
+
+      return new java.security.spec.ECParameterSpec(curve, generator, order, cofactor.intValue());
+   }
+
+   /**
+    * Extracts the EC public point (W) from an EVP_PKEY as an ECPoint.
+    */
+   public static java.security.spec.ECPoint extractECPublicPoint(MemorySegment pkey, Arena arena) throws Throwable {
+      byte[] pubBytes = EVP_PKEY_get_octet_string_param(pkey, "pub", 256, arena);
+      if (pubBytes[0] != 0x04) {
+         throw new IllegalStateException("Expected uncompressed public point");
+      }
+      int coordLen = (pubBytes.length - 1) / 2;
+      byte[] xBytes = new byte[coordLen];
+      byte[] yBytes = new byte[coordLen];
+      System.arraycopy(pubBytes, 1, xBytes, 0, coordLen);
+      System.arraycopy(pubBytes, 1 + coordLen, yBytes, 0, coordLen);
+      return new java.security.spec.ECPoint(
+         new java.math.BigInteger(1, xBytes),
+         new java.math.BigInteger(1, yBytes));
+   }
+
+   /**
+    * Extracts the EC curve name from an EVP_PKEY.
+    */
+   public static String extractECCurveName(MemorySegment pkey, Arena arena) throws Throwable {
+      return EVP_PKEY_get_utf8_string_param(pkey, "group", arena);
+   }
+
+   // OSSL_KEYMGMT_SELECT constants
+   private static final int OSSL_KEYMGMT_SELECT_PRIVATE_KEY = 1;
+   private static final int OSSL_KEYMGMT_SELECT_PUBLIC_KEY = 2;
+   private static final int OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS = 4;
+   private static final int EVP_PKEY_PUBLIC_KEY = OSSL_KEYMGMT_SELECT_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+   private static final int EVP_PKEY_KEYPAIR = OSSL_KEYMGMT_SELECT_PRIVATE_KEY | OSSL_KEYMGMT_SELECT_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+
+   // Make selection constants accessible for KeyFactory/KeyPairGenerator use
+   public static final int SELECT_PUBLIC_KEY = EVP_PKEY_PUBLIC_KEY;
+   public static final int SELECT_KEYPAIR = EVP_PKEY_KEYPAIR;
+   public static final int SELECT_PRIVATE_KEY_AND_DOMAIN =
+      OSSL_KEYMGMT_SELECT_PRIVATE_KEY | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+
+   /**
+    * Builder for OSSL_PARAM arrays used with EVP_PKEY_fromdata.
+    * Supports mixed parameter types (UTF8_STRING, OCTET_STRING, UNSIGNED_INTEGER).
+    */
+   public static class OSSLParamBuilder {
+      private final java.util.List<Object[]> entries = new java.util.ArrayList<>();
+
+      @CanIgnoreReturnValue
+      public OSSLParamBuilder addUtf8String(String name, String value) {
+         entries.add(new Object[]{name, OSSL_PARAM_UTF8_STRING, value});
+         return this;
+      }
+
+      @CanIgnoreReturnValue
+      public OSSLParamBuilder addOctetString(String name, byte[] value) {
+         entries.add(new Object[]{name, OSSL_PARAM_OCTET_STRING, value});
+         return this;
+      }
+
+      @CanIgnoreReturnValue
+      public OSSLParamBuilder addBigInteger(String name, java.math.BigInteger value) {
+         entries.add(new Object[]{name, OSSL_PARAM_UNSIGNED_INTEGER, value});
+         return this;
+      }
+
+      /**
+       * Builds the OSSL_PARAM array in the given arena.
+       */
+      MemorySegment build(Arena arena) {
+         int count = entries.size();
+         MemorySegment params = arena.allocate(OSSL_PARAM_SIZE * (count + 1));
+
+         for (int i = 0; i < count; i++) {
+            Object[] entry = entries.get(i);
+            String name = (String) entry[0];
+            int type = (int) entry[1];
+            Object value = entry[2];
+
+            MemorySegment keyName = arena.allocateFrom(name);
+            long offset = i * OSSL_PARAM_SIZE;
+
+            switch (type) {
+               case OSSL_PARAM_UTF8_STRING -> {
+                  String strVal = (String) value;
+                  MemorySegment strSeg = arena.allocateFrom(strVal);
+                  params.set(ValueLayout.ADDRESS, offset, keyName);
+                  params.set(ValueLayout.JAVA_INT, offset + 8, type);
+                  params.set(ValueLayout.ADDRESS, offset + 16, strSeg);
+                  params.set(ValueLayout.JAVA_LONG, offset + 24, strVal.length());
+                  params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
+               }
+               case OSSL_PARAM_OCTET_STRING -> {
+                  byte[] bytes = (byte[]) value;
+                  MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, bytes.length);
+                  seg.asByteBuffer().put(bytes);
+                  params.set(ValueLayout.ADDRESS, offset, keyName);
+                  params.set(ValueLayout.JAVA_INT, offset + 8, type);
+                  params.set(ValueLayout.ADDRESS, offset + 16, seg);
+                  params.set(ValueLayout.JAVA_LONG, offset + 24, bytes.length);
+                  params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
+               }
+               case OSSL_PARAM_UNSIGNED_INTEGER -> {
+                  byte[] bnBytes = ((java.math.BigInteger) value).toByteArray();
+                  // Strip leading zero (sign extension)
+                  if (bnBytes.length > 1 && bnBytes[0] == 0) {
+                     byte[] trimmed = new byte[bnBytes.length - 1];
+                     System.arraycopy(bnBytes, 1, trimmed, 0, trimmed.length);
+                     bnBytes = trimmed;
+                  }
+                  MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, bnBytes.length);
+                  seg.asByteBuffer().put(bnBytes);
+                  params.set(ValueLayout.ADDRESS, offset, keyName);
+                  params.set(ValueLayout.JAVA_INT, offset + 8, type);
+                  params.set(ValueLayout.ADDRESS, offset + 16, seg);
+                  params.set(ValueLayout.JAVA_LONG, offset + 24, bnBytes.length);
+                  params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
+               }
+               default -> throw new IllegalArgumentException("Unsupported OSSL_PARAM type: " + type);
+            }
+         }
+
+         // End marker
+         params.set(ValueLayout.ADDRESS, (long) count * OSSL_PARAM_SIZE, MemorySegment.NULL);
+         return params;
+      }
+   }
+
+   /**
+    * Creates an EVP_PKEY from an OSSL_PARAM array via EVP_PKEY_fromdata.
+    * Reusable across all key types (EC, RSA, DSA, DH).
+    *
+    * @param algorithm OpenSSL algorithm name ("EC", "RSA", "DSA", "DH")
+    * @param builder   populated OSSLParamBuilder
+    * @param selection OSSL_KEYMGMT_SELECT combination
+    * @param arena     memory arena
+    * @return new EVP_PKEY (caller must free)
+    */
+   public static MemorySegment createKeyFromParams(
+      String algorithm, OSSLParamBuilder builder,
+      int selection, Arena arena) throws Throwable {
+      MemorySegment ctx = EVP_PKEY_CTX_new_from_name(MemorySegment.NULL, algorithm, MemorySegment.NULL, arena);
+      if (ctx.equals(MemorySegment.NULL)) {
+         throw new IllegalStateException("Failed to create EVP_PKEY_CTX for " + algorithm);
+      }
+      try {
+         int r = (int) EVP_PKEY_fromdata_init.invokeExact(ctx, selection);
+         if (r <= 0) {
+            throw new IllegalStateException("EVP_PKEY_fromdata_init failed for " + algorithm);
+         }
+
+         MemorySegment params = builder.build(arena);
+         MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
+         r = (int) EVP_PKEY_fromdata.invokeExact(ctx, pkeyPtr, selection, params);
+         if (r <= 0) {
+            throw new IllegalStateException("EVP_PKEY_fromdata failed for " + algorithm);
+         }
+         return pkeyPtr.get(ValueLayout.ADDRESS, 0);
+      } finally {
+         EVP_PKEY_CTX_free(ctx);
+      }
+   }
+
+   /**
+    * Convenience: creates an EVP_PKEY from BigInteger-only parameters.
+    * Suitable for RSA, DSA, DH where all params are unsigned integers.
+    */
+   public static MemorySegment createKeyFromBNParams(
+      String algorithm, String[] paramNames, java.math.BigInteger[] paramValues,
+      int selection, Arena arena) throws Throwable {
+      if (paramNames.length != paramValues.length) {
+         throw new IllegalArgumentException("paramNames and paramValues must have same length");
+      }
+      OSSLParamBuilder builder = new OSSLParamBuilder();
+      for (int i = 0; i < paramNames.length; i++) {
+         builder.addBigInteger(paramNames[i], paramValues[i]);
+      }
+      return createKeyFromParams(algorithm, builder, selection, arena);
+   }
+
+   /**
+    * Creates an EC public key EVP_PKEY from a curve name and uncompressed point.
+    */
+   public static MemorySegment createECPublicKeyFromPoint(String curveName, byte[] uncompressedPoint, Arena arena) throws Throwable {
+      OSSLParamBuilder builder = new OSSLParamBuilder()
+         .addUtf8String("group", curveName)
+         .addOctetString("pub", uncompressedPoint);
+      return createKeyFromParams("EC", builder, SELECT_PUBLIC_KEY, arena);
+   }
+
+   /**
+    * Creates an EC private key EVP_PKEY from a curve name and private scalar.
+    */
+   public static MemorySegment createECPrivateKeyFromScalar(String curveName, java.math.BigInteger s, Arena arena) throws Throwable {
+      OSSLParamBuilder builder = new OSSLParamBuilder()
+         .addUtf8String("group", curveName)
+         .addBigInteger("priv", s);
+      return createKeyFromParams("EC", builder, SELECT_PRIVATE_KEY_AND_DOMAIN, arena);
    }
 
    // EVP_KDF wrapper methods

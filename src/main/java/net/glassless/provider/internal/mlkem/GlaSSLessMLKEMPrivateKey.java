@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.mlkem;
 
+import java.io.Serial;
+
 import net.glassless.provider.internal.AbstractPrivateKey;
 
 /**
@@ -8,6 +10,7 @@ import net.glassless.provider.internal.AbstractPrivateKey;
  */
 public class GlaSSLessMLKEMPrivateKey extends AbstractPrivateKey {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    public GlaSSLessMLKEMPrivateKey(String algorithm, byte[] encoded) {

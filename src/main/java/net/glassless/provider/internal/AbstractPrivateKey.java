@@ -1,5 +1,6 @@
 package net.glassless.provider.internal;
 
+import java.io.Serial;
 import java.security.PrivateKey;
 import java.util.Arrays;
 
@@ -11,6 +12,7 @@ import javax.security.auth.Destroyable;
  */
 public abstract class AbstractPrivateKey implements PrivateKey, Destroyable {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    private final String algorithm;

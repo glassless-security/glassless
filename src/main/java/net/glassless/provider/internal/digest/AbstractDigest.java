@@ -12,12 +12,14 @@ import net.glassless.provider.internal.OpenSSLCrypto;
 
 public abstract class AbstractDigest extends MessageDigestSpi implements Cloneable {
 
-   private final MemorySegment evpMdCtx;
-   private final MemorySegment handle;
-   private final Arena arena;
+   private final String algorithmName;
+   private MemorySegment evpMdCtx;
+   private MemorySegment handle;
+   private Arena arena;
 
    protected AbstractDigest(String algorithmName) throws ProviderException {
       super();
+      this.algorithmName = algorithmName;
       try {
          arena = Arena.ofShared();
          evpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
@@ -127,7 +129,30 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
 
    @Override
    public Object clone() throws CloneNotSupportedException {
-      // TODO
-      throw new CloneNotSupportedException(this.getClass().getSimpleName() + " does not support cloning yet.");
+      AbstractDigest copy = (AbstractDigest) super.clone();
+      try {
+         copy.arena = Arena.ofShared();
+         copy.evpMdCtx = OpenSSLCrypto.EVP_MD_CTX_new();
+         if (copy.evpMdCtx.equals(MemorySegment.NULL)) {
+            copy.arena.close();
+            throw new CloneNotSupportedException("Failed to create EVP_MD_CTX for clone");
+         }
+         copy.handle = OpenSSLCrypto.getDigestHandle(this.algorithmName, copy.arena);
+         int result = OpenSSLCrypto.EVP_MD_CTX_copy_ex(copy.evpMdCtx, this.evpMdCtx);
+         if (result != 1) {
+            OpenSSLCrypto.EVP_MD_CTX_free(copy.evpMdCtx);
+            copy.arena.close();
+            throw new CloneNotSupportedException("EVP_MD_CTX_copy_ex failed");
+         }
+         NativeResourceCleaner.builder()
+            .freeEvpMdCtx(copy.evpMdCtx)
+            .closeArena(copy.arena)
+            .registerFor(copy);
+         return copy;
+      } catch (CloneNotSupportedException e) {
+         throw e;
+      } catch (Throwable e) {
+         throw new CloneNotSupportedException("Failed to clone digest: " + e.getMessage());
+      }
    }
 }

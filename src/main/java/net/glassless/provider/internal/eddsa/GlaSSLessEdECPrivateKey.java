@@ -1,5 +1,6 @@
 package net.glassless.provider.internal.eddsa;
 
+import java.io.Serial;
 import java.security.interfaces.EdECPrivateKey;
 import java.security.spec.NamedParameterSpec;
 import java.util.Arrays;
@@ -10,6 +11,7 @@ import java.util.Optional;
  */
 public class GlaSSLessEdECPrivateKey implements EdECPrivateKey {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    private final NamedParameterSpec params;

@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.secretkeyfactory;
 
+import java.io.Serial;
+
 import javax.crypto.SecretKey;
 
 /**
@@ -31,6 +33,7 @@ public abstract class AbstractPBES2SecretKeyFactory extends AbstractPBKDF2Secret
     * Internal PBES2 SecretKey implementation.
     */
    private static class PBES2SecretKey implements SecretKey {
+      @Serial
       private static final long serialVersionUID = 1L;
 
       private final byte[] keyBytes;

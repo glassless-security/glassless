@@ -3,22 +3,20 @@ package net.glassless.provider.internal.keypairgen;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGeneratorSpi;
-import java.security.PrivateKey;
 import java.security.ProviderException;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.spec.DHParameterSpec;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
+import net.glassless.provider.internal.keyfactory.DHKeyFactory;
+import net.glassless.provider.internal.keyfactory.GlaSSLessDHPublicKey;
 
 /**
  * DH (Diffie-Hellman) KeyPairGenerator using OpenSSL.
@@ -75,19 +73,16 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
 
          MemorySegment dhParams;
          try {
-            // Initialize for parameter generation
             int result = OpenSSLCrypto.EVP_PKEY_paramgen_init(paramCtx);
             if (result <= 0) {
                throw new ProviderException("EVP_PKEY_paramgen_init failed");
             }
 
-            // Set key size
             result = OpenSSLCrypto.EVP_PKEY_CTX_set_dh_paramgen_prime_len(paramCtx, keySize);
             if (result <= 0) {
                throw new ProviderException("EVP_PKEY_CTX_set_dh_paramgen_prime_len failed");
             }
 
-            // Generate parameters
             MemorySegment paramsPtr = arena.allocate(ValueLayout.ADDRESS);
             result = OpenSSLCrypto.EVP_PKEY_paramgen(paramCtx, paramsPtr);
             if (result <= 0) {
@@ -110,13 +105,11 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
             }
 
             try {
-               // Initialize for key generation
                int result = OpenSSLCrypto.EVP_PKEY_keygen_init(keyCtx);
                if (result <= 0) {
                   throw new ProviderException("EVP_PKEY_keygen_init failed");
                }
 
-               // Generate the key pair
                MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
                result = OpenSSLCrypto.EVP_PKEY_keygen(keyCtx, pkeyPtr);
                if (result <= 0) {
@@ -129,20 +122,15 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
                }
 
                try {
-                  // Export private key to DER format (PKCS#8)
                   byte[] privateKeyBytes = OpenSSLCrypto.exportPrivateKey(pkey, arena);
-                  PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-
-                  // Export public key to DER format (SubjectPublicKeyInfo / X.509)
                   byte[] publicKeyBytes = OpenSSLCrypto.exportPublicKey(pkey, arena);
-                  X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
 
-                  // Use standard KeyFactory to create the key objects
-                  KeyFactory keyFactory = KeyFactory.getInstance("DH");
-                  PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
-                  PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+                  DHParameterSpec params = DHKeyFactory.extractDHParams(pkey, arena);
+                  BigInteger y = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "pub", arena);
 
-                  return new KeyPair(publicKey, privateKey);
+                  return new KeyPair(
+                     new GlaSSLessDHPublicKey(y, params, publicKeyBytes),
+                     DHKeyFactory.extractDHPrivateKey(pkey, arena, privateKeyBytes));
 
                } finally {
                   OpenSSLCrypto.EVP_PKEY_free(pkey);

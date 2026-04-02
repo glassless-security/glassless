@@ -41,9 +41,8 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
    @Override
    protected void engineInit(Key key, AlgorithmParameterSpec params, SecureRandom random)
       throws InvalidKeyException, InvalidAlgorithmParameterException {
-      if (params != null) {
-         throw new InvalidAlgorithmParameterException("No parameters expected for ECDH");
-      }
+      // Accept and ignore params — JSSE may pass ECParameterSpec (e.g. NamedCurve)
+      // The curve is already encoded in the private key
       engineInit(key, random);
    }
 

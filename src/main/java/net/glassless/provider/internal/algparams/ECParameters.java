@@ -8,6 +8,8 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.InvalidParameterSpecException;
 import java.util.Locale;
 
+import net.glassless.provider.internal.OpenSSLCrypto;
+
 /**
  * AlgorithmParameters implementation for EC (Elliptic Curve).
  * Supports ECParameterSpec and ECGenParameterSpec.
@@ -66,6 +68,20 @@ public class ECParameters extends AlgorithmParametersSpi {
          if (ecParameterSpec != null) {
             return (T) ecParameterSpec;
          }
+         // Resolve ECParameterSpec from curve name by delegating to a non-GlaSSLess provider
+         if (curveName != null) {
+            try {
+               ecParameterSpec = resolveECParameterSpec(curveName);
+               return (T) ecParameterSpec;
+            } catch (InvalidParameterSpecException e) {
+               throw e;
+            } catch (Exception e) {
+               InvalidParameterSpecException ex = new InvalidParameterSpecException(
+                  "Failed to resolve ECParameterSpec for curve: " + curveName);
+               ex.initCause(e);
+               throw ex;
+            }
+         }
          throw new InvalidParameterSpecException("ECParameterSpec not available");
       }
       throw new InvalidParameterSpecException("Unsupported parameter spec: " + paramSpec.getName());
@@ -96,6 +112,18 @@ public class ECParameters extends AlgorithmParametersSpi {
          return "EC Parameters: " + ecParameterSpec;
       }
       return "EC Parameters: <not initialized>";
+   }
+
+   private ECParameterSpec resolveECParameterSpec(String name)
+      throws InvalidParameterSpecException {
+      try {
+         return OpenSSLCrypto.resolveECParameterSpec(name);
+      } catch (Throwable e) {
+         InvalidParameterSpecException ex = new InvalidParameterSpecException(
+            "Failed to resolve ECParameterSpec for curve: " + name);
+         ex.initCause(e);
+         throw ex;
+      }
    }
 
    private String getCurveNameFromSpec(ECParameterSpec spec) {

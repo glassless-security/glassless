@@ -3,6 +3,7 @@ package net.glassless.provider.internal.cipher;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -86,7 +87,17 @@ abstract class AbstractCipher extends CipherSpi {
 
    @Override
    protected int engineGetOutputSize(int inputLen) {
-      // This is a conservative estimate. The actual size may be smaller.
+      boolean isAEAD = mode == CipherMode.GCM || mode == CipherMode.GCM_SIV || mode == CipherMode.CCM || mode == CipherMode.POLY1305;
+      if (isAEAD) {
+         int tagLength = gcmTagLenBits / 8;
+         if (opmode == Cipher.ENCRYPT_MODE) {
+            // Ciphertext + tag
+            return inputLen + tagLength;
+         } else {
+            // Input includes the tag; plaintext is smaller
+            return Math.max(0, inputLen - tagLength);
+         }
+      }
       return inputLen + engineGetBlockSize();
    }
 
@@ -240,6 +251,44 @@ abstract class AbstractCipher extends CipherSpi {
    }
 
    @Override
+   protected void engineUpdateAAD(byte[] src, int offset, int len) {
+      if (evpCipherCtx == null) {
+         throw new IllegalStateException("Cipher not initialized");
+      }
+      try (Arena confinedArena = Arena.ofConfined()) {
+         MemorySegment inputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, len);
+         inputSegment.asByteBuffer().put(src, offset, len);
+
+         MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT);
+
+         int result;
+         if (opmode == Cipher.ENCRYPT_MODE) {
+            result = OpenSSLCrypto.EVP_EncryptUpdate(evpCipherCtx, MemorySegment.NULL, outLenSegment, inputSegment, len);
+         } else {
+            result = OpenSSLCrypto.EVP_DecryptUpdate(evpCipherCtx, MemorySegment.NULL, outLenSegment, inputSegment, len);
+         }
+         if (result != 1) {
+            throw new ProviderException("Failed to update AAD");
+         }
+      } catch (ProviderException e) {
+         throw e;
+      } catch (Throwable e) {
+         throw new ProviderException("Error updating AAD", e);
+      }
+   }
+
+   @Override
+   protected void engineUpdateAAD(ByteBuffer src) {
+      int len = src.remaining();
+      if (len == 0) {
+         return;
+      }
+      byte[] aad = new byte[len];
+      src.get(aad);
+      engineUpdateAAD(aad, 0, aad.length);
+   }
+
+   @Override
    protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen)
       throws IllegalBlockSizeException, BadPaddingException {
       try (Arena confinedArena = Arena.ofConfined()) {
@@ -296,7 +345,7 @@ abstract class AbstractCipher extends CipherSpi {
          MemorySegment tagSegment = MemorySegment.NULL;
 
 
-         int finalOutputSegmentSize = engineGetOutputSize(0); // Max possible for final, like one block
+         int finalOutputSegmentSize = Math.max(engineGetBlockSize(), 16); // At least one block for final output
          MemorySegment finalOutputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, finalOutputSegmentSize);
          MemorySegment finalOutLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT);
 
@@ -343,6 +392,8 @@ abstract class AbstractCipher extends CipherSpi {
 
          return finalOutput;
 
+      } catch (IllegalBlockSizeException | BadPaddingException e) {
+         throw e;
       } catch (Throwable e) {
          throw new ProviderException("Error finalizing cipher", e);
       } finally {

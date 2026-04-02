@@ -41,9 +41,8 @@ public class DHKeyAgreement extends KeyAgreementSpi {
    @Override
    protected void engineInit(Key key, AlgorithmParameterSpec params, SecureRandom random)
       throws InvalidKeyException, InvalidAlgorithmParameterException {
-      if (params != null) {
-         throw new InvalidAlgorithmParameterException("No parameters expected for DH key agreement");
-      }
+      // Accept and ignore params — JSSE may pass DHParameterSpec
+      // The parameters are already encoded in the private key
       engineInit(key, random);
    }
 

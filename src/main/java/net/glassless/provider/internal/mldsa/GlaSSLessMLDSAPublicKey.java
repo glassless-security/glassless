@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.mldsa;
 
+import java.io.Serial;
+
 import net.glassless.provider.internal.AbstractPublicKey;
 
 /**
@@ -8,6 +10,7 @@ import net.glassless.provider.internal.AbstractPublicKey;
  */
 public class GlaSSLessMLDSAPublicKey extends AbstractPublicKey {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    public GlaSSLessMLDSAPublicKey(String algorithm, byte[] encoded) {

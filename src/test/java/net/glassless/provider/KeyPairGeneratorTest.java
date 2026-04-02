@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
@@ -17,7 +18,10 @@ import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -193,6 +197,32 @@ public class KeyPairGeneratorTest {
             assertTrue(sig.verify(signature));
         }
 
+        @ParameterizedTest(name = "EC with ECParameterSpec from {0} curve")
+        @ValueSource(strings = {"secp256r1", "secp384r1", "secp521r1"})
+        @DisplayName("EC with ECParameterSpec (JSSE NamedCurve compatibility)")
+        void testECKeyGenerationWithECParameterSpec(String curveName) throws Exception {
+            // JSSE passes sun.security.util.NamedCurve (extends ECParameterSpec), not ECGenParameterSpec.
+            // Simulate this by extracting ECParameterSpec from a JDK-generated key.
+            KeyPairGenerator jdkKeyGen = KeyPairGenerator.getInstance("EC", "SunEC");
+            jdkKeyGen.initialize(new ECGenParameterSpec(curveName));
+            KeyPair jdkKeyPair = jdkKeyGen.generateKeyPair();
+            ECParameterSpec ecParams = ((ECPublicKey) jdkKeyPair.getPublic()).getParams();
+
+            // Initialize GlaSSLess EC KeyPairGenerator with ECParameterSpec (not ECGenParameterSpec)
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            keyGen.initialize(ecParams);
+
+            KeyPair keyPair = keyGen.generateKeyPair();
+            assertNotNull(keyPair);
+            assertInstanceOf(ECPublicKey.class, keyPair.getPublic());
+            assertInstanceOf(ECPrivateKey.class, keyPair.getPrivate());
+
+            // Verify the generated key uses the same curve
+            ECPublicKey generatedPub = (ECPublicKey) keyPair.getPublic();
+            assertEquals(ecParams.getCurve().getField().getFieldSize(),
+                generatedPub.getParams().getCurve().getField().getFieldSize());
+        }
+
         @Test
         @DisplayName("Generated EC keys are unique")
         void testECKeyUniqueness() throws Exception {
@@ -207,6 +237,47 @@ public class KeyPairGeneratorTest {
 
             // Different key pairs should have different private key values
             assertFalse(priv1.getS().equals(priv2.getS()));
+        }
+    }
+
+    @Nested
+    @DisplayName("KeyFactory Delegation")
+    class KeyFactoryDelegationTests {
+
+        @Test
+        @DisplayName("EC KeyFactory does not recurse when GlaSSLess is highest-priority provider")
+        void testECKeyFactoryNoRecursion() throws Exception {
+            // Generate a key pair — this exercises getDelegateKeyFactory internally
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", PROVIDER_NAME);
+            keyGen.initialize(256);
+            KeyPair keyPair = keyGen.generateKeyPair();
+
+            // Re-encode and reconstruct through our KeyFactory — should not StackOverflow
+            KeyFactory kf = KeyFactory.getInstance("EC", PROVIDER_NAME);
+            ECPublicKey pub = (ECPublicKey) kf.generatePublic(
+                new X509EncodedKeySpec(keyPair.getPublic().getEncoded()));
+            ECPrivateKey priv = (ECPrivateKey) kf.generatePrivate(
+                new PKCS8EncodedKeySpec(keyPair.getPrivate().getEncoded()));
+
+            assertNotNull(pub);
+            assertNotNull(priv);
+        }
+
+        @Test
+        @DisplayName("RSA KeyFactory does not recurse when GlaSSLess is highest-priority provider")
+        void testRSAKeyFactoryNoRecursion() throws Exception {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
+            keyGen.initialize(2048);
+            KeyPair keyPair = keyGen.generateKeyPair();
+
+            KeyFactory kf = KeyFactory.getInstance("RSA", PROVIDER_NAME);
+            RSAPublicKey pub = (RSAPublicKey) kf.generatePublic(
+                new X509EncodedKeySpec(keyPair.getPublic().getEncoded()));
+            RSAPrivateKey priv = (RSAPrivateKey) kf.generatePrivate(
+                new PKCS8EncodedKeySpec(keyPair.getPrivate().getEncoded()));
+
+            assertNotNull(pub);
+            assertNotNull(priv);
         }
     }
 }

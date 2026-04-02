@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.securerandom;
 
+import java.io.Serial;
+
 /**
  * NativePRNG SecureRandom implementation.
  * This is an alias for OpenSSLSecureRandom, which uses OpenSSL's
@@ -7,6 +9,7 @@ package net.glassless.provider.internal.securerandom;
  */
 public class NativePRNG extends OpenSSLSecureRandom {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    public NativePRNG() {

@@ -1,5 +1,6 @@
 package net.glassless.provider.internal.xdh;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.security.interfaces.XECPublicKey;
 import java.security.spec.AlgorithmParameterSpec;
@@ -11,6 +12,7 @@ import java.util.Arrays;
  */
 public class GlaSSLessXECPublicKey implements XECPublicKey {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    private final NamedParameterSpec params;

@@ -14,6 +14,7 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.spec.DSAParameterSpec;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 
@@ -66,6 +67,36 @@ public class AlgorithmParametersTest {
 
             ECGenParameterSpec spec = params2.getParameterSpec(ECGenParameterSpec.class);
             assertEquals("secp384r1", spec.getName());
+        }
+
+        @Test
+        @DisplayName("Resolve ECParameterSpec from curve name")
+        void testGetECParameterSpecFromCurveName() throws Exception {
+            // This exercises the code path hit during TLS handshake:
+            // SunEC's ECPublicKeyImpl parses X.509 key, gets AlgorithmParameters("EC"),
+            // inits with DER OID, then requests ECParameterSpec.
+            AlgorithmParameters params = AlgorithmParameters.getInstance("EC", PROVIDER_NAME);
+            params.init(new ECGenParameterSpec("secp256r1"));
+
+            ECParameterSpec ecSpec = params.getParameterSpec(ECParameterSpec.class);
+            assertNotNull(ecSpec);
+            assertEquals(256, ecSpec.getCurve().getField().getFieldSize());
+        }
+
+        @Test
+        @DisplayName("Resolve ECParameterSpec from DER-encoded OID")
+        void testGetECParameterSpecFromDER() throws Exception {
+            // Init from DER (as SunEC does when parsing key encoding), then request ECParameterSpec
+            AlgorithmParameters params1 = AlgorithmParameters.getInstance("EC", PROVIDER_NAME);
+            params1.init(new ECGenParameterSpec("secp384r1"));
+            byte[] encoded = params1.getEncoded();
+
+            AlgorithmParameters params2 = AlgorithmParameters.getInstance("EC", PROVIDER_NAME);
+            params2.init(encoded);
+
+            ECParameterSpec ecSpec = params2.getParameterSpec(ECParameterSpec.class);
+            assertNotNull(ecSpec);
+            assertEquals(384, ecSpec.getCurve().getField().getFieldSize());
         }
 
         @Test

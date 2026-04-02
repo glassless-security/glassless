@@ -1,5 +1,6 @@
 package net.glassless.provider.internal;
 
+import java.io.Serial;
 import java.security.PublicKey;
 import java.util.Arrays;
 
@@ -9,6 +10,7 @@ import java.util.Arrays;
  */
 public abstract class AbstractPublicKey implements PublicKey {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    private final String algorithm;

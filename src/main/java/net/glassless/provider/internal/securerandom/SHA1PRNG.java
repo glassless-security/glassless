@@ -1,5 +1,7 @@
 package net.glassless.provider.internal.securerandom;
 
+import java.io.Serial;
+
 /**
  * SHA1PRNG SecureRandom implementation.
  * For compatibility, this uses OpenSSL's random number generator
@@ -8,6 +10,7 @@ package net.glassless.provider.internal.securerandom;
  */
 public class SHA1PRNG extends OpenSSLSecureRandom {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    public SHA1PRNG() {

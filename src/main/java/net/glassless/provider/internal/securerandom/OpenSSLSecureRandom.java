@@ -1,5 +1,6 @@
 package net.glassless.provider.internal.securerandom;
 
+import java.io.Serial;
 import java.security.SecureRandomSpi;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
@@ -12,6 +13,7 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  */
 public class OpenSSLSecureRandom extends SecureRandomSpi {
 
+   @Serial
    private static final long serialVersionUID = 1L;
 
    public OpenSSLSecureRandom() {

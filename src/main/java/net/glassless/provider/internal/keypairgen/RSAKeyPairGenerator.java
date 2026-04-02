@@ -1,18 +1,19 @@
 package net.glassless.provider.internal.keypairgen;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGeneratorSpi;
 import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAKeyGenParameterSpec;
-import java.security.spec.X509EncodedKeySpec;
 
 import net.glassless.provider.internal.OpenSSLCrypto;
+import net.glassless.provider.internal.keyfactory.GlaSSLessRSAPublicKey;
+import net.glassless.provider.internal.keyfactory.RSAKeyFactory;
 
 /**
  * RSA KeyPairGenerator using OpenSSL.
@@ -52,7 +53,7 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
    @Override
    public KeyPair generateKeyPair() {
-      try {
+      try (Arena arena = Arena.ofConfined()) {
          byte[][] keys = OpenSSLCrypto.generateKeyPair("RSA",
             ctx -> {
                int r = OpenSSLCrypto.EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, keySize);
@@ -60,14 +61,40 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
                   throw new ProviderException("EVP_PKEY_CTX_set_rsa_keygen_bits failed");
                }
             });
-         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-         return new KeyPair(
-            keyFactory.generatePublic(new X509EncodedKeySpec(keys[0])),
-            keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keys[1])));
-      } catch (ProviderException e) {
-         throw e;
-      } catch (Throwable e) {
-         throw new ProviderException("Error generating RSA key pair", e);
+
+         // Parse the generated keys using OpenSSL to extract components
+         byte[] pubEncoded = keys[0];
+         byte[] privEncoded = keys[1];
+
+         // Extract public key components
+         MemorySegment pubPkey = OpenSSLCrypto.loadPublicKey(pubEncoded, arena);
+         if (pubPkey.equals(MemorySegment.NULL)) {
+            throw new ProviderException("Failed to parse generated RSA public key");
+         }
+         java.math.BigInteger n, e;
+         try {
+            n = OpenSSLCrypto.EVP_PKEY_get_bn_param(pubPkey, "n", arena);
+            e = OpenSSLCrypto.EVP_PKEY_get_bn_param(pubPkey, "e", arena);
+         } finally {
+            OpenSSLCrypto.EVP_PKEY_free(pubPkey);
+         }
+
+         // Extract private key components (including CRT params)
+         MemorySegment privPkey = OpenSSLCrypto.loadPrivateKey(0, privEncoded, arena);
+         if (privPkey.equals(MemorySegment.NULL)) {
+            throw new ProviderException("Failed to parse generated RSA private key");
+         }
+         try {
+            return new KeyPair(
+               new GlaSSLessRSAPublicKey(n, e, pubEncoded),
+               RSAKeyFactory.extractRSAPrivateKey(privPkey, arena, privEncoded));
+         } finally {
+            OpenSSLCrypto.EVP_PKEY_free(privPkey);
+         }
+      } catch (ProviderException ex) {
+         throw ex;
+      } catch (Throwable ex) {
+         throw new ProviderException("Error generating RSA key pair", ex);
       }
    }
 }

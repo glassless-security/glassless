@@ -9,11 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
+import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
 import java.util.Arrays;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
+import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.spec.DHParameterSpec;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -258,6 +262,79 @@ public class KeyAgreementTest {
             // Both should compute the same shared secret
             assertArrayEquals(aliceSharedSecret, bobSharedSecret,
                     "GlaSSLess and default provider should produce the same shared secret");
+        }
+
+        @Test
+        @DisplayName("ECDH init with ECParameterSpec params (JSSE compatibility)")
+        void testECDHInitWithECParameterSpec() throws Exception {
+            // JSSE calls init(key, ECParameterSpec, random) — must not throw
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+            keyGen.initialize(new ECGenParameterSpec("secp256r1"));
+
+            KeyPair aliceKeyPair = keyGen.generateKeyPair();
+            KeyPair bobKeyPair = keyGen.generateKeyPair();
+
+            // Extract ECParameterSpec (simulates what JSSE does with NamedCurve)
+            ECParameterSpec ecParams = ((ECPublicKey) aliceKeyPair.getPublic()).getParams();
+
+            // Init with params — should not throw InvalidAlgorithmParameterException
+            KeyAgreement ka = KeyAgreement.getInstance("ECDH", PROVIDER_NAME);
+            ka.init(aliceKeyPair.getPrivate(), ecParams);
+            ka.doPhase(bobKeyPair.getPublic(), true);
+            byte[] secret = ka.generateSecret();
+
+            assertNotNull(secret);
+            assertEquals(32, secret.length);
+        }
+    }
+
+    @Nested
+    @DisplayName("DH Key Agreement")
+    class DHKeyAgreementTests {
+
+        @Test
+        @DisplayName("DH key agreement basic")
+        void testDHBasic() throws Exception {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
+            keyGen.initialize(2048);
+
+            KeyPair aliceKeyPair = keyGen.generateKeyPair();
+            KeyPair bobKeyPair = keyGen.generateKeyPair();
+
+            KeyAgreement aliceKa = KeyAgreement.getInstance("DH", PROVIDER_NAME);
+            aliceKa.init(aliceKeyPair.getPrivate());
+            aliceKa.doPhase(bobKeyPair.getPublic(), true);
+            byte[] aliceSecret = aliceKa.generateSecret();
+
+            KeyAgreement bobKa = KeyAgreement.getInstance("DH", PROVIDER_NAME);
+            bobKa.init(bobKeyPair.getPrivate());
+            bobKa.doPhase(aliceKeyPair.getPublic(), true);
+            byte[] bobSecret = bobKa.generateSecret();
+
+            assertNotNull(aliceSecret);
+            assertArrayEquals(aliceSecret, bobSecret);
+        }
+
+        @Test
+        @DisplayName("DH init with DHParameterSpec params (JSSE compatibility)")
+        void testDHInitWithDHParameterSpec() throws Exception {
+            // JSSE may call init(key, DHParameterSpec, random) — must not throw
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
+            keyGen.initialize(2048);
+
+            KeyPair aliceKeyPair = keyGen.generateKeyPair();
+            KeyPair bobKeyPair = keyGen.generateKeyPair();
+
+            // Extract DHParameterSpec from the generated key
+            DHParameterSpec dhParams = ((DHPublicKey) aliceKeyPair.getPublic()).getParams();
+
+            // Init with params — should not throw InvalidAlgorithmParameterException
+            KeyAgreement ka = KeyAgreement.getInstance("DH", PROVIDER_NAME);
+            ka.init(aliceKeyPair.getPrivate(), dhParams);
+            ka.doPhase(bobKeyPair.getPublic(), true);
+            byte[] secret = ka.generateSecret();
+
+            assertNotNull(secret);
         }
     }
 }
