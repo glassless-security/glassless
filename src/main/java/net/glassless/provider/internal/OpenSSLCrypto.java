@@ -136,6 +136,16 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_KDF_CTX_free;
    private static MethodHandle EVP_KDF_derive;
 
+   // Method handles for OSSL_PARAM_BLD (parameter builder)
+   private static MethodHandle OSSL_PARAM_BLD_new;
+   private static MethodHandle OSSL_PARAM_BLD_free;
+   private static MethodHandle OSSL_PARAM_BLD_to_param;
+   private static MethodHandle OSSL_PARAM_BLD_push_BN;
+   private static MethodHandle OSSL_PARAM_BLD_push_utf8_string;
+   private static MethodHandle OSSL_PARAM_BLD_push_octet_string;
+   private static MethodHandle OSSL_PARAM_free;
+   private static MethodHandle BN_bin2bn;
+
    // Method handles for FIPS detection
    private static MethodHandle EVP_default_properties_is_fips_enabled;
    private static MethodHandle OSSL_PROVIDER_available;
@@ -639,6 +649,48 @@ public class OpenSSLCrypto {
          // void BN_free(BIGNUM *a)
          BN_free = linker.downcallHandle(
             libcrypto.find("BN_free").orElseThrow(),
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
+         );
+
+         // BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
+         BN_bin2bn = linker.downcallHandle(
+            libcrypto.find("BN_bin2bn").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
+         );
+
+         // OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void)
+         OSSL_PARAM_BLD_new = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_BLD_new").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.ADDRESS)
+         );
+         // void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld)
+         OSSL_PARAM_BLD_free = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_BLD_free").orElseThrow(),
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
+         );
+         // OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
+         OSSL_PARAM_BLD_to_param = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_BLD_to_param").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+         );
+         // int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key, const BIGNUM *bn)
+         OSSL_PARAM_BLD_push_BN = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_BLD_push_BN").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+         );
+         // int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key, const char *buf, size_t bsize)
+         OSSL_PARAM_BLD_push_utf8_string = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_BLD_push_utf8_string").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+         );
+         // int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key, const void *buf, size_t bsize)
+         OSSL_PARAM_BLD_push_octet_string = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_BLD_push_octet_string").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+         );
+         // void OSSL_PARAM_free(OSSL_PARAM *params)
+         OSSL_PARAM_free = linker.downcallHandle(
+            libcrypto.find("OSSL_PARAM_free").orElseThrow(),
             FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
          );
 
@@ -1866,71 +1918,70 @@ public class OpenSSLCrypto {
       }
 
       /**
-       * Builds the OSSL_PARAM array in the given arena.
+       * Builds the OSSL_PARAM array using OpenSSL's OSSL_PARAM_BLD API.
+       * This delegates byte order handling to OpenSSL, ensuring correctness
+       * across all versions and platforms.
+       *
+       * @return OSSL_PARAM array (caller must free with OSSL_PARAM_free)
        */
-      MemorySegment build(Arena arena) {
-         int count = entries.size();
-         MemorySegment params = arena.allocate(OSSL_PARAM_SIZE * (count + 1));
-
-         for (int i = 0; i < count; i++) {
-            Object[] entry = entries.get(i);
-            String name = (String) entry[0];
-            int type = (int) entry[1];
-            Object value = entry[2];
-
-            MemorySegment keyName = arena.allocateFrom(name);
-            long offset = i * OSSL_PARAM_SIZE;
-
-            switch (type) {
-               case OSSL_PARAM_UTF8_STRING -> {
-                  String strVal = (String) value;
-                  MemorySegment strSeg = arena.allocateFrom(strVal);
-                  params.set(ValueLayout.ADDRESS, offset, keyName);
-                  params.set(ValueLayout.JAVA_INT, offset + 8, type);
-                  params.set(ValueLayout.ADDRESS, offset + 16, strSeg);
-                  params.set(ValueLayout.JAVA_LONG, offset + 24, strVal.length());
-                  params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
-               }
-               case OSSL_PARAM_OCTET_STRING -> {
-                  byte[] bytes = (byte[]) value;
-                  MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, bytes.length);
-                  seg.asByteBuffer().put(bytes);
-                  params.set(ValueLayout.ADDRESS, offset, keyName);
-                  params.set(ValueLayout.JAVA_INT, offset + 8, type);
-                  params.set(ValueLayout.ADDRESS, offset + 16, seg);
-                  params.set(ValueLayout.JAVA_LONG, offset + 24, bytes.length);
-                  params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
-               }
-               case OSSL_PARAM_UNSIGNED_INTEGER -> {
-                  byte[] bnBytes = ((java.math.BigInteger) value).toByteArray();
-                  // Strip leading zero (sign extension)
-                  if (bnBytes.length > 1 && bnBytes[0] == 0) {
-                     byte[] trimmed = new byte[bnBytes.length - 1];
-                     System.arraycopy(bnBytes, 1, trimmed, 0, trimmed.length);
-                     bnBytes = trimmed;
-                  }
-                  // OSSL_PARAM UNSIGNED_INTEGER expects native byte order (little-endian on x86_64).
-                  // BigInteger.toByteArray() returns big-endian, so reverse.
-                  for (int j = 0, k = bnBytes.length - 1; j < k; j++, k--) {
-                     byte tmp = bnBytes[j];
-                     bnBytes[j] = bnBytes[k];
-                     bnBytes[k] = tmp;
-                  }
-                  MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, bnBytes.length);
-                  seg.asByteBuffer().put(bnBytes);
-                  params.set(ValueLayout.ADDRESS, offset, keyName);
-                  params.set(ValueLayout.JAVA_INT, offset + 8, type);
-                  params.set(ValueLayout.ADDRESS, offset + 16, seg);
-                  params.set(ValueLayout.JAVA_LONG, offset + 24, bnBytes.length);
-                  params.set(ValueLayout.JAVA_LONG, offset + 32, 0L);
-               }
-               default -> throw new IllegalArgumentException("Unsupported OSSL_PARAM type: " + type);
-            }
+      MemorySegment build(Arena arena) throws Throwable {
+         MemorySegment bld = (MemorySegment) OSSL_PARAM_BLD_new.invokeExact();
+         if (bld.equals(MemorySegment.NULL)) {
+            throw new IllegalStateException("OSSL_PARAM_BLD_new failed");
          }
+         java.util.List<MemorySegment> bnsToFree = new java.util.ArrayList<>();
+         try {
+            for (Object[] entry : entries) {
+               String name = (String) entry[0];
+               int type = (int) entry[1];
+               Object value = entry[2];
+               MemorySegment keyName = arena.allocateFrom(name);
 
-         // End marker
-         params.set(ValueLayout.ADDRESS, (long) count * OSSL_PARAM_SIZE, MemorySegment.NULL);
-         return params;
+               switch (type) {
+                  case OSSL_PARAM_UTF8_STRING -> {
+                     String strVal = (String) value;
+                     MemorySegment strSeg = arena.allocateFrom(strVal);
+                     int r = (int) OSSL_PARAM_BLD_push_utf8_string.invokeExact(bld, keyName, strSeg, (long) strVal.length());
+                     if (r != 1) throw new IllegalStateException("OSSL_PARAM_BLD_push_utf8_string failed for: " + name);
+                  }
+                  case OSSL_PARAM_OCTET_STRING -> {
+                     byte[] bytes = (byte[]) value;
+                     MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, bytes.length);
+                     seg.asByteBuffer().put(bytes);
+                     int r = (int) OSSL_PARAM_BLD_push_octet_string.invokeExact(bld, keyName, seg, (long) bytes.length);
+                     if (r != 1) throw new IllegalStateException("OSSL_PARAM_BLD_push_octet_string failed for: " + name);
+                  }
+                  case OSSL_PARAM_UNSIGNED_INTEGER -> {
+                     byte[] bnBytes = ((java.math.BigInteger) value).toByteArray();
+                     // Strip leading zero (sign extension)
+                     if (bnBytes.length > 1 && bnBytes[0] == 0) {
+                        byte[] trimmed = new byte[bnBytes.length - 1];
+                        System.arraycopy(bnBytes, 1, trimmed, 0, trimmed.length);
+                        bnBytes = trimmed;
+                     }
+                     // BN_bin2bn takes big-endian bytes (same as BigInteger.toByteArray)
+                     MemorySegment bnBuf = arena.allocate(ValueLayout.JAVA_BYTE, bnBytes.length);
+                     bnBuf.asByteBuffer().put(bnBytes);
+                     MemorySegment bn = (MemorySegment) BN_bin2bn.invokeExact(bnBuf, bnBytes.length, MemorySegment.NULL);
+                     if (bn.equals(MemorySegment.NULL)) throw new IllegalStateException("BN_bin2bn failed for: " + name);
+                     bnsToFree.add(bn);
+                     int r = (int) OSSL_PARAM_BLD_push_BN.invokeExact(bld, keyName, bn);
+                     if (r != 1) throw new IllegalStateException("OSSL_PARAM_BLD_push_BN failed for: " + name);
+                  }
+                  default -> throw new IllegalArgumentException("Unsupported OSSL_PARAM type: " + type);
+               }
+            }
+            MemorySegment params = (MemorySegment) OSSL_PARAM_BLD_to_param.invokeExact(bld);
+            if (params.equals(MemorySegment.NULL)) {
+               throw new IllegalStateException("OSSL_PARAM_BLD_to_param failed");
+            }
+            return params;
+         } finally {
+            for (MemorySegment bn : bnsToFree) {
+               BN_free.invokeExact(bn);
+            }
+            OSSL_PARAM_BLD_free.invokeExact(bld);
+         }
       }
    }
 
@@ -1951,13 +2002,14 @@ public class OpenSSLCrypto {
       if (ctx.equals(MemorySegment.NULL)) {
          throw new IllegalStateException("Failed to create EVP_PKEY_CTX for " + algorithm);
       }
+      MemorySegment params = MemorySegment.NULL;
       try {
          int r = (int) EVP_PKEY_fromdata_init.invokeExact(ctx);
          if (r <= 0) {
             throw new IllegalStateException("EVP_PKEY_fromdata_init failed for " + algorithm);
          }
 
-         MemorySegment params = builder.build(arena);
+         params = builder.build(arena);
          MemorySegment pkeyPtr = arena.allocate(ValueLayout.ADDRESS);
          r = (int) EVP_PKEY_fromdata.invokeExact(ctx, pkeyPtr, selection, params);
          if (r <= 0) {
@@ -1965,6 +2017,9 @@ public class OpenSSLCrypto {
          }
          return pkeyPtr.get(ValueLayout.ADDRESS, 0);
       } finally {
+         if (!params.equals(MemorySegment.NULL)) {
+            OSSL_PARAM_free.invokeExact(params);
+         }
          EVP_PKEY_CTX_free(ctx);
       }
    }
