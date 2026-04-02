@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -56,7 +57,7 @@ public class AESGCMSIVCipherTest {
       byte[] iv = new byte[12]; // GCM-SIV uses 12-byte nonce
       new SecureRandom().nextBytes(iv);
 
-      byte[] plaintext = "AES-GCM-SIV nonce-misuse-resistant AEAD test data".getBytes();
+      byte[] plaintext = "AES-GCM-SIV nonce-misuse-resistant AEAD test data".getBytes(StandardCharsets.UTF_8);
 
       // Encrypt
       cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
@@ -105,7 +106,7 @@ public class AESGCMSIVCipherTest {
       byte[] iv = new byte[12];
       new SecureRandom().nextBytes(iv);
 
-      byte[] plaintext = "Authenticated data".getBytes();
+      byte[] plaintext = "Authenticated data".getBytes(StandardCharsets.UTF_8);
 
       cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
       byte[] ciphertext = cipher.doFinal(plaintext);

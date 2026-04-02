@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.Security;
 import java.util.HexFormat;
@@ -46,7 +47,7 @@ public class MD5DigestTest {
       @DisplayName("MD5 of 'hello'")
       void testHello() throws Exception {
          MessageDigest md = MessageDigest.getInstance("MD5", PROVIDER_NAME);
-         byte[] digest = md.digest("hello".getBytes());
+         byte[] digest = md.digest("hello".getBytes(StandardCharsets.UTF_8));
 
          // MD5("hello") = 5d41402abc4b2a76b9719d911017c592
          String expected = "5d41402abc4b2a76b9719d911017c592";
@@ -57,7 +58,7 @@ public class MD5DigestTest {
       @DisplayName("MD5 of 'The quick brown fox jumps over the lazy dog'")
       void testQuickBrownFox() throws Exception {
          MessageDigest md = MessageDigest.getInstance("MD5", PROVIDER_NAME);
-         byte[] digest = md.digest("The quick brown fox jumps over the lazy dog".getBytes());
+         byte[] digest = md.digest("The quick brown fox jumps over the lazy dog".getBytes(StandardCharsets.UTF_8));
 
          // MD5("The quick brown fox jumps over the lazy dog") = 9e107d9d372bb6826bd81d3542a419d6
          String expected = "9e107d9d372bb6826bd81d3542a419d6";
@@ -68,9 +69,9 @@ public class MD5DigestTest {
       @DisplayName("MD5 incremental update")
       void testIncrementalUpdate() throws Exception {
          MessageDigest md = MessageDigest.getInstance("MD5", PROVIDER_NAME);
-         md.update("hello".getBytes());
-         md.update(" ".getBytes());
-         md.update("world".getBytes());
+         md.update("hello".getBytes(StandardCharsets.UTF_8));
+         md.update(" ".getBytes(StandardCharsets.UTF_8));
+         md.update("world".getBytes(StandardCharsets.UTF_8));
          byte[] digest = md.digest();
 
          // MD5("hello world") = 5eb63bbbe01eeed093cb22bb8f5acdc3
@@ -82,9 +83,9 @@ public class MD5DigestTest {
       @DisplayName("MD5 reset")
       void testReset() throws Exception {
          MessageDigest md = MessageDigest.getInstance("MD5", PROVIDER_NAME);
-         md.update("some data".getBytes());
+         md.update("some data".getBytes(StandardCharsets.UTF_8));
          md.reset();
-         byte[] digest = md.digest("hello".getBytes());
+         byte[] digest = md.digest("hello".getBytes(StandardCharsets.UTF_8));
 
          // Should be MD5("hello"), not MD5("some datahello")
          String expected = "5d41402abc4b2a76b9719d911017c592";
@@ -96,8 +97,8 @@ public class MD5DigestTest {
       void testMultipleDigests() throws Exception {
          MessageDigest md = MessageDigest.getInstance("MD5", PROVIDER_NAME);
 
-         byte[] digest1 = md.digest("hello".getBytes());
-         byte[] digest2 = md.digest("world".getBytes());
+         byte[] digest1 = md.digest("hello".getBytes(StandardCharsets.UTF_8));
+         byte[] digest2 = md.digest("world".getBytes(StandardCharsets.UTF_8));
 
          // MD5("hello") = 5d41402abc4b2a76b9719d911017c592
          // MD5("world") = 7d793037a0760186574b0282f2f435e7
@@ -113,7 +114,7 @@ public class MD5DigestTest {
       @Test
       @DisplayName("GlaSSLess MD5 matches default provider")
       void testCrossProvider() throws Exception {
-         byte[] data = "Cross-provider MD5 test data".getBytes();
+         byte[] data = "Cross-provider MD5 test data".getBytes(StandardCharsets.UTF_8);
 
          MessageDigest glasslessMd = MessageDigest.getInstance("MD5", PROVIDER_NAME);
          byte[] glasslessDigest = glasslessMd.digest(data);
@@ -130,7 +131,7 @@ public class MD5DigestTest {
       void testOidAlias() throws Exception {
          // MD5 OID: 1.2.840.113549.2.5
          MessageDigest md = MessageDigest.getInstance("1.2.840.113549.2.5", PROVIDER_NAME);
-         byte[] digest = md.digest("hello".getBytes());
+         byte[] digest = md.digest("hello".getBytes(StandardCharsets.UTF_8));
 
          assertEquals("5d41402abc4b2a76b9719d911017c592", HexFormat.of().formatHex(digest));
       }

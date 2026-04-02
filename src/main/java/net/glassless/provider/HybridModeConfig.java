@@ -256,7 +256,7 @@ public final class HybridModeConfig {
       if (value == null || value.trim().isEmpty()) {
          return algorithms;
       }
-      for (String algo : value.split(",")) {
+      for (String algo : value.split(",", -1)) {
          String trimmed = algo.trim();
          if (!trimmed.isEmpty()) {
             algorithms.add(trimmed);

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 import javax.crypto.Cipher;
@@ -43,7 +44,7 @@ public class DESedeCipherTest {
         StringBuilder sb = new StringBuilder();
        // 8 bytes per block
        sb.repeat("12345678", Math.max(0, blocks));
-        return sb.toString().getBytes();
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Nested
@@ -110,7 +111,7 @@ public class DESedeCipherTest {
             }
 
             // Plaintext can be any length for PKCS5Padding
-            byte[] plaintext = "A short plaintext for testing DESede padding".getBytes();
+            byte[] plaintext = "A short plaintext for testing DESede padding".getBytes(StandardCharsets.UTF_8);
 
             // Encryption
             if (iv == null) {

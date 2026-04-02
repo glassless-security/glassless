@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -52,11 +54,11 @@ public class NativeMemorySoakTest {
    private static long getResidentMemoryKB() {
       try {
          // Read from /proc/self/status which works without knowing PID
-         try (BufferedReader reader = new BufferedReader(new FileReader("/proc/self/status"))) {
+         try (BufferedReader reader = Files.newBufferedReader(Path.of("/proc/self/status"), StandardCharsets.UTF_8)) {
             String line;
             while ((line = reader.readLine()) != null) {
                if (line.startsWith("VmRSS:")) {
-                  String[] parts = line.split("\\s+");
+                  String[] parts = line.split("\\s+", -1);
                   return Long.parseLong(parts[1]);
                }
             }
@@ -71,7 +73,6 @@ public class NativeMemorySoakTest {
 
    private static void forceGC() {
       System.gc();
-      System.runFinalization();
       try {
          Thread.sleep(100);
       } catch (InterruptedException e) {

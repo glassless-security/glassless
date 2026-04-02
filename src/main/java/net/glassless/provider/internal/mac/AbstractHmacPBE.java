@@ -31,8 +31,8 @@ public abstract class AbstractHmacPBE extends AbstractHmac {
       throws InvalidKeyException, InvalidAlgorithmParameterException {
       // Extract password from key
       char[] password;
-      if (key instanceof PBEKey) {
-         password = ((PBEKey) key).getPassword();
+      if (key instanceof PBEKey pbeKey) {
+         password = pbeKey.getPassword();
       } else if (key instanceof SecretKey) {
          byte[] keyBytes = key.getEncoded();
          if (keyBytes == null) {

@@ -95,7 +95,7 @@ public class KeyPairGeneratorBenchmark {
             }
          }
       } else if (algorithm.startsWith("RSA-")) {
-         int keySize = Integer.parseInt(algorithm.split("-")[1]);
+         int keySize = Integer.parseInt(algorithm.split("-", -1)[1]);
 
          jdkKeyPairGen = KeyPairGenerator.getInstance("RSA");
          jdkKeyPairGen.initialize(keySize);

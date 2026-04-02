@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -74,13 +75,13 @@ public class SLHDSATest {
 
             Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             assertNotNull(signature);
 
             sig.initVerify(kp.getPublic());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
 
@@ -94,11 +95,11 @@ public class SLHDSATest {
 
             Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("original message".getBytes());
+            sig.update("original message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("different message".getBytes());
+            sig.update("different message".getBytes(StandardCharsets.UTF_8));
             assertFalse(sig.verify(signature));
         }
     }
@@ -131,11 +132,11 @@ public class SLHDSATest {
 
             Signature sig = Signature.getInstance("SLH-DSA-SHA2-128s", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -168,11 +169,11 @@ public class SLHDSATest {
 
             Signature sig = Signature.getInstance("SLH-DSA-SHAKE-128f", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("SHAKE variant test".getBytes());
+            sig.update("SHAKE variant test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("SHAKE variant test".getBytes());
+            sig.update("SHAKE variant test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -192,11 +193,11 @@ public class SLHDSATest {
 
             Signature sig = Signature.getInstance("SLH-DSA-SHA2-192f", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("192-bit security".getBytes());
+            sig.update("192-bit security".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("192-bit security".getBytes());
+            sig.update("192-bit security".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
 
@@ -211,11 +212,11 @@ public class SLHDSATest {
 
             Signature sig = Signature.getInstance("SLH-DSA-SHA2-256f", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("256-bit security".getBytes());
+            sig.update("256-bit security".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("256-bit security".getBytes());
+            sig.update("256-bit security".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -247,11 +248,11 @@ public class SLHDSATest {
             // Use reconstructed keys for signing
             Signature sig = Signature.getInstance("SLH-DSA-SHA2-128f", PROVIDER_NAME);
             sig.initSign(reconstructedPriv);
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(reconstructedPub);
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -284,11 +285,11 @@ public class SLHDSATest {
             // Use generic SLH-DSA signature
             Signature sig = Signature.getInstance("SLH-DSA", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("generic test".getBytes());
+            sig.update("generic test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("generic test".getBytes());
+            sig.update("generic test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }

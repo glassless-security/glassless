@@ -96,7 +96,7 @@ public class DSAParameters extends AlgorithmParametersSpi {
       if (der[offset[0]++] != 0x30) {
          throw new IOException("Expected SEQUENCE tag");
       }
-      int seqLen = readLength(der, offset);
+      readLength(der, offset);
 
       // Read p
       this.p = readInteger(der, offset);

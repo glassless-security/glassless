@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -95,7 +96,7 @@ public class KeyPairGeneratorTest {
 
             // Use the generated keys with our signature implementation
             Signature sig = Signature.getInstance("SHA256withRSA", PROVIDER_NAME);
-            byte[] data = "Test data for signing".getBytes();
+            byte[] data = "Test data for signing".getBytes(StandardCharsets.UTF_8);
 
             sig.initSign(keyPair.getPrivate());
             sig.update(data);
@@ -186,7 +187,7 @@ public class KeyPairGeneratorTest {
 
             // Use the generated keys with our signature implementation
             Signature sig = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
-            byte[] data = "Test data for ECDSA signing".getBytes();
+            byte[] data = "Test data for ECDSA signing".getBytes(StandardCharsets.UTF_8);
 
             sig.initSign(keyPair.getPrivate());
             sig.update(data);

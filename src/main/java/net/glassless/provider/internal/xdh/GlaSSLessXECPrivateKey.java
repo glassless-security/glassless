@@ -72,6 +72,7 @@ public class GlaSSLessXECPrivateKey implements XECPrivateKey {
    /**
     * Clears the private key material from memory.
     */
+   @Override
    public void destroy() {
       Arrays.fill(scalar, (byte) 0);
       Arrays.fill(encoded, (byte) 0);

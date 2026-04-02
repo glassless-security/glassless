@@ -31,10 +31,10 @@ public class DHKeyAgreement extends KeyAgreementSpi {
 
    @Override
    protected void engineInit(Key key, SecureRandom random) throws InvalidKeyException {
-      if (!(key instanceof DHPrivateKey)) {
+      if (!(key instanceof DHPrivateKey dhKey)) {
          throw new InvalidKeyException("DH key agreement requires a DHPrivateKey");
       }
-      this.privateKey = (DHPrivateKey) key;
+      this.privateKey = dhKey;
       this.peerPublicKey = null;
       this.sharedSecret = null;
    }
@@ -57,11 +57,11 @@ public class DHKeyAgreement extends KeyAgreementSpi {
          throw new IllegalStateException("DH only supports two-party key agreement (lastPhase must be true)");
       }
 
-      if (!(key instanceof DHPublicKey)) {
+      if (!(key instanceof DHPublicKey dhPubKey)) {
          throw new InvalidKeyException("DH key agreement requires a DHPublicKey for the peer");
       }
 
-      this.peerPublicKey = (DHPublicKey) key;
+      this.peerPublicKey = dhPubKey;
 
       // Derive the shared secret
       try {

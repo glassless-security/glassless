@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -44,7 +45,7 @@ public class ChaCha20Poly1305Test {
          IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
          // Plaintext
-         byte[] plaintext = "Hello, ChaCha20-Poly1305!".getBytes();
+         byte[] plaintext = "Hello, ChaCha20-Poly1305!".getBytes(StandardCharsets.UTF_8);
 
          // Encrypt
          Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
@@ -69,7 +70,7 @@ public class ChaCha20Poly1305Test {
          new SecureRandom().nextBytes(keyBytes);
          SecretKey key = new SecretKeySpec(keyBytes, "ChaCha20");
 
-         byte[] plaintext = "Same plaintext".getBytes();
+         byte[] plaintext = "Same plaintext".getBytes(StandardCharsets.UTF_8);
 
          byte[] nonce1 = new byte[12];
          byte[] nonce2 = new byte[12];
@@ -99,7 +100,7 @@ public class ChaCha20Poly1305Test {
          new SecureRandom().nextBytes(nonce);
          IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-         byte[] plaintext = "Authenticate me!".getBytes();
+         byte[] plaintext = "Authenticate me!".getBytes(StandardCharsets.UTF_8);
 
          Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
          encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
@@ -126,7 +127,7 @@ public class ChaCha20Poly1305Test {
          new SecureRandom().nextBytes(nonce);
          IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-         byte[] plaintext = "Authenticate me!".getBytes();
+         byte[] plaintext = "Authenticate me!".getBytes(StandardCharsets.UTF_8);
 
          Cipher encryptCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
          encryptCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
@@ -213,7 +214,7 @@ public class ChaCha20Poly1305Test {
          new SecureRandom().nextBytes(nonce);
          IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-         byte[] plaintext = "Cross-provider test".getBytes();
+         byte[] plaintext = "Cross-provider test".getBytes(StandardCharsets.UTF_8);
 
          // Encrypt with GlaSSLess
          Cipher glasslessCipher = Cipher.getInstance("ChaCha20-Poly1305", PROVIDER_NAME);
@@ -240,7 +241,7 @@ public class ChaCha20Poly1305Test {
          new SecureRandom().nextBytes(nonce);
          IvParameterSpec ivSpec = new IvParameterSpec(nonce);
 
-         byte[] plaintext = "Cross-provider test".getBytes();
+         byte[] plaintext = "Cross-provider test".getBytes(StandardCharsets.UTF_8);
 
          // Encrypt with default provider (SunJCE)
          Cipher sunCipher = Cipher.getInstance("ChaCha20-Poly1305");

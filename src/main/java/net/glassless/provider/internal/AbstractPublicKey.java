@@ -39,8 +39,7 @@ public abstract class AbstractPublicKey implements PublicKey {
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
-      AbstractPublicKey other = (AbstractPublicKey) obj;
+      if (!(obj instanceof AbstractPublicKey other)) return false;
       return algorithm.equals(other.algorithm) && Arrays.equals(encoded, other.encoded);
    }
 

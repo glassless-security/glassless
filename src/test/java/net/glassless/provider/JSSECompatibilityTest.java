@@ -738,10 +738,10 @@ public class JSSECompatibilityTest {
             client.setEnabledCipherSuites(new String[]{cipherSuite});
             client.startHandshake();
 
-            client.getOutputStream().write("ping".getBytes());
+            client.getOutputStream().write("ping".getBytes(StandardCharsets.UTF_8));
             client.getOutputStream().flush();
             byte[] resp = client.getInputStream().readNBytes(4);
-            assertEquals("ping", new String(resp));
+            assertEquals("ping", new String(resp, StandardCharsets.UTF_8));
          }
 
          server.join(30000);

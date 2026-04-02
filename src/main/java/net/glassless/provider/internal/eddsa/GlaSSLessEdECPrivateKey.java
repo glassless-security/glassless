@@ -71,6 +71,7 @@ public class GlaSSLessEdECPrivateKey implements EdECPrivateKey {
    /**
     * Clears the private key material from memory.
     */
+   @Override
    public void destroy() {
       Arrays.fill(keyBytes, (byte) 0);
       Arrays.fill(encoded, (byte) 0);

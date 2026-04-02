@@ -31,10 +31,10 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
 
    @Override
    protected void engineInit(Key key, SecureRandom random) throws InvalidKeyException {
-      if (!(key instanceof ECPrivateKey)) {
+      if (!(key instanceof ECPrivateKey ecKey)) {
          throw new InvalidKeyException("ECDH requires an ECPrivateKey");
       }
-      this.privateKey = (ECPrivateKey) key;
+      this.privateKey = ecKey;
       this.peerPublicKey = null;
       this.sharedSecret = null;
    }
@@ -57,11 +57,11 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
          throw new IllegalStateException("ECDH only supports two-party key agreement (lastPhase must be true)");
       }
 
-      if (!(key instanceof ECPublicKey)) {
+      if (!(key instanceof ECPublicKey ecPubKey)) {
          throw new InvalidKeyException("ECDH requires an ECPublicKey for the peer");
       }
 
-      this.peerPublicKey = (ECPublicKey) key;
+      this.peerPublicKey = ecPubKey;
 
       // Derive the shared secret
       try {

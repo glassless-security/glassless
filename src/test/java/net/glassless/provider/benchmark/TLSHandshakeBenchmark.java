@@ -2,6 +2,7 @@ package net.glassless.provider.benchmark;
 
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
@@ -60,7 +61,7 @@ public class TLSHandshakeBenchmark {
 
    private Path tempDir;
 
-   private static final byte[] PAYLOAD = "Hello TLS 1.3 benchmark!".getBytes();
+   private static final byte[] PAYLOAD = "Hello TLS 1.3 benchmark!".getBytes(StandardCharsets.UTF_8);
 
    @Setup(Level.Trial)
    public void setup() throws Exception {
@@ -78,7 +79,7 @@ public class TLSHandshakeBenchmark {
          String sigAlg = keyType.equals("EC-P256") ? "SHA256withECDSA" : "SHA384withECDSA";
          cmd.addAll(List.of("-groupname", curve, "-sigalg", sigAlg));
       } else {
-         int keySize = Integer.parseInt(keyType.split("-")[1]);
+         int keySize = Integer.parseInt(keyType.split("-", -1)[1]);
          cmd.addAll(List.of("-keysize", String.valueOf(keySize), "-sigalg", "SHA256withRSA"));
       }
 
@@ -137,11 +138,16 @@ public class TLSHandshakeBenchmark {
    @TearDown(Level.Trial)
    public void tearDown() throws Exception {
       if (tempDir != null) {
-         Files.walk(tempDir)
-            .sorted(java.util.Comparator.reverseOrder())
-            .forEach(p -> {
-               try { Files.deleteIfExists(p); } catch (Exception ignored) { }
-            });
+         try (var paths = Files.walk(tempDir)) {
+            paths.sorted(java.util.Comparator.reverseOrder())
+               .forEach(p -> {
+                  try {
+                     Files.deleteIfExists(p);
+                  } catch (Exception ignored) {
+                     // Best-effort cleanup of temporary files
+                  }
+               });
+         }
       }
    }
 

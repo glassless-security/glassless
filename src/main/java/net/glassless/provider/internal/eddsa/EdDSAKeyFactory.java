@@ -225,7 +225,6 @@ public class EdDSAKeyFactory extends AbstractKeyFactory {
       byte[] raw = new byte[keyLen];
       int srcOffset = yBytes[0] == 0 ? 1 : 0;  // Skip leading zero if present
       int srcLen = yBytes.length - srcOffset;
-      int dstOffset = 0;
 
       // Reverse into raw (little-endian)
       for (int i = 0; i < srcLen && i < keyLen; i++) {

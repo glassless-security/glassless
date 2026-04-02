@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
@@ -55,7 +56,7 @@ public class DeterministicECDSATest {
    })
    void testSignAndVerify(String algorithm, String curve) throws Exception {
       KeyPair keyPair = generateKeyPair(curve);
-      byte[] message = "Deterministic ECDSA test message".getBytes();
+      byte[] message = "Deterministic ECDSA test message".getBytes(StandardCharsets.UTF_8);
 
       Signature signer = Signature.getInstance(algorithm, PROVIDER_NAME);
       signer.initSign(keyPair.getPrivate());
@@ -78,7 +79,7 @@ public class DeterministicECDSATest {
    })
    void testDeterminism(String algorithm) throws Exception {
       KeyPair keyPair = generateKeyPair("secp256r1");
-      byte[] message = "Same message, same key, same signature".getBytes();
+      byte[] message = "Same message, same key, same signature".getBytes(StandardCharsets.UTF_8);
 
       Signature sig1 = Signature.getInstance(algorithm, PROVIDER_NAME);
       sig1.initSign(keyPair.getPrivate());
@@ -98,7 +99,7 @@ public class DeterministicECDSATest {
    @DisplayName("Standard ECDSA produces different signatures (non-deterministic)")
    void testStandardECDSAIsNonDeterministic() throws Exception {
       KeyPair keyPair = generateKeyPair("secp256r1");
-      byte[] message = "Non-deterministic test".getBytes();
+      byte[] message = "Non-deterministic test".getBytes(StandardCharsets.UTF_8);
 
       Signature sig1 = Signature.getInstance("SHA256withECDSA", PROVIDER_NAME);
       sig1.initSign(keyPair.getPrivate());
@@ -118,14 +119,14 @@ public class DeterministicECDSATest {
    @DisplayName("Deterministic ECDSA detects modified message")
    void testModifiedMessage() throws Exception {
       KeyPair keyPair = generateKeyPair("secp256r1");
-      byte[] message = "Original message".getBytes();
+      byte[] message = "Original message".getBytes(StandardCharsets.UTF_8);
 
       Signature signer = Signature.getInstance("SHA256withDetECDSA", PROVIDER_NAME);
       signer.initSign(keyPair.getPrivate());
       signer.update(message);
       byte[] signature = signer.sign();
 
-      byte[] modifiedMessage = "Modified message".getBytes();
+      byte[] modifiedMessage = "Modified message".getBytes(StandardCharsets.UTF_8);
       Signature verifier = Signature.getInstance("SHA256withDetECDSA", PROVIDER_NAME);
       verifier.initVerify(keyPair.getPublic());
       verifier.update(modifiedMessage);
@@ -136,7 +137,7 @@ public class DeterministicECDSATest {
    @DisplayName("Deterministic ECDSA signature verifiable with standard ECDSA verifier")
    void testCrossVerification() throws Exception {
       KeyPair keyPair = generateKeyPair("secp256r1");
-      byte[] message = "Cross verification test".getBytes();
+      byte[] message = "Cross verification test".getBytes(StandardCharsets.UTF_8);
 
       // Sign with deterministic ECDSA
       Signature signer = Signature.getInstance("SHA256withDetECDSA", PROVIDER_NAME);

@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -78,7 +79,7 @@ public class PBECipherTest {
             PBEParameterSpec pbeParams = new PBEParameterSpec(salt, ITERATION_COUNT, ivSpec);
 
             // Test data
-            byte[] plaintext = "This is a test message for PBE encryption!".getBytes();
+            byte[] plaintext = "This is a test message for PBE encryption!".getBytes(StandardCharsets.UTF_8);
 
             // Encrypt
             cipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParams);

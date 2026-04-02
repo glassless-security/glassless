@@ -133,7 +133,7 @@ public class PBEParameters extends AlgorithmParametersSpi {
       if (der[offset[0]++] != 0x30) {
          throw new IOException("Expected SEQUENCE for PBKDF2-params");
       }
-      int pbkdf2Len = readLength(der, offset);
+      readLength(der, offset);
 
       // Parse salt
       if (der[offset[0]++] != 0x04) {

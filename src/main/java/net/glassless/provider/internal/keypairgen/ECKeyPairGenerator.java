@@ -26,8 +26,6 @@ import net.glassless.provider.internal.keyfactory.GlaSSLessECPublicKey;
  */
 public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
 
-   private static final int DEFAULT_KEY_SIZE = 256;
-
    // FIPS 186-5 approved NIST curves
    private static final Set<Integer> FIPS_APPROVED_NIDS = Set.of(
       OpenSSLCrypto.NID_X9_62_prime256v1,  // P-256

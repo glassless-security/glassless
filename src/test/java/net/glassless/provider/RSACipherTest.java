@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
@@ -78,7 +79,7 @@ public class RSACipherTest {
          Cipher cipher = Cipher.getInstance("RSA", PROVIDER_NAME);
          assertNotNull(cipher);
 
-         byte[] plaintext = "Test message".getBytes();
+         byte[] plaintext = "Test message".getBytes(StandardCharsets.UTF_8);
 
          cipher.init(Cipher.ENCRYPT_MODE, keyPair2048.getPublic());
          byte[] encrypted = cipher.doFinal(plaintext);

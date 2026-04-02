@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 import javax.crypto.SecretKey;
@@ -36,7 +37,7 @@ public class ScryptTest {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
 
             char[] password = "password".toCharArray();
-            byte[] salt = "salt1234salt1234".getBytes();  // 16 bytes
+            byte[] salt = "salt1234salt1234".getBytes(StandardCharsets.UTF_8);  // 16 bytes
             int n = 16384;  // 2^14
             int r = 8;
             int p = 1;
@@ -75,7 +76,7 @@ public class ScryptTest {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
 
             char[] password = "mypassword".toCharArray();
-            byte[] salt = "randomsalt123456".getBytes();
+            byte[] salt = "randomsalt123456".getBytes(StandardCharsets.UTF_8);
             int n = 1024;
             int r = 8;
             int p = 1;
@@ -96,7 +97,7 @@ public class ScryptTest {
         void testDifferentPasswords() throws Exception {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
 
-            byte[] salt = "salt1234salt1234".getBytes();
+            byte[] salt = "salt1234salt1234".getBytes(StandardCharsets.UTF_8);
             int n = 1024;
             int r = 8;
             int p = 1;
@@ -123,10 +124,10 @@ public class ScryptTest {
             int p = 1;
             int keyLength = 256;
 
-            ScryptKeySpec spec1 = new ScryptKeySpec(password, "salt1111salt1111".getBytes(), n, r, p, keyLength);
+            ScryptKeySpec spec1 = new ScryptKeySpec(password, "salt1111salt1111".getBytes(StandardCharsets.UTF_8), n, r, p, keyLength);
             SecretKey key1 = skf.generateSecret(spec1);
 
-            ScryptKeySpec spec2 = new ScryptKeySpec(password, "salt2222salt2222".getBytes(), n, r, p, keyLength);
+            ScryptKeySpec spec2 = new ScryptKeySpec(password, "salt2222salt2222".getBytes(StandardCharsets.UTF_8), n, r, p, keyLength);
             SecretKey key2 = skf.generateSecret(spec2);
 
             assertFalse(java.util.Arrays.equals(key1.getEncoded(), key2.getEncoded()),
@@ -139,7 +140,7 @@ public class ScryptTest {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
 
             char[] password = "password".toCharArray();
-            byte[] salt = "salt1234salt1234".getBytes();
+            byte[] salt = "salt1234salt1234".getBytes(StandardCharsets.UTF_8);
             int r = 8;
             int p = 1;
             int keyLength = 256;
@@ -160,7 +161,7 @@ public class ScryptTest {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
 
             char[] password = "test".toCharArray();
-            byte[] salt = "0123456789abcdef".getBytes();
+            byte[] salt = "0123456789abcdef".getBytes(StandardCharsets.UTF_8);
             int n = 1024;
             int keyLength = 256;
 
@@ -240,7 +241,7 @@ public class ScryptTest {
         void test128BitKey() throws Exception {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
             ScryptKeySpec spec = new ScryptKeySpec("password".toCharArray(),
-                "salt1234salt1234".getBytes(), 1024, 8, 1, 128);
+                "salt1234salt1234".getBytes(StandardCharsets.UTF_8), 1024, 8, 1, 128);
             SecretKey key = skf.generateSecret(spec);
             assertEquals(16, key.getEncoded().length);
         }
@@ -250,7 +251,7 @@ public class ScryptTest {
         void test256BitKey() throws Exception {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
             ScryptKeySpec spec = new ScryptKeySpec("password".toCharArray(),
-                "salt1234salt1234".getBytes(), 1024, 8, 1, 256);
+                "salt1234salt1234".getBytes(StandardCharsets.UTF_8), 1024, 8, 1, 256);
             SecretKey key = skf.generateSecret(spec);
             assertEquals(32, key.getEncoded().length);
         }
@@ -260,7 +261,7 @@ public class ScryptTest {
         void test512BitKey() throws Exception {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("SCRYPT", PROVIDER_NAME);
             ScryptKeySpec spec = new ScryptKeySpec("password".toCharArray(),
-                "salt1234salt1234".getBytes(), 1024, 8, 1, 512);
+                "salt1234salt1234".getBytes(StandardCharsets.UTF_8), 1024, 8, 1, 512);
             SecretKey key = skf.generateSecret(spec);
             assertEquals(64, key.getEncoded().length);
         }

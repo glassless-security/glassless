@@ -2,6 +2,7 @@ package net.glassless.provider.benchmark;
 
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Provider;
@@ -70,7 +71,7 @@ public class SignatureBenchmark {
       Security.addProvider(new GlaSSLessProvider());
       Security.addProvider(new BouncyCastleFipsProvider());
 
-      data = "This is the data to be signed for benchmark testing purposes.".getBytes();
+      data = "This is the data to be signed for benchmark testing purposes.".getBytes(StandardCharsets.UTF_8);
 
       KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
       String curve = algorithm.contains("384") ? "secp384r1" : "secp256r1";

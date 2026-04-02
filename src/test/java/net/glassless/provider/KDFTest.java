@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 import javax.crypto.KDF;
@@ -45,7 +46,7 @@ public class KDFTest {
 
          byte[] sharedSecret = new byte[32];
          for (int i = 0; i < 32; i++) sharedSecret[i] = (byte) i;
-         byte[] sharedInfo = "context".getBytes();
+         byte[] sharedInfo = "context".getBytes(StandardCharsets.UTF_8);
 
          X963KDFParameterSpec params = new X963KDFParameterSpec(sharedSecret, sharedInfo, 32);
          SecretKey key = kdf.deriveKey("AES", params);
@@ -60,8 +61,8 @@ public class KDFTest {
       void testX963KDFConsistency() throws Exception {
          KDF kdf = KDF.getInstance("X963KDF-SHA256", PROVIDER_NAME);
 
-         byte[] sharedSecret = "shared-secret-value-1234".getBytes();
-         byte[] sharedInfo = "info".getBytes();
+         byte[] sharedSecret = "shared-secret-value-1234".getBytes(StandardCharsets.UTF_8);
+         byte[] sharedInfo = "info".getBytes(StandardCharsets.UTF_8);
 
          X963KDFParameterSpec params1 = new X963KDFParameterSpec(sharedSecret, sharedInfo, 16);
          X963KDFParameterSpec params2 = new X963KDFParameterSpec(sharedSecret, sharedInfo, 16);
@@ -105,9 +106,9 @@ public class KDFTest {
       void testSSHKDFKeyTypes() throws Exception {
          KDF kdf = KDF.getInstance("SSHKDF-SHA256", PROVIDER_NAME);
 
-         byte[] sharedSecret = "ssh-shared-secret".getBytes();
-         byte[] exchangeHash = "ssh-exchange-hash!".getBytes();
-         byte[] sessionId = "ssh-session-id!!!".getBytes();
+         byte[] sharedSecret = "ssh-shared-secret".getBytes(StandardCharsets.UTF_8);
+         byte[] exchangeHash = "ssh-exchange-hash!".getBytes(StandardCharsets.UTF_8);
+         byte[] sessionId = "ssh-session-id!!!".getBytes(StandardCharsets.UTF_8);
 
          SSHKDFParameterSpec paramsC = new SSHKDFParameterSpec(
             sharedSecret, exchangeHash, sessionId,
@@ -136,8 +137,8 @@ public class KDFTest {
 
          byte[] key = new byte[32];
          for (int i = 0; i < 32; i++) key[i] = (byte) i;
-         byte[] label = "label".getBytes();
-         byte[] context = "context".getBytes();
+         byte[] label = "label".getBytes(StandardCharsets.UTF_8);
+         byte[] context = "context".getBytes(StandardCharsets.UTF_8);
 
          KBKDFParameterSpec params = new KBKDFParameterSpec(key, label, context, 32);
          SecretKey derivedKey = kdf.deriveKey("AES", params);

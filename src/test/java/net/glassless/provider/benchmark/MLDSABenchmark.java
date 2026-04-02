@@ -6,6 +6,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.Signature;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -64,7 +65,7 @@ public class MLDSABenchmark {
    public void setup() throws Exception {
       Security.addProvider(new GlaSSLessProvider());
 
-      String opensslName = algorithm.toLowerCase().replace("-", "");
+      String opensslName = algorithm.toLowerCase(Locale.ROOT).replace("-", "");
       glasslessAvailable = OpenSSLCrypto.isAlgorithmAvailable("KEYMGMT", opensslName);
 
       if (glasslessAvailable) {

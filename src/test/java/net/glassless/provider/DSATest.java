@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -191,7 +192,7 @@ public class DSATest {
     @DisplayName("DSA Signatures")
     class DSASignatureTests {
 
-        private final byte[] testData = "Test data for DSA signature".getBytes();
+        private final byte[] testData = "Test data for DSA signature".getBytes(StandardCharsets.UTF_8);
 
         @Test
         @DisplayName("SHA1withDSA sign and verify")

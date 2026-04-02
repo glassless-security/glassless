@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 import javax.crypto.Cipher;
@@ -46,7 +47,7 @@ public class AESCipherTest {
         StringBuilder sb = new StringBuilder();
        // 16 bytes per block
        sb.repeat("0123456789abcdef", Math.max(0, blocks));
-        return sb.toString().getBytes();
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Nested
@@ -128,7 +129,7 @@ public class AESCipherTest {
             // but GCM tag is always appended. So length will be plaintext + tag length.
             // For NOPADDING, we expect the output length to be plaintext.length + GCM_TAG_LENGTH.
             // SunJCE for AES/GCM/NoPadding outputs plaintext.length + 16 (for 128-bit tag).
-            byte[] plaintext = "Some data for GCM".getBytes();
+            byte[] plaintext = "Some data for GCM".getBytes(StandardCharsets.UTF_8);
 
             // Encryption
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv)); // 128 bits tag length
@@ -176,7 +177,7 @@ public class AESCipherTest {
             }
 
             // Plaintext can be any length for PKCS5Padding
-            byte[] plaintext = "A short plaintext for testing padding".getBytes(); // Not block aligned
+            byte[] plaintext = "A short plaintext for testing padding".getBytes(StandardCharsets.UTF_8); // Not block aligned
 
             // Encryption
             if (iv == null) {
@@ -221,7 +222,7 @@ public class AESCipherTest {
             // GCM padding is usually handled internally by the authenticated encryption process.
             // PKCS5Padding with GCM doesn't make typical sense as GCM provides its own authentication and integrity.
             // For OpenSSL EVP, if PKCS5Padding is set with GCM, it effectively means use GCM's implicit padding (no explicit PKCS5) and append the tag.
-            byte[] plaintext = "Some data for GCM with PKCS5 padding specified".getBytes();
+            byte[] plaintext = "Some data for GCM with PKCS5 padding specified".getBytes(StandardCharsets.UTF_8);
 
             // Encryption
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv)); // 128 bits tag length

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 import javax.crypto.KDF;
@@ -35,9 +36,9 @@ public class HKDFTest {
             assertNotNull(kdf);
             assertEquals("HKDF-SHA256", kdf.getAlgorithm());
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
-            byte[] info = "info".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -55,8 +56,8 @@ public class HKDFTest {
         void testExtractOnly() throws Exception {
             KDF kdf = KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -77,7 +78,7 @@ public class HKDFTest {
             // Use a 32-byte PRK (SHA-256 hash length)
             byte[] prk = new byte[32];
             for (int i = 0; i < 32; i++) prk[i] = (byte) i;
-            byte[] info = "info".getBytes();
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.expandOnly(
                 new SecretKeySpec(prk, "HKDF-PRK"),
@@ -95,9 +96,9 @@ public class HKDFTest {
         void testDeriveData() throws Exception {
             KDF kdf = KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
-            byte[] info = "info".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -114,10 +115,10 @@ public class HKDFTest {
         void testMultipleIKMs() throws Exception {
             KDF kdf = KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
 
-            byte[] ikm1 = "first key".getBytes();
-            byte[] ikm2 = "second key".getBytes();
-            byte[] salt = "salt".getBytes();
-            byte[] info = "info".getBytes();
+            byte[] ikm1 = "first key".getBytes(StandardCharsets.UTF_8);
+            byte[] ikm2 = "second key".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm1, "HKDF"))
@@ -142,9 +143,9 @@ public class HKDFTest {
             assertNotNull(kdf);
             assertEquals("HKDF-SHA384", kdf.getAlgorithm());
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
-            byte[] info = "info".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -161,8 +162,8 @@ public class HKDFTest {
         void testExtractOnly() throws Exception {
             KDF kdf = KDF.getInstance("HKDF-SHA384", PROVIDER_NAME);
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -187,9 +188,9 @@ public class HKDFTest {
             assertNotNull(kdf);
             assertEquals("HKDF-SHA512", kdf.getAlgorithm());
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
-            byte[] info = "info".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -206,8 +207,8 @@ public class HKDFTest {
         void testExtractOnly() throws Exception {
             KDF kdf = KDF.getInstance("HKDF-SHA512", PROVIDER_NAME);
 
-            byte[] ikm = "input key material".getBytes();
-            byte[] salt = "salt".getBytes();
+            byte[] ikm = "input key material".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
 
             HKDFParameterSpec params = HKDFParameterSpec.ofExtract()
                 .addIKM(new SecretKeySpec(ikm, "HKDF"))
@@ -228,7 +229,7 @@ public class HKDFTest {
             // Use a 64-byte PRK (SHA-512 hash length)
             byte[] prk = new byte[64];
             for (int i = 0; i < 64; i++) prk[i] = (byte) i;
-            byte[] info = "info".getBytes();
+            byte[] info = "info".getBytes(StandardCharsets.UTF_8);
 
             // HKDF can expand up to 255 * hashLen bytes (255 * 64 = 16320 for SHA-512)
             HKDFParameterSpec params = HKDFParameterSpec.expandOnly(
@@ -250,9 +251,9 @@ public class HKDFTest {
         @Test
         @DisplayName("GlaSSLess and SunJCE produce same output")
         void testCrossProviderCompatibility() throws Exception {
-            byte[] ikm = "input key material for cross-provider test".getBytes();
-            byte[] salt = "common salt".getBytes();
-            byte[] info = "context info".getBytes();
+            byte[] ikm = "input key material for cross-provider test".getBytes(StandardCharsets.UTF_8);
+            byte[] salt = "common salt".getBytes(StandardCharsets.UTF_8);
+            byte[] info = "context info".getBytes(StandardCharsets.UTF_8);
 
             // GlaSSLess provider
             KDF glasslessKdf = KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);

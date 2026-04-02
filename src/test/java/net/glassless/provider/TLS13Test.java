@@ -232,9 +232,9 @@ public class TLS13Test {
          javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA256", PROVIDER_NAME);
          assertNotNull(hkdf);
 
-         byte[] ikm = "input-key-material".getBytes();
-         byte[] salt = "salt".getBytes();
-         byte[] info = "tls13 derived".getBytes();
+         byte[] ikm = "input-key-material".getBytes(StandardCharsets.UTF_8);
+         byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+         byte[] info = "tls13 derived".getBytes(StandardCharsets.UTF_8);
 
          // Test HKDF extract and expand
          javax.crypto.spec.HKDFParameterSpec params = javax.crypto.spec.HKDFParameterSpec
@@ -266,7 +266,7 @@ public class TLS13Test {
 
          // Encrypt
          cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key, gcmSpec);
-         byte[] plaintext = "TLS 1.3 application data".getBytes();
+         byte[] plaintext = "TLS 1.3 application data".getBytes(StandardCharsets.UTF_8);
          byte[] ciphertext = cipher.doFinal(plaintext);
 
          // Decrypt
@@ -325,7 +325,7 @@ public class TLS13Test {
 
          // Simulate TLS 1.3 key schedule: extract -> expand for client/server keys
          byte[] earlySecret = new byte[32]; // All zeros for initial extraction
-         byte[] context = "tls13 hybrid test".getBytes();
+         byte[] context = "tls13 hybrid test".getBytes(StandardCharsets.UTF_8);
 
          // Client write key derivation
          javax.crypto.spec.HKDFParameterSpec clientKeyParams = javax.crypto.spec.HKDFParameterSpec
@@ -355,7 +355,7 @@ public class TLS13Test {
 
          // Client encrypts
          cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, clientWriteKey, gcmSpec);
-         byte[] plaintext = "Hybrid PQC protected message".getBytes();
+         byte[] plaintext = "Hybrid PQC protected message".getBytes(StandardCharsets.UTF_8);
          byte[] encrypted = cipher.doFinal(plaintext);
 
          // Server decrypts
@@ -394,7 +394,7 @@ public class TLS13Test {
          // Derive traffic keys using HKDF-SHA384 (appropriate for higher security)
          javax.crypto.KDF hkdf = javax.crypto.KDF.getInstance("HKDF-SHA384", PROVIDER_NAME);
          byte[] salt = new byte[48];
-         byte[] info = "tls13 x448mlkem1024 test".getBytes();
+         byte[] info = "tls13 x448mlkem1024 test".getBytes(StandardCharsets.UTF_8);
 
          javax.crypto.spec.HKDFParameterSpec keyParams = javax.crypto.spec.HKDFParameterSpec
                .ofExtract()
@@ -673,13 +673,13 @@ public class TLS13Test {
          OutputStream out = clientSocket.getOutputStream();
          InputStream in = clientSocket.getInputStream();
 
-         out.write("test".getBytes());
+         out.write("test".getBytes(StandardCharsets.UTF_8));
          out.flush();
 
          byte[] response = new byte[4];
          int read = in.read(response);
          assertEquals(4, read);
-         assertEquals("test", new String(response, 0, read));
+         assertEquals("test", new String(response, 0, read, StandardCharsets.UTF_8));
       }
 
       serverThread.join(30000);

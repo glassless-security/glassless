@@ -58,8 +58,7 @@ public abstract class AbstractPrivateKey implements PrivateKey, Destroyable {
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
-      AbstractPrivateKey other = (AbstractPrivateKey) obj;
+      if (!(obj instanceof AbstractPrivateKey other)) return false;
       if (destroyed || other.destroyed) return false;
       return algorithm.equals(other.algorithm) && Arrays.equals(encoded, other.encoded);
    }

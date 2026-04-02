@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
@@ -47,7 +48,7 @@ public class SignatureTest {
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sig);
 
-            byte[] data = "Test data for RSA signature".getBytes();
+            byte[] data = "Test data for RSA signature".getBytes(StandardCharsets.UTF_8);
 
             // Sign
             sig.initSign(rsaKeyPair.getPrivate());
@@ -68,7 +69,7 @@ public class SignatureTest {
         void testRSAVerifyFailsWithModifiedData(String algorithm) throws Exception {
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
 
-            byte[] data = "Test data for RSA signature".getBytes();
+            byte[] data = "Test data for RSA signature".getBytes(StandardCharsets.UTF_8);
 
             // Sign
             sig.initSign(rsaKeyPair.getPrivate());
@@ -76,7 +77,7 @@ public class SignatureTest {
             byte[] signature = sig.sign();
 
             // Verify with modified data should fail
-            byte[] modifiedData = "Modified test data".getBytes();
+            byte[] modifiedData = "Modified test data".getBytes(StandardCharsets.UTF_8);
             sig.initVerify(rsaKeyPair.getPublic());
             sig.update(modifiedData);
             assertFalse(sig.verify(signature));
@@ -89,14 +90,14 @@ public class SignatureTest {
 
             // Sign with incremental updates
             sig.initSign(rsaKeyPair.getPrivate());
-            sig.update("Part 1 ".getBytes());
-            sig.update("Part 2 ".getBytes());
-            sig.update("Part 3".getBytes());
+            sig.update("Part 1 ".getBytes(StandardCharsets.UTF_8));
+            sig.update("Part 2 ".getBytes(StandardCharsets.UTF_8));
+            sig.update("Part 3".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             // Verify with single update
             sig.initVerify(rsaKeyPair.getPublic());
-            sig.update("Part 1 Part 2 Part 3".getBytes());
+            sig.update("Part 1 Part 2 Part 3".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -111,7 +112,7 @@ public class SignatureTest {
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sig);
 
-            byte[] data = "Test data for ECDSA signature".getBytes();
+            byte[] data = "Test data for ECDSA signature".getBytes(StandardCharsets.UTF_8);
 
             // Sign
             sig.initSign(ecKeyPair.getPrivate());
@@ -132,7 +133,7 @@ public class SignatureTest {
         void testECDSAVerifyFailsWithModifiedData(String algorithm) throws Exception {
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
 
-            byte[] data = "Test data for ECDSA signature".getBytes();
+            byte[] data = "Test data for ECDSA signature".getBytes(StandardCharsets.UTF_8);
 
             // Sign
             sig.initSign(ecKeyPair.getPrivate());
@@ -140,7 +141,7 @@ public class SignatureTest {
             byte[] signature = sig.sign();
 
             // Verify with modified data should fail
-            byte[] modifiedData = "Modified test data".getBytes();
+            byte[] modifiedData = "Modified test data".getBytes(StandardCharsets.UTF_8);
             sig.initVerify(ecKeyPair.getPublic());
             sig.update(modifiedData);
             assertFalse(sig.verify(signature));
@@ -153,14 +154,14 @@ public class SignatureTest {
 
             // Sign with incremental updates
             sig.initSign(ecKeyPair.getPrivate());
-            sig.update("Part 1 ".getBytes());
-            sig.update("Part 2 ".getBytes());
-            sig.update("Part 3".getBytes());
+            sig.update("Part 1 ".getBytes(StandardCharsets.UTF_8));
+            sig.update("Part 2 ".getBytes(StandardCharsets.UTF_8));
+            sig.update("Part 3".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             // Verify with single update
             sig.initVerify(ecKeyPair.getPublic());
-            sig.update("Part 1 Part 2 Part 3".getBytes());
+            sig.update("Part 1 Part 2 Part 3".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -175,7 +176,7 @@ public class SignatureTest {
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sig);
 
-            byte[] data = "Test data for RSA-PSS signature".getBytes();
+            byte[] data = "Test data for RSA-PSS signature".getBytes(StandardCharsets.UTF_8);
 
             // Sign
             sig.initSign(rsaKeyPair.getPrivate());
@@ -196,7 +197,7 @@ public class SignatureTest {
         void testRSAPSSVerifyFailsWithModifiedData(String algorithm) throws Exception {
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
 
-            byte[] data = "Test data for RSA-PSS signature".getBytes();
+            byte[] data = "Test data for RSA-PSS signature".getBytes(StandardCharsets.UTF_8);
 
             // Sign
             sig.initSign(rsaKeyPair.getPrivate());
@@ -204,7 +205,7 @@ public class SignatureTest {
             byte[] signature = sig.sign();
 
             // Verify with modified data should fail
-            byte[] modifiedData = "Modified test data".getBytes();
+            byte[] modifiedData = "Modified test data".getBytes(StandardCharsets.UTF_8);
             sig.initVerify(rsaKeyPair.getPublic());
             sig.update(modifiedData);
             assertFalse(sig.verify(signature));

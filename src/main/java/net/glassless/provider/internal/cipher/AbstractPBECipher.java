@@ -62,8 +62,8 @@ abstract class AbstractPBECipher extends AbstractCipher {
 
       // Extract password from key
       char[] password;
-      if (key instanceof PBEKey) {
-         password = ((PBEKey) key).getPassword();
+      if (key instanceof PBEKey pbeKey) {
+         password = pbeKey.getPassword();
       } else if (key instanceof SecretKey) {
          // Assume the key bytes are the password encoded as UTF-8
          byte[] keyBytes = key.getEncoded();

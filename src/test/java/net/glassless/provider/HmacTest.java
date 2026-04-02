@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -71,7 +72,7 @@ public class HmacTest {
             mac.init(key);
             assertEquals(expectedMacLength, mac.getMacLength());
 
-            byte[] data = "Test data for HMAC".getBytes();
+            byte[] data = "Test data for HMAC".getBytes(StandardCharsets.UTF_8);
             byte[] result = mac.doFinal(data);
 
             assertNotNull(result);
@@ -99,14 +100,14 @@ public class HmacTest {
             mac.init(key);
 
             // Update incrementally
-            mac.update("Part 1 ".getBytes());
-            mac.update("Part 2 ".getBytes());
-            mac.update("Part 3".getBytes());
+            mac.update("Part 1 ".getBytes(StandardCharsets.UTF_8));
+            mac.update("Part 2 ".getBytes(StandardCharsets.UTF_8));
+            mac.update("Part 3".getBytes(StandardCharsets.UTF_8));
             byte[] result1 = mac.doFinal();
 
             // Compare with single update
             mac.init(key);
-            byte[] result2 = mac.doFinal("Part 1 Part 2 Part 3".getBytes());
+            byte[] result2 = mac.doFinal("Part 1 Part 2 Part 3".getBytes(StandardCharsets.UTF_8));
 
             assertArrayEquals(result1, result2);
         }
@@ -134,7 +135,7 @@ public class HmacTest {
             mac.init(key);
             assertEquals(expectedMacLength, mac.getMacLength());
 
-            byte[] data = "Test data for HMAC SHA3".getBytes();
+            byte[] data = "Test data for HMAC SHA3".getBytes(StandardCharsets.UTF_8);
             byte[] result = mac.doFinal(data);
 
             assertNotNull(result);
@@ -173,7 +174,7 @@ public class HmacTest {
             mac.init(pbeKey, pbeParams);
             assertEquals(expectedMacLength, mac.getMacLength());
 
-            byte[] data = "Test data for PBE HMAC".getBytes();
+            byte[] data = "Test data for PBE HMAC".getBytes(StandardCharsets.UTF_8);
             byte[] result = mac.doFinal(data);
 
             assertNotNull(result);
@@ -199,7 +200,7 @@ public class HmacTest {
             byte[] salt2 = generateSalt(16);
             int iterationCount = 10000;
 
-            byte[] data = "Test data".getBytes();
+            byte[] data = "Test data".getBytes(StandardCharsets.UTF_8);
 
             Mac mac1 = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
             mac1.init(pbeKey, new PBEParameterSpec(salt1, iterationCount));

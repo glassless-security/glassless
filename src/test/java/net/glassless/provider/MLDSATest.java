@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -76,13 +77,13 @@ public class MLDSATest {
 
             Signature sig = Signature.getInstance("ML-DSA-44", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             assertNotNull(signature);
 
             sig.initVerify(kp.getPublic());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -114,13 +115,13 @@ public class MLDSATest {
 
             Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("Hello, Post-Quantum World!".getBytes());
+            sig.update("Hello, Post-Quantum World!".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             assertNotNull(signature);
 
             sig.initVerify(kp.getPublic());
-            sig.update("Hello, Post-Quantum World!".getBytes());
+            sig.update("Hello, Post-Quantum World!".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
 
@@ -134,11 +135,11 @@ public class MLDSATest {
 
             Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("original message".getBytes());
+            sig.update("original message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("different message".getBytes());
+            sig.update("different message".getBytes(StandardCharsets.UTF_8));
             assertFalse(sig.verify(signature));
         }
 
@@ -173,11 +174,11 @@ public class MLDSATest {
             // Use generic signature
             Signature sig = Signature.getInstance("ML-DSA", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -211,13 +212,13 @@ public class MLDSATest {
 
             Signature sig = Signature.getInstance("ML-DSA-87", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             assertNotNull(signature);
 
             sig.initVerify(kp.getPublic());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -249,11 +250,11 @@ public class MLDSATest {
             // Use reconstructed keys for signing
             Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(reconstructedPriv);
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(reconstructedPub);
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
 
@@ -317,22 +318,22 @@ public class MLDSATest {
 
             Signature sig = Signature.getInstance("ML-DSA-65", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("part1".getBytes());
-            sig.update("part2".getBytes());
-            sig.update("part3".getBytes());
+            sig.update("part1".getBytes(StandardCharsets.UTF_8));
+            sig.update("part2".getBytes(StandardCharsets.UTF_8));
+            sig.update("part3".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("part1".getBytes());
-            sig.update("part2".getBytes());
-            sig.update("part3".getBytes());
+            sig.update("part1".getBytes(StandardCharsets.UTF_8));
+            sig.update("part2".getBytes(StandardCharsets.UTF_8));
+            sig.update("part3".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
 
             // Verify fails if parts are in different order
             sig.initVerify(kp.getPublic());
-            sig.update("part3".getBytes());
-            sig.update("part2".getBytes());
-            sig.update("part1".getBytes());
+            sig.update("part3".getBytes(StandardCharsets.UTF_8));
+            sig.update("part2".getBytes(StandardCharsets.UTF_8));
+            sig.update("part1".getBytes(StandardCharsets.UTF_8));
             assertFalse(sig.verify(signature));
         }
     }

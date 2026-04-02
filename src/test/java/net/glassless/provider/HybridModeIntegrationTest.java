@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
@@ -303,7 +304,7 @@ public class HybridModeIntegrationTest {
 
          // Get SHA-256 from default provider (delegated)
          MessageDigest md = MessageDigest.getInstance("SHA-256");
-         byte[] digest = md.digest("test".getBytes());
+         byte[] digest = md.digest("test".getBytes(StandardCharsets.UTF_8));
 
          // Verify digest is correct (expected SHA-256 of "test")
          assertEquals(32, digest.length);
@@ -320,7 +321,7 @@ public class HybridModeIntegrationTest {
 
          // Get SHA-384 from GlaSSLess (not delegated)
          MessageDigest md = MessageDigest.getInstance("SHA-384", PROVIDER_NAME);
-         byte[] digest = md.digest("test".getBytes());
+         byte[] digest = md.digest("test".getBytes(StandardCharsets.UTF_8));
 
          // Verify digest length is correct for SHA-384
          assertEquals(48, digest.length);
@@ -340,7 +341,7 @@ public class HybridModeIntegrationTest {
          KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
          keyGen.init(256);
          mac.init(keyGen.generateKey());
-         byte[] macResult = mac.doFinal("test".getBytes());
+         byte[] macResult = mac.doFinal("test".getBytes(StandardCharsets.UTF_8));
 
          // Verify MAC length is correct
          assertEquals(32, macResult.length);

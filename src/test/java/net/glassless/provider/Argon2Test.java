@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 import javax.crypto.SecretKey;
@@ -42,7 +43,7 @@ public class Argon2Test {
       assertNotNull(skf);
 
       char[] password = "test-password".toCharArray();
-      byte[] salt = "0123456789abcdef".getBytes();
+      byte[] salt = "0123456789abcdef".getBytes(StandardCharsets.UTF_8);
 
       Argon2KeySpec spec = new Argon2KeySpec(password, salt, 3, 65536, 4, 256);
       SecretKey key = skf.generateSecret(spec);
@@ -60,7 +61,7 @@ public class Argon2Test {
       assertNotNull(skf);
 
       char[] password = "test-password".toCharArray();
-      byte[] salt = "0123456789abcdef".getBytes();
+      byte[] salt = "0123456789abcdef".getBytes(StandardCharsets.UTF_8);
 
       Argon2KeySpec spec = new Argon2KeySpec(password, salt, 3, 65536, 4, 256);
       SecretKey key = skf.generateSecret(spec);
@@ -78,7 +79,7 @@ public class Argon2Test {
       assertNotNull(skf);
 
       char[] password = "test-password".toCharArray();
-      byte[] salt = "0123456789abcdef".getBytes();
+      byte[] salt = "0123456789abcdef".getBytes(StandardCharsets.UTF_8);
 
       Argon2KeySpec spec = new Argon2KeySpec(password, salt, 3, 65536, 4, 256);
       SecretKey key = skf.generateSecret(spec);
@@ -95,7 +96,7 @@ public class Argon2Test {
       SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", PROVIDER_NAME);
 
       char[] password = "consistent-password".toCharArray();
-      byte[] salt = "fixed-salt-value".getBytes();
+      byte[] salt = "fixed-salt-value".getBytes(StandardCharsets.UTF_8);
 
       Argon2KeySpec spec1 = new Argon2KeySpec(password, salt, 2, 8192, 1, 256);
       Argon2KeySpec spec2 = new Argon2KeySpec(password, salt, 2, 8192, 1, 256);
@@ -113,7 +114,7 @@ public class Argon2Test {
    void testDifferentPasswords() throws Exception {
       SecretKeyFactory skf = SecretKeyFactory.getInstance("Argon2id", PROVIDER_NAME);
 
-      byte[] salt = "same-salt-value!".getBytes();
+      byte[] salt = "same-salt-value!".getBytes(StandardCharsets.UTF_8);
 
       Argon2KeySpec spec1 = new Argon2KeySpec("password1".toCharArray(), salt, 2, 8192, 1, 256);
       Argon2KeySpec spec2 = new Argon2KeySpec("password2".toCharArray(), salt, 2, 8192, 1, 256);

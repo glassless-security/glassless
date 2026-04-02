@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -212,7 +213,7 @@ public class SecretKeyFactoryTest {
             byte[] iv = generateSalt(16);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new IvParameterSpec(iv));
 
-            byte[] plaintext = "Test message for PBKDF2 derived key".getBytes();
+            byte[] plaintext = "Test message for PBKDF2 derived key".getBytes(StandardCharsets.UTF_8);
             byte[] ciphertext = cipher.doFinal(plaintext);
 
             // Decrypt
@@ -394,7 +395,7 @@ public class SecretKeyFactoryTest {
             byte[] iv = generateSalt(16);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, new IvParameterSpec(iv));
 
-            byte[] plaintext = "Test message for PBES2 derived key".getBytes();
+            byte[] plaintext = "Test message for PBES2 derived key".getBytes(StandardCharsets.UTF_8);
             byte[] ciphertext = cipher.doFinal(plaintext);
 
             // Decrypt

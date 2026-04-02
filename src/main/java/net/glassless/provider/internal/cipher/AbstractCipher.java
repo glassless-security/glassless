@@ -130,8 +130,8 @@ abstract class AbstractCipher extends CipherSpi {
 
       this.opmode = opmode;
 
-      if (params instanceof IvParameterSpec) {
-         this.iv = ((IvParameterSpec) params).getIV();
+      if (params instanceof IvParameterSpec ivParams) {
+         this.iv = ivParams.getIV();
       } else if (params instanceof GCMParameterSpec gcmParams) {
          this.iv = gcmParams.getIV();
          this.gcmTagLenBits = gcmParams.getTLen();

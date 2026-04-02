@@ -192,7 +192,7 @@ public class ECParameters extends AlgorithmParametersSpi {
    }
 
    private byte[] encodeOIDToDER(String oid) {
-      String[] parts = oid.split("\\.");
+      String[] parts = oid.split("\\.", -1);
       if (parts.length < 2) {
          throw new IllegalArgumentException("Invalid OID: " + oid);
       }

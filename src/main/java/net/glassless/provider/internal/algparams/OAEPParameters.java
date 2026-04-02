@@ -139,17 +139,14 @@ public class OAEPParameters extends AlgorithmParametersSpi {
          if ((tag & 0xA0) == 0xA0) { // context-specific tag
             int tagNum = tag & 0x1F;
             switch (tagNum) {
-               case 0: // hashAlgorithm
+               case 0 -> // hashAlgorithm
                   this.mdName = parseAlgorithmIdentifier(der, offset, len);
-                  break;
-               case 1: // maskGenAlgorithm
+               case 1 -> // maskGenAlgorithm
                   parseMGFAlgorithm(der, offset, len);
-                  break;
-               case 2: // pSourceAlgorithm
+               case 2 -> // pSourceAlgorithm
                   // Skip for now, use default
                   offset[0] += len;
-                  break;
-               default:
+               default ->
                   offset[0] += len;
             }
          } else {
@@ -177,6 +174,7 @@ public class OAEPParameters extends AlgorithmParametersSpi {
       return oidToDigestName(oid);
    }
 
+   @SuppressWarnings("UnusedVariable")
    private void parseMGFAlgorithm(byte[] der, int[] offset, int len) throws IOException {
       int startOffset = offset[0];
       // For MGF1, the parameters contain the hash algorithm

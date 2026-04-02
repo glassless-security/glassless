@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -115,14 +116,14 @@ public class EdDSATest {
 
             Signature sig = Signature.getInstance("Ed25519", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             assertNotNull(signature);
             assertEquals(64, signature.length);  // Ed25519 signature is 64 bytes
 
             sig.initVerify(kp.getPublic());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
 
@@ -134,11 +135,11 @@ public class EdDSATest {
 
             Signature sig = Signature.getInstance("Ed25519", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("original message".getBytes());
+            sig.update("original message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("different message".getBytes());
+            sig.update("different message".getBytes(StandardCharsets.UTF_8));
             assertFalse(sig.verify(signature));
         }
 
@@ -164,11 +165,11 @@ public class EdDSATest {
 
             Signature sig = Signature.getInstance("EdDSA", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(kp.getPublic());
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -185,14 +186,14 @@ public class EdDSATest {
 
             Signature sig = Signature.getInstance("Ed448", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             assertNotNull(signature);
             assertEquals(114, signature.length);  // Ed448 signature is 114 bytes
 
             sig.initVerify(kp.getPublic());
-            sig.update("test message".getBytes());
+            sig.update("test message".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -266,11 +267,11 @@ public class EdDSATest {
             // Use translated keys for signing
             Signature sig = Signature.getInstance("Ed25519", PROVIDER_NAME);
             sig.initSign(translatedPriv);
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             sig.initVerify(translatedPub);
-            sig.update("test".getBytes());
+            sig.update("test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sig.verify(signature));
         }
     }
@@ -288,7 +289,7 @@ public class EdDSATest {
             // Sign with GlaSSLess
             Signature sig = Signature.getInstance("Ed25519", PROVIDER_NAME);
             sig.initSign(kp.getPrivate());
-            sig.update("cross-provider test".getBytes());
+            sig.update("cross-provider test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             // Verify with default provider (SunEC)
@@ -298,7 +299,7 @@ public class EdDSATest {
 
             Signature sunSig = Signature.getInstance("Ed25519");
             sunSig.initVerify(sunPub);
-            sunSig.update("cross-provider test".getBytes());
+            sunSig.update("cross-provider test".getBytes(StandardCharsets.UTF_8));
             assertTrue(sunSig.verify(signature));
         }
 
@@ -311,7 +312,7 @@ public class EdDSATest {
             // Sign with default provider
             Signature sig = Signature.getInstance("Ed25519");
             sig.initSign(kp.getPrivate());
-            sig.update("reverse cross-provider test".getBytes());
+            sig.update("reverse cross-provider test".getBytes(StandardCharsets.UTF_8));
             byte[] signature = sig.sign();
 
             // Verify with GlaSSLess
@@ -321,7 +322,7 @@ public class EdDSATest {
 
             Signature glassSig = Signature.getInstance("Ed25519", PROVIDER_NAME);
             glassSig.initVerify(glassPub);
-            glassSig.update("reverse cross-provider test".getBytes());
+            glassSig.update("reverse cross-provider test".getBytes(StandardCharsets.UTF_8));
             assertTrue(glassSig.verify(signature));
         }
     }
