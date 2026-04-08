@@ -12,12 +12,15 @@ import java.security.spec.EdECPoint;
 import java.security.spec.NamedParameterSpec;
 import java.util.Locale;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * KeyPairGenerator for EdDSA (Ed25519 and Ed448).
  */
 public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
 
    private NamedParameterSpec params = NamedParameterSpec.ED25519;  // Default to Ed25519
 
@@ -68,6 +71,7 @@ public class EdDSAKeyPairGenerator extends KeyPairGeneratorSpi {
          // Create EdECPoint from raw public key
          EdECPoint point = createEdECPoint(rawPublicKey);
 
+         LOG.log(System.Logger.Level.DEBUG, "{0}", algorithmName);
          return new KeyPair(
             new GlaSSLessEdECPublicKey(params, point, keys[0]),
             new GlaSSLessEdECPrivateKey(params, rawPrivateKey, keys[1]));

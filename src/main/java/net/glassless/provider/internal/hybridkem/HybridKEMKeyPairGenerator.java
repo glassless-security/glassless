@@ -13,6 +13,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
 import java.util.Locale;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -23,6 +24,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * for quantum-resistant key encapsulation. Requires OpenSSL 3.5+.
  */
 public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
 
    // OpenSSL algorithm names
    protected static final String X25519_MLKEM768 = "X25519MLKEM768";
@@ -137,6 +140,7 @@ public class HybridKEMKeyPairGenerator extends KeyPairGeneratorSpi {
                GlaSSLessHybridKEMPrivateKey privateKey = new GlaSSLessHybridKEMPrivateKey(
                   jcaAlgorithm, algorithmName, rawPrivateKey);
 
+               LOG.log(System.Logger.Level.DEBUG, "{0}", jcaAlgorithm);
                return new KeyPair(publicKey, privateKey);
             } finally {
                OpenSSLCrypto.EVP_PKEY_free(pkey);

@@ -23,6 +23,8 @@ import java.security.SignatureSpi;
  */
 public abstract class AbstractSingleShotSignature extends SignatureSpi {
 
+   private static final System.Logger LOG = GlaSSLessLog.SIGNATURE;
+
    private final String algorithmName;
    protected byte[] privateKeyEncoded;
    protected byte[] publicKeyEncoded;
@@ -56,6 +58,8 @@ public abstract class AbstractSingleShotSignature extends SignatureSpi {
       this.publicKeyEncoded = null;
       this.dataBuffer.reset();
       this.signing = true;
+      LOG.log(System.Logger.Level.DEBUG,
+         "initSign: {0}, key: {1}", algorithmName, privateKey.getAlgorithm());
    }
 
    @Override
@@ -64,6 +68,8 @@ public abstract class AbstractSingleShotSignature extends SignatureSpi {
       this.privateKeyEncoded = null;
       this.dataBuffer.reset();
       this.signing = false;
+      LOG.log(System.Logger.Level.DEBUG,
+         "initVerify: {0}, key: {1}", algorithmName, publicKey.getAlgorithm());
    }
 
    @Override
@@ -126,6 +132,8 @@ public abstract class AbstractSingleShotSignature extends SignatureSpi {
                byte[] signature = new byte[(int) actualLen];
                sigBuffer.asByteBuffer().get(signature);
 
+               LOG.log(System.Logger.Level.TRACE,
+                  "sign: {0}, {1} bytes", algorithmName, signature.length);
                return signature;
             } finally {
                OpenSSLCrypto.EVP_MD_CTX_free(mdCtx);
@@ -176,7 +184,10 @@ public abstract class AbstractSingleShotSignature extends SignatureSpi {
                result = OpenSSLCrypto.EVP_DigestVerify(mdCtx, sigSegment, sigBytes.length,
                   dataSegment, data.length);
 
-               return result == 1;
+               boolean verified = result == 1;
+               LOG.log(System.Logger.Level.TRACE,
+                  "verify: {0}, sig {1} bytes, result: {2}", algorithmName, sigBytes.length, verified);
+               return verified;
             } finally {
                OpenSSLCrypto.EVP_MD_CTX_free(mdCtx);
             }

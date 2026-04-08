@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import net.glassless.provider.FIPSStatus;
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.keyfactory.GlaSSLessECPrivateKey;
 import net.glassless.provider.internal.keyfactory.GlaSSLessECPublicKey;
@@ -25,6 +26,8 @@ import net.glassless.provider.internal.keyfactory.GlaSSLessECPublicKey;
  * EC (Elliptic Curve) KeyPairGenerator using OpenSSL.
  */
 public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
 
    // FIPS 186-5 approved NIST curves
    private static final Set<Integer> FIPS_APPROVED_NIDS = Set.of(
@@ -153,6 +156,7 @@ public class ECKeyPairGenerator extends KeyPairGeneratorSpi {
                byte[] publicEncoded = OpenSSLCrypto.exportPublicKey(pkey, arena);
                byte[] privateEncoded = OpenSSLCrypto.exportPrivateKey(pkey, arena);
 
+               LOG.log(System.Logger.Level.DEBUG, "EC, curve NID {0}", curveNid);
                return new KeyPair(
                   new GlaSSLessECPublicKey(w, params, publicEncoded),
                   new GlaSSLessECPrivateKey(s, params, privateEncoded));

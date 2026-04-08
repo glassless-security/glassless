@@ -15,6 +15,7 @@ import javax.crypto.KEM;
 import javax.crypto.KEMSpi;
 import javax.crypto.SecretKey;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.KEMUtils;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -23,6 +24,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * Implements the Key Encapsulation Mechanism as defined in FIPS 203.
  */
 public class MLKEM implements KEMSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEM;
 
    protected final String opensslName;
    protected final String jcaAlgorithm;
@@ -54,6 +57,7 @@ public class MLKEM implements KEMSpi {
          throw new InvalidKeyException("Public key encoding is null");
       }
 
+      LOG.log(System.Logger.Level.DEBUG, "newEncapsulator: {0}", jcaAlgorithm);
       return new MLKEMEncapsulator(encodedKey, sharedSecretSize);
    }
 
@@ -72,6 +76,7 @@ public class MLKEM implements KEMSpi {
          throw new InvalidKeyException("Private key encoding is null");
       }
 
+      LOG.log(System.Logger.Level.DEBUG, "newDecapsulator: {0}", jcaAlgorithm);
       return new MLKEMDecapsulator(encodedKey, sharedSecretSize);
    }
 

@@ -14,6 +14,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.DSAParameterSpec;
 
 import net.glassless.provider.FIPSStatus;
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.keyfactory.DSAKeyFactory;
 import net.glassless.provider.internal.keyfactory.GlaSSLessDSAPublicKey;
@@ -26,6 +27,7 @@ import net.glassless.provider.internal.keyfactory.GlaSSLessDSAPublicKey;
  */
 public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
    private static final int DEFAULT_KEY_SIZE = 2048;
    private static final int MIN_KEY_SIZE = 512;
    private static final int FIPS_MIN_KEY_SIZE = 2048;
@@ -134,6 +136,7 @@ public class DSAKeyPairGenerator extends KeyPairGeneratorSpi {
                   DSAParameterSpec params = DSAKeyFactory.extractDSAParams(pkey, arena);
                   BigInteger y = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "pub", arena);
 
+                  LOG.log(System.Logger.Level.DEBUG, "DSA, {0} bits", keySize);
                   return new KeyPair(
                      new GlaSSLessDSAPublicKey(y, params, publicKeyBytes),
                      DSAKeyFactory.extractDSAPrivateKey(pkey, arena, privateKeyBytes));

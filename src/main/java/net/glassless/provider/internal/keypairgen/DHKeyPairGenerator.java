@@ -15,6 +15,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import javax.crypto.spec.DHParameterSpec;
 
 import net.glassless.provider.FIPSStatus;
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.keyfactory.DHKeyFactory;
 import net.glassless.provider.internal.keyfactory.GlaSSLessDHPublicKey;
@@ -27,6 +28,7 @@ import net.glassless.provider.internal.keyfactory.GlaSSLessDHPublicKey;
  */
 public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
 
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
    private static final int DEFAULT_KEY_SIZE = 2048;
    private static final int MIN_KEY_SIZE = 512;
    private static final int FIPS_MIN_KEY_SIZE = 2048;
@@ -135,6 +137,7 @@ public class DHKeyPairGenerator extends KeyPairGeneratorSpi {
                   DHParameterSpec params = DHKeyFactory.extractDHParams(pkey, arena);
                   BigInteger y = OpenSSLCrypto.EVP_PKEY_get_bn_param(pkey, "pub", arena);
 
+                  LOG.log(System.Logger.Level.DEBUG, "DH, {0} bits", keySize);
                   return new KeyPair(
                      new GlaSSLessDHPublicKey(y, params, publicKeyBytes),
                      DHKeyFactory.extractDHPrivateKey(pkey, arena, privateKeyBytes));

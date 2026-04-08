@@ -18,12 +18,15 @@ import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * DH (Diffie-Hellman) key agreement using OpenSSL.
  */
 public class DHKeyAgreement extends KeyAgreementSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_AGREEMENT;
 
    private DHPrivateKey privateKey;
    private DHPublicKey peerPublicKey;
@@ -37,6 +40,7 @@ public class DHKeyAgreement extends KeyAgreementSpi {
       this.privateKey = dhKey;
       this.peerPublicKey = null;
       this.sharedSecret = null;
+      LOG.log(System.Logger.Level.DEBUG, "DH init");
    }
 
    @Override
@@ -136,6 +140,8 @@ public class DHKeyAgreement extends KeyAgreementSpi {
       Arrays.fill(this.sharedSecret, (byte) 0);
       this.sharedSecret = null;
       this.peerPublicKey = null;
+      LOG.log(System.Logger.Level.TRACE,
+         "DH generateSecret: {0} bytes", result.length);
       return result;
    }
 

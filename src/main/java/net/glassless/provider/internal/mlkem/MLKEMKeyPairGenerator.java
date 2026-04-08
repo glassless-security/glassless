@@ -10,6 +10,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
 import java.util.Locale;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -19,6 +20,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * <p>ML-KEM is standardized in FIPS 203 and requires OpenSSL 3.5+.
  */
 public class MLKEMKeyPairGenerator extends KeyPairGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
 
    // OpenSSL algorithm names
    protected static final String MLKEM512 = "mlkem512";
@@ -91,6 +94,7 @@ public class MLKEMKeyPairGenerator extends KeyPairGeneratorSpi {
    public KeyPair generateKeyPair() {
       try {
          byte[][] keys = OpenSSLCrypto.generateKeyPair(algorithmName, null);
+         LOG.log(System.Logger.Level.DEBUG, "{0}", jcaAlgorithm);
          return new KeyPair(
             new GlaSSLessMLKEMPublicKey(jcaAlgorithm, keys[0]),
             new GlaSSLessMLKEMPrivateKey(jcaAlgorithm, keys[1]));

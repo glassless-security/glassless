@@ -7,10 +7,13 @@ import java.security.MessageDigestSpi;
 import java.security.ProviderException;
 import java.util.Objects;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.NativeResourceCleaner;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 public abstract class AbstractDigest extends MessageDigestSpi implements Cloneable {
+
+   private static final System.Logger LOG = GlaSSLessLog.DIGEST;
 
    private final String algorithmName;
    private MemorySegment evpMdCtx;
@@ -39,6 +42,7 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
             .closeArena(arena)
             .registerFor(this);
          engineReset();
+         LOG.log(System.Logger.Level.DEBUG, "{0}", algorithmName);
       } catch (ProviderException e) {
          throw e;
       } catch (Throwable e) {
@@ -100,6 +104,8 @@ public abstract class AbstractDigest extends MessageDigestSpi implements Cloneab
          }
          byte[] digest = digestBuffer.asSlice(0, digestSize).toArray(ValueLayout.JAVA_BYTE);
          engineReset();
+         LOG.log(System.Logger.Level.TRACE,
+            "{0} digest: {1} bytes", algorithmName, digestSize);
          return digest;
       } catch (Throwable e) {
          throw new ProviderException("Error calculating digest", e);

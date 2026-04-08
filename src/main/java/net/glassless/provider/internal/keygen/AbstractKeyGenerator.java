@@ -11,12 +11,15 @@ import javax.crypto.KeyGeneratorSpi;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for key generators using OpenSSL's RAND_bytes.
  */
 public abstract class AbstractKeyGenerator extends KeyGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_GEN;
 
    private final String algorithm;
    private final int defaultKeySize; // in bits
@@ -65,6 +68,8 @@ public abstract class AbstractKeyGenerator extends KeyGeneratorSpi {
       try {
          int keySizeBytes = keySize / 8;
          keyBytes = OpenSSLCrypto.RAND_bytes(keySizeBytes);
+         LOG.log(System.Logger.Level.DEBUG,
+            "{0}, {1} bits", algorithm, keySize);
          return new SecretKeySpec(keyBytes, algorithm);
       } catch (Throwable e) {
          throw new ProviderException("Error generating key", e);

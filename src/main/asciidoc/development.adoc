@@ -215,6 +215,71 @@ mvn test -Pbenchmarks
 ./scripts/generate-performance-report.sh
 ----
 
+== Logging
+
+GlaSSLess uses the `java.lang.System.Logger` Platform Logging API for tracing cryptographic operations. Each JCA service type has its own logger:
+
+[cols="1,1"]
+|===
+|Logger Name |Service Type
+
+|`net.glassless.provider.cipher` |Cipher (AES, DESede, ChaCha20, RSA)
+|`net.glassless.provider.digest` |MessageDigest (SHA, MD5)
+|`net.glassless.provider.signature` |Signature (RSA, ECDSA, EdDSA, ML-DSA, SLH-DSA)
+|`net.glassless.provider.mac` |MAC (HMAC, CMAC, GMAC, KMAC)
+|`net.glassless.provider.keyagreement` |KeyAgreement (ECDH, DH, XDH)
+|`net.glassless.provider.keypairgen` |KeyPairGenerator (RSA, EC, DSA, DH, EdDSA, ML-KEM, ML-DSA, SLH-DSA)
+|`net.glassless.provider.keygen` |KeyGenerator (AES, HMAC)
+|`net.glassless.provider.keyfactory` |KeyFactory (RSA, EC, DSA, DH)
+|`net.glassless.provider.securerandom` |SecureRandom
+|`net.glassless.provider.kdf` |KDF (HKDF, TLS-PRF, TLS 1.3, SSH, KBKDF, X9.63)
+|`net.glassless.provider.kem` |KEM (ML-KEM, hybrid KEM)
+|===
+
+Two logging levels are used:
+
+* **DEBUG** — initialization and completion of operations (algorithm, key size, mode)
+* **TRACE** — data-flow details (byte counts for update/sign/verify/doFinal)
+
+=== Activation with JUL
+
+Create a `logging.properties` file:
+
+[source,properties]
+----
+handlers = java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level = ALL
+
+# Enable all GlaSSLess logging
+net.glassless.provider.level = FINE
+
+# Or enable specific categories
+net.glassless.provider.cipher.level = FINE
+net.glassless.provider.signature.level = FINE
+----
+
+Then run with:
+
+[source,bash]
+----
+java -Djava.util.logging.config.file=logging.properties ...
+----
+
+=== Adding Logging to New Algorithms
+
+When adding a new algorithm family, follow the existing pattern:
+
+[source,java]
+----
+private static final System.Logger LOG = GlaSSLessLog.<CATEGORY>;
+
+// DEBUG for init/setup (algorithm name, key info)
+LOG.log(System.Logger.Level.DEBUG, "{0}, key: {1} bits", algorithm, keySize);
+
+// TRACE for data-flow (byte counts)
+LOG.log(System.Logger.Level.TRACE, "doFinal: {0} bytes in, {1} bytes out", inputLen, outputLen);
+----
+
 == Common Issues
 
 === Module Access Errors

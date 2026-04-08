@@ -12,6 +12,7 @@ import javax.crypto.KDFSpi;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -20,6 +21,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * OpenSSL KDF context lifecycle management.
  */
 public abstract class AbstractKDF extends KDFSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KDF;
 
    private final String algorithm;
    protected final String digestName;
@@ -49,7 +52,10 @@ public abstract class AbstractKDF extends KDFSpi {
    protected byte[] engineDeriveData(AlgorithmParameterSpec params)
       throws InvalidAlgorithmParameterException {
       try (Arena arena = Arena.ofConfined()) {
-         return derive(params, arena);
+         byte[] result = derive(params, arena);
+         LOG.log(System.Logger.Level.DEBUG,
+            "{0}, {1} bytes", algorithm, result.length);
+         return result;
       } catch (InvalidAlgorithmParameterException | ProviderException e) {
          throw e;
       } catch (Throwable e) {

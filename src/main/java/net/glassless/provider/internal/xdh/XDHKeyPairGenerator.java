@@ -11,12 +11,15 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
 import java.util.Locale;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * KeyPairGenerator for XDH (X25519 and X448).
  */
 public class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
 
    private NamedParameterSpec params = NamedParameterSpec.X25519;  // Default to X25519
 
@@ -68,6 +71,7 @@ public class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
          // Create u-coordinate from raw public key (little-endian)
          BigInteger u = createUCoordinate(rawPublicKey);
 
+         LOG.log(System.Logger.Level.DEBUG, "{0}", algorithmName);
          return new KeyPair(
             new GlaSSLessXECPublicKey(params, u, keys[0]),
             new GlaSSLessXECPrivateKey(params, rawPrivateKey, keys[1]));

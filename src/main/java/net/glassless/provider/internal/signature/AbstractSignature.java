@@ -12,6 +12,7 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.SignatureSpi;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.NativeResourceCleaner;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -19,6 +20,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * Abstract base class for signature implementations using OpenSSL EVP_DigestSign/Verify API.
  */
 public abstract class AbstractSignature extends SignatureSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.SIGNATURE;
 
    private final String digestAlgorithm;
    private final NativeResourceCleaner.ResourceHolder resourceHolder;
@@ -57,6 +60,8 @@ public abstract class AbstractSignature extends SignatureSpi {
          resourceHolder.setEvpPkey(evpPkey);
 
          initVerify();
+         LOG.log(System.Logger.Level.DEBUG,
+            "initVerify: {0}, key: {1}", digestAlgorithm, publicKey.getAlgorithm());
 
       } catch (InvalidKeyException e) {
          throw e;
@@ -87,6 +92,8 @@ public abstract class AbstractSignature extends SignatureSpi {
          resourceHolder.setEvpPkey(evpPkey);
 
          initSign();
+         LOG.log(System.Logger.Level.DEBUG,
+            "initSign: {0}, key: {1}", digestAlgorithm, privateKey.getAlgorithm());
 
       } catch (InvalidKeyException e) {
          throw e;
@@ -215,6 +222,8 @@ public abstract class AbstractSignature extends SignatureSpi {
          byte[] signature = new byte[(int) sigLen];
          sigSegment.asByteBuffer().get(signature);
 
+         LOG.log(System.Logger.Level.TRACE,
+            "sign: {0}, {1} bytes", digestAlgorithm, signature.length);
          return signature;
 
       } catch (SignatureException e) {
@@ -251,7 +260,10 @@ public abstract class AbstractSignature extends SignatureSpi {
          int result = OpenSSLCrypto.EVP_DigestVerifyFinal(mdCtx, sigSegment, sigBytes.length);
 
          // result == 1 means success, 0 means verification failed, < 0 means error
-         return result == 1;
+         boolean verified = result == 1;
+         LOG.log(System.Logger.Level.TRACE,
+            "verify: {0}, sig {1} bytes, result: {2}", digestAlgorithm, sigBytes.length, verified);
+         return verified;
 
       } catch (SignatureException e) {
          throw e;

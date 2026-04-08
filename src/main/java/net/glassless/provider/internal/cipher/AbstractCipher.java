@@ -23,10 +23,13 @@ import javax.crypto.ShortBufferException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.NativeResourceCleaner;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 abstract class AbstractCipher extends CipherSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.CIPHER;
 
    protected final Arena arena;
    private String algorithmName;
@@ -190,6 +193,10 @@ abstract class AbstractCipher extends CipherSpi {
             }
          }
 
+         LOG.log(System.Logger.Level.DEBUG,
+            "{0} {1}, key: {2} bits",
+            GlaSSLessLog.opmodeName(opmode), algorithmName, keyBytes.length * 8);
+
       } catch (Throwable e) {
          throw new ProviderException("Error initializing cipher", e);
       }
@@ -265,6 +272,8 @@ abstract class AbstractCipher extends CipherSpi {
 
          int written = outLenSegment.get(ValueLayout.JAVA_INT, 0);
          outputSegment.asByteBuffer().get(output, outputOffset, written);
+         LOG.log(System.Logger.Level.TRACE,
+            "update: {0} bytes in, {1} bytes out", inputLen, written);
          return written;
       } catch (Throwable e) {
          throw new ProviderException("Error updating cipher", e);
@@ -430,6 +439,8 @@ abstract class AbstractCipher extends CipherSpi {
          currentOffset += outputFromFinal.length;
          System.arraycopy(gcmTagBytes, 0, finalOutput, currentOffset, gcmTagBytes.length);
 
+         LOG.log(System.Logger.Level.TRACE,
+            "doFinal: {0} bytes in, {1} bytes out", inputLen, totalOutputArrayLen);
          return finalOutput;
 
       } catch (IllegalBlockSizeException | BadPaddingException e) {

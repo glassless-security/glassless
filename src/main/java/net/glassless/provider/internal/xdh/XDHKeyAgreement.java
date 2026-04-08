@@ -18,12 +18,15 @@ import javax.crypto.KeyAgreementSpi;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * XDH Key Agreement implementation (X25519 and X448) using OpenSSL.
  */
 public class XDHKeyAgreement extends KeyAgreementSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_AGREEMENT;
 
    private final String expectedCurve;  // null means accept any XDH curve
    private NamedParameterSpec params;
@@ -65,6 +68,7 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
       if (this.privateKeyEncoded == null) {
          throw new InvalidKeyException("Private key encoding is null");
       }
+      LOG.log(System.Logger.Level.DEBUG, "XDH init: {0}", nps.getName());
    }
 
    @Override
@@ -157,6 +161,8 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
       // Zeroize and clear after use
       Arrays.fill(sharedSecret, (byte) 0);
       sharedSecret = null;
+      LOG.log(System.Logger.Level.TRACE,
+         "XDH generateSecret: {0} bytes", result.length);
       return result;
    }
 

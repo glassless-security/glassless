@@ -10,6 +10,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.NamedParameterSpec;
 import java.util.Locale;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -19,6 +20,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * <p>ML-DSA is standardized in FIPS 204 and requires OpenSSL 3.5+.
  */
 public class MLDSAKeyPairGenerator extends KeyPairGeneratorSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
 
    // OpenSSL algorithm names
    protected static final String MLDSA44 = "mldsa44";
@@ -91,6 +94,7 @@ public class MLDSAKeyPairGenerator extends KeyPairGeneratorSpi {
    public KeyPair generateKeyPair() {
       try {
          byte[][] keys = OpenSSLCrypto.generateKeyPair(algorithmName, null);
+         LOG.log(System.Logger.Level.DEBUG, "{0}", jcaAlgorithm);
          return new KeyPair(
             new GlaSSLessMLDSAPublicKey(jcaAlgorithm, keys[0]),
             new GlaSSLessMLDSAPrivateKey(jcaAlgorithm, keys[1]));

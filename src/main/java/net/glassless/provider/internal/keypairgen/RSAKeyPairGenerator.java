@@ -12,6 +12,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
 
 import net.glassless.provider.FIPSStatus;
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 import net.glassless.provider.internal.keyfactory.GlaSSLessRSAPublicKey;
 import net.glassless.provider.internal.keyfactory.RSAKeyFactory;
@@ -21,6 +22,7 @@ import net.glassless.provider.internal.keyfactory.RSAKeyFactory;
  */
 public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
+   private static final System.Logger LOG = GlaSSLessLog.KEY_PAIR_GEN;
    private static final int DEFAULT_KEY_SIZE = 2048;
    private static final int MIN_KEY_SIZE = 512;
    private static final int FIPS_MIN_KEY_SIZE = 2048;
@@ -92,6 +94,7 @@ public class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
             throw new ProviderException("Failed to parse generated RSA private key");
          }
          try {
+            LOG.log(System.Logger.Level.DEBUG, "RSA, {0} bits", keySize);
             return new KeyPair(
                new GlaSSLessRSAPublicKey(n, e, pubEncoded),
                RSAKeyFactory.extractRSAPrivateKey(privPkey, arena, privEncoded));

@@ -15,6 +15,7 @@ import javax.crypto.KEM;
 import javax.crypto.KEMSpi;
 import javax.crypto.SecretKey;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.KEMUtils;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
@@ -23,6 +24,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * Supports X25519MLKEM768, X448MLKEM1024, SecP256r1MLKEM768, and SecP384r1MLKEM1024.
  */
 public class HybridKEM implements KEMSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEM;
 
    protected final int sharedSecretSize;
 
@@ -46,6 +49,7 @@ public class HybridKEM implements KEMSpi {
       }
 
       if (publicKey instanceof GlaSSLessHybridKEMPublicKey hybridKey) {
+         LOG.log(System.Logger.Level.DEBUG, "newEncapsulator: {0}", hybridKey.getAlgorithm());
          return new HybridKEMEncapsulator(hybridKey.getOpenSSLName(), hybridKey.getRawKey(), sharedSecretSize);
       }
 
@@ -64,6 +68,7 @@ public class HybridKEM implements KEMSpi {
       }
 
       if (privateKey instanceof GlaSSLessHybridKEMPrivateKey hybridKey) {
+         LOG.log(System.Logger.Level.DEBUG, "newDecapsulator: {0}", hybridKey.getAlgorithm());
          return new HybridKEMDecapsulator(hybridKey.getOpenSSLName(), hybridKey.getRawKey(), sharedSecretSize);
       }
 

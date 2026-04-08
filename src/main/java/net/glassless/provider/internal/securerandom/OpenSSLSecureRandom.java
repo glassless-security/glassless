@@ -3,6 +3,7 @@ package net.glassless.provider.internal.securerandom;
 import java.io.Serial;
 import java.security.SecureRandomSpi;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -16,8 +17,11 @@ public class OpenSSLSecureRandom extends SecureRandomSpi {
    @Serial
    private static final long serialVersionUID = 1L;
 
+   private static final System.Logger LOG = GlaSSLessLog.SECURE_RANDOM;
+
    public OpenSSLSecureRandom() {
       // OpenSSL's RNG is self-seeding from system entropy
+      LOG.log(System.Logger.Level.DEBUG, "OpenSSL SecureRandom");
    }
 
    @Override

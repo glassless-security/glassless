@@ -22,12 +22,15 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * Abstract base class for RSA ciphers using OpenSSL EVP_PKEY API.
  */
 abstract class AbstractRSACipher extends CipherSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.CIPHER;
 
    private final Arena arena;
    private final RSAPadding padding;
@@ -170,6 +173,9 @@ abstract class AbstractRSACipher extends CipherSpi {
             }
          }
 
+         LOG.log(System.Logger.Level.DEBUG,
+            "{0} RSA/{1}, key: {2} bits", GlaSSLessLog.opmodeName(opmode), padding.name(), keySize * 8);
+
       } catch (InvalidKeyException e) {
          throw e;
       } catch (Throwable e) {
@@ -231,6 +237,8 @@ abstract class AbstractRSACipher extends CipherSpi {
             outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
             byte[] output = new byte[(int) outLen];
             outputSegment.asByteBuffer().get(output);
+            LOG.log(System.Logger.Level.TRACE,
+               "doFinal: RSA encrypt, {0} bytes in, {1} bytes out", inputLen, outLen);
             return output;
 
          } else {
@@ -252,6 +260,8 @@ abstract class AbstractRSACipher extends CipherSpi {
             outLen = outLenSegment.get(ValueLayout.JAVA_LONG, 0);
             byte[] output = new byte[(int) outLen];
             outputSegment.asByteBuffer().get(output);
+            LOG.log(System.Logger.Level.TRACE,
+               "doFinal: RSA decrypt, {0} bytes in, {1} bytes out", inputLen, outLen);
             return output;
          }
 

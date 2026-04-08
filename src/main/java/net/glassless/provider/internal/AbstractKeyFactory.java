@@ -16,6 +16,8 @@ import java.security.spec.X509EncodedKeySpec;
  */
 public abstract class AbstractKeyFactory extends KeyFactorySpi {
 
+   private static final System.Logger LOG = GlaSSLessLog.KEY_FACTORY;
+
    /**
     * Returns {@code true} if the key is already an instance produced by
     * this provider and needs no translation.
@@ -32,13 +34,19 @@ public abstract class AbstractKeyFactory extends KeyFactorySpi {
       }
       if (key instanceof PublicKey) {
          try {
-            return engineGeneratePublic(new X509EncodedKeySpec(key.getEncoded()));
+            Key translated = engineGeneratePublic(new X509EncodedKeySpec(key.getEncoded()));
+            LOG.log(System.Logger.Level.DEBUG,
+               "translateKey: public {0}", key.getAlgorithm());
+            return translated;
          } catch (InvalidKeySpecException e) {
             throw new InvalidKeyException("Failed to translate public key", e);
          }
       } else if (key instanceof PrivateKey) {
          try {
-            return engineGeneratePrivate(new PKCS8EncodedKeySpec(key.getEncoded()));
+            Key translated = engineGeneratePrivate(new PKCS8EncodedKeySpec(key.getEncoded()));
+            LOG.log(System.Logger.Level.DEBUG,
+               "translateKey: private {0}", key.getAlgorithm());
+            return translated;
          } catch (InvalidKeySpecException e) {
             throw new InvalidKeyException("Failed to translate private key", e);
          }

@@ -18,12 +18,15 @@ import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
  * ECDH (Elliptic Curve Diffie-Hellman) key agreement using OpenSSL.
  */
 public class ECDHKeyAgreement extends KeyAgreementSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.KEY_AGREEMENT;
 
    private ECPrivateKey privateKey;
    private ECPublicKey peerPublicKey;
@@ -37,6 +40,7 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
       this.privateKey = ecKey;
       this.peerPublicKey = null;
       this.sharedSecret = null;
+      LOG.log(System.Logger.Level.DEBUG, "ECDH init");
    }
 
    @Override
@@ -114,6 +118,8 @@ public class ECDHKeyAgreement extends KeyAgreementSpi {
       Arrays.fill(this.sharedSecret, (byte) 0);
       this.sharedSecret = null;
       this.peerPublicKey = null;
+      LOG.log(System.Logger.Level.TRACE,
+         "ECDH generateSecret: {0} bytes", result.length);
       return result;
    }
 

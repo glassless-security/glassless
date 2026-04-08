@@ -12,6 +12,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import javax.crypto.MacSpi;
 import javax.crypto.SecretKey;
 
+import net.glassless.provider.internal.GlaSSLessLog;
 import net.glassless.provider.internal.OpenSSLCrypto;
 
 /**
@@ -19,6 +20,8 @@ import net.glassless.provider.internal.OpenSSLCrypto;
  * This class supports CMAC, GMAC, KMAC, and other MAC algorithms.
  */
 public abstract class AbstractMac extends MacSpi {
+
+   private static final System.Logger LOG = GlaSSLessLog.MAC;
 
    private final String macAlgorithm;
    private final int macLength;
@@ -102,6 +105,8 @@ public abstract class AbstractMac extends MacSpi {
          }
 
          initialized = true;
+         LOG.log(System.Logger.Level.DEBUG,
+            "{0}, key: {1} bits", macAlgorithm, keyBytes.length * 8);
 
       } catch (InvalidKeyException e) {
          throw e;
@@ -158,6 +163,8 @@ public abstract class AbstractMac extends MacSpi {
          byte[] mac = new byte[(int) outLen];
          outSegment.asByteBuffer().get(mac);
 
+         LOG.log(System.Logger.Level.TRACE,
+            "doFinal: {0}, {1} bytes", macAlgorithm, outLen);
          return mac;
 
       } catch (Throwable e) {
