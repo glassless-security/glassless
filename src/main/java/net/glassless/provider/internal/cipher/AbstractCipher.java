@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidParameterSpecException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -197,8 +198,28 @@ abstract class AbstractCipher extends CipherSpi {
    @Override
    protected void engineInit(int opmode, Key key, AlgorithmParameters params, SecureRandom random)
       throws InvalidKeyException, InvalidAlgorithmParameterException {
-      // Not implemented
-      throw new UnsupportedOperationException("engineInit with AlgorithmParameters not supported");
+      if (params == null) {
+         engineInit(opmode, key, (AlgorithmParameterSpec) null, random);
+         return;
+      }
+      AlgorithmParameterSpec paramSpec = extractParameterSpec(params);
+      engineInit(opmode, key, paramSpec, random);
+   }
+
+   /**
+    * Extracts the appropriate AlgorithmParameterSpec from AlgorithmParameters.
+    * Subclasses (e.g., PBE ciphers) can override to extract their specific spec type.
+    */
+   protected AlgorithmParameterSpec extractParameterSpec(AlgorithmParameters params)
+      throws InvalidAlgorithmParameterException {
+      try {
+         if (mode == CipherMode.GCM) {
+            return params.getParameterSpec(GCMParameterSpec.class);
+         }
+         return params.getParameterSpec(IvParameterSpec.class);
+      } catch (InvalidParameterSpecException e) {
+         throw new InvalidAlgorithmParameterException("Failed to extract parameter spec", e);
+      }
    }
 
    @Override
@@ -229,7 +250,7 @@ abstract class AbstractCipher extends CipherSpi {
          inputSegment.asByteBuffer().put(input, inputOffset, inputLen);
 
          MemorySegment outputSegment = confinedArena.allocate(ValueLayout.JAVA_BYTE, output.length - outputOffset);
-         MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT); // Corrected: Allocate space for an int
+         MemorySegment outLenSegment = confinedArena.allocate(ValueLayout.JAVA_INT);
 
          int result;
          if (opmode == Cipher.ENCRYPT_MODE) {
@@ -248,6 +269,25 @@ abstract class AbstractCipher extends CipherSpi {
       } catch (Throwable e) {
          throw new ProviderException("Error updating cipher", e);
       }
+   }
+
+   @Override
+   protected int engineUpdate(ByteBuffer input, ByteBuffer output) throws ShortBufferException {
+      int inputLen = input.remaining();
+      if (inputLen == 0) {
+         return 0;
+      }
+      byte[] inputBytes = new byte[inputLen];
+      input.get(inputBytes);
+      // Allocate based on what OpenSSL can actually produce: at most inputLen + one block
+      int maxOutput = inputLen + engineGetBlockSize();
+      byte[] outputBytes = new byte[maxOutput];
+      int written = engineUpdate(inputBytes, 0, inputLen, outputBytes, 0);
+      if (written > output.remaining()) {
+         throw new ShortBufferException("Output buffer too small: need " + written + " but have " + output.remaining());
+      }
+      output.put(outputBytes, 0, written);
+      return written;
    }
 
    @Override
