@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -52,6 +53,8 @@ public class SecretKeyFactoryTest {
                 "SHA512, 64"
         })
         void testPBKDF2KeyDerivation(String hashAlgorithm, int expectedKeyLength) throws Exception {
+            assumeFalse("SHA1".equals(hashAlgorithm) && FIPSStatus.isFIPSEnabled(),
+                "PBKDF2WithHmacSHA1 is not available in FIPS mode");
             String algorithm = "PBKDF2WithHmac" + hashAlgorithm;
             SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(factory);
@@ -122,6 +125,8 @@ public class SecretKeyFactoryTest {
                 "SHA512, 64"
         })
         void testPBKDF2With8BitEncoding(String hashAlgorithm, int expectedKeyLength) throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(),
+                "PBKDF2 8BIT variants are not available in FIPS mode");
             String algorithm = "PBKDF2WithHmac" + hashAlgorithm + "And8BIT";
             SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(factory);
@@ -165,6 +170,8 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("8BIT encoding differs from UTF-8 for high-byte chars")
         void testEncodingDifference() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(),
+                "PBKDF2 8BIT variants are not available in FIPS mode");
             SecretKeyFactory utf8Factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256", PROVIDER_NAME);
             SecretKeyFactory eightBitFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256And8BIT", PROVIDER_NAME);
 
@@ -231,6 +238,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("DESede key from DESedeKeySpec")
         void testDESedeFromKeySpec() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede", PROVIDER_NAME);
             assertNotNull(factory);
 
@@ -249,6 +257,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("DESede key has correct parity bits")
         void testDESedeParityBits() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede", PROVIDER_NAME);
 
             byte[] keyBytes = new byte[24];
@@ -267,6 +276,7 @@ public class SecretKeyFactoryTest {
         @Test
         @DisplayName("TripleDES alias works")
         void testTripleDESAlias() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             SecretKeyFactory factory = SecretKeyFactory.getInstance("TripleDES", PROVIDER_NAME);
             assertNotNull(factory);
 
@@ -298,6 +308,8 @@ public class SecretKeyFactoryTest {
                 "SHA512, 256"
         })
         void testPBES2KeyDerivation(String hashAlgorithm, int keySize) throws Exception {
+            assumeFalse("SHA1".equals(hashAlgorithm) && FIPSStatus.isFIPSEnabled(),
+                "PBEWithHmacSHA1 is not available in FIPS mode");
             String algorithm = "PBEWithHmac" + hashAlgorithm + "AndAES_" + keySize;
             SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(factory);

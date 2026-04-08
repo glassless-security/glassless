@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.security.SecureRandom;
 import java.security.Security;
@@ -33,6 +34,8 @@ public class SecureRandomTest {
         @ParameterizedTest(name = "Algorithm: {0}")
         @ValueSource(strings = {"NativePRNG", "DRBG", "SHA1PRNG"})
         void testGetInstance(String algorithm) throws Exception {
+            assumeFalse("SHA1PRNG".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+                "SHA1PRNG is not available in FIPS mode");
             SecureRandom sr = SecureRandom.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sr);
             assertEquals(algorithm, sr.getAlgorithm());
@@ -42,6 +45,8 @@ public class SecureRandomTest {
         @ParameterizedTest(name = "Algorithm: {0}")
         @ValueSource(strings = {"NativePRNG", "DRBG", "SHA1PRNG"})
         void testNextBytes(String algorithm) throws Exception {
+            assumeFalse("SHA1PRNG".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+                "SHA1PRNG is not available in FIPS mode");
             SecureRandom sr = SecureRandom.getInstance(algorithm, PROVIDER_NAME);
 
             byte[] bytes = new byte[32];
@@ -61,6 +66,8 @@ public class SecureRandomTest {
         @ParameterizedTest(name = "Algorithm: {0}")
         @ValueSource(strings = {"NativePRNG", "DRBG", "SHA1PRNG"})
         void testGenerateSeed(String algorithm) throws Exception {
+            assumeFalse("SHA1PRNG".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+                "SHA1PRNG is not available in FIPS mode");
             SecureRandom sr = SecureRandom.getInstance(algorithm, PROVIDER_NAME);
 
             byte[] seed = sr.generateSeed(32);
@@ -191,6 +198,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("Generate seed of various sizes")
         void testGenerateSeedSizes() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "SHA1PRNG is not available in FIPS mode");
             SecureRandom sr = SecureRandom.getInstance("SHA1PRNG", PROVIDER_NAME);
 
             for (int size : new int[]{8, 16, 32, 64}) {
@@ -258,6 +266,7 @@ public class SecureRandomTest {
         @Test
         @DisplayName("nextLong produces varied results")
         void testNextLong() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "SHA1PRNG is not available in FIPS mode");
             SecureRandom sr = SecureRandom.getInstance("SHA1PRNG", PROVIDER_NAME);
 
             Set<Long> values = new HashSet<>();

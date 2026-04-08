@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -24,6 +25,7 @@ public class ChaCha20Poly1305Test {
 
    @BeforeAll
    public static void setUp() {
+      assumeFalse(FIPSStatus.isFIPSEnabled(), "ChaCha20-Poly1305 is not available in FIPS mode");
       Security.addProvider(new GlaSSLessProvider());
    }
 

@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
@@ -23,6 +24,7 @@ public class DESedeCipherTest {
 
     @BeforeAll
     public static void setUp() {
+        assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
         Security.addProvider(new GlaSSLessProvider());
     }
 

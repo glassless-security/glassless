@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.security.Security;
 
@@ -95,6 +96,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("DESede key generation")
         void testDESedeKeyGeneration() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             KeyGenerator keyGen = KeyGenerator.getInstance("DESede", PROVIDER_NAME);
             assertNotNull(keyGen);
 
@@ -108,6 +110,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("DESede keys should have correct parity bits")
         void testDESedeParityBits() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             KeyGenerator keyGen = KeyGenerator.getInstance("DESede", PROVIDER_NAME);
             SecretKey key = keyGen.generateKey();
 
@@ -122,6 +125,7 @@ public class KeyGeneratorTest {
         @Test
         @DisplayName("TripleDES alias should work")
         void testTripleDESAlias() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             KeyGenerator keyGen = KeyGenerator.getInstance("TripleDES", PROVIDER_NAME);
             assertNotNull(keyGen);
 
@@ -144,6 +148,8 @@ public class KeyGeneratorTest {
                 "SHA512, 64"
         })
         void testHmacSHAKeyGeneration(String algorithm, int expectedKeyLength) throws Exception {
+            assumeFalse("SHA1".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+                "HmacSHA1 KeyGenerator is not available in FIPS mode");
             String keyGenAlgorithm = "Hmac" + algorithm;
             KeyGenerator keyGen = KeyGenerator.getInstance(keyGenAlgorithm, PROVIDER_NAME);
             assertNotNull(keyGen);

@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -45,6 +46,8 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = {"SHA1withRSA", "SHA224withRSA", "SHA256withRSA", "SHA384withRSA", "SHA512withRSA"})
         void testRSASignAndVerify(String algorithm) throws Exception {
+            assumeFalse(algorithm.startsWith("SHA1") && FIPSStatus.isFIPSEnabled(),
+                "SHA-1 signatures are not available in FIPS mode");
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sig);
 
@@ -109,6 +112,8 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = {"SHA1withECDSA", "SHA224withECDSA", "SHA256withECDSA", "SHA384withECDSA", "SHA512withECDSA"})
         void testECDSASignAndVerify(String algorithm) throws Exception {
+            assumeFalse(algorithm.startsWith("SHA1") && FIPSStatus.isFIPSEnabled(),
+                "SHA-1 signatures are not available in FIPS mode");
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sig);
 
@@ -173,6 +178,8 @@ public class SignatureTest {
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = {"SHA1withRSAandMGF1", "SHA224withRSAandMGF1", "SHA256withRSAandMGF1", "SHA384withRSAandMGF1", "SHA512withRSAandMGF1"})
         void testRSAPSSSignAndVerify(String algorithm) throws Exception {
+            assumeFalse(algorithm.startsWith("SHA1") && FIPSStatus.isFIPSEnabled(),
+                "SHA-1 signatures are not available in FIPS mode");
             Signature sig = Signature.getInstance(algorithm, PROVIDER_NAME);
             assertNotNull(sig);
 

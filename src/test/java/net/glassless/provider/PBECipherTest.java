@@ -3,6 +3,7 @@ package net.glassless.provider;
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -61,6 +62,8 @@ public class PBECipherTest {
                 "SHA512, 256"
         })
         void testPBECipher(String hashAlgorithm, int keySize) throws Exception {
+            assumeFalse("SHA1".equals(hashAlgorithm) && FIPSStatus.isFIPSEnabled(),
+                "PBEWithHmacSHA1 is not available in FIPS mode");
             String algorithm = String.format("PBEWithHmac%sAndAES_%d", hashAlgorithm, keySize);
 
             // Get cipher from our provider

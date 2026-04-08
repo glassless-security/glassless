@@ -4,6 +4,7 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -57,6 +58,8 @@ public class HmacTest {
                 "SHA512, 128, 64"
         })
         void testHmacSHA(String algorithm, int keyLength, int expectedMacLength) throws Exception {
+            assumeFalse("SHA1".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+                "HmacSHA1 is not available in FIPS mode");
             String macAlgorithm = "Hmac" + algorithm;
             Mac mac = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
             assertNotNull(mac);
@@ -86,6 +89,8 @@ public class HmacTest {
                 "SHA512, 64"
         })
         void testHmacIncrementalUpdate(String algorithm, int expectedMacLength) throws Exception {
+            assumeFalse("SHA1".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+                "HmacSHA1 is not available in FIPS mode");
             String macAlgorithm = "Hmac" + algorithm;
             Mac mac = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
 

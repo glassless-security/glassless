@@ -50,6 +50,7 @@
 
       <!-- Plugin versions -->
       <version.central-publishing-maven-plugin>0.10.0</version.central-publishing-maven-plugin>
+      <version.docker-maven-plugin>0.48.1</version.docker-maven-plugin>
       <version.exec-maven-plugin>3.5.0</version.exec-maven-plugin>
       <version.git-commit-id-maven-plugin>9.1.0</version.git-commit-id-maven-plugin>
       <version.maven-compiler-plugin>3.15.0</version.maven-compiler-plugin>
@@ -407,6 +408,72 @@
                      <waitUntil>published</waitUntil>
                      <waitMaxTime>60</waitMaxTime>
                   </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>fips</id>
+         <build>
+            <plugins>
+               <!-- Skip local tests — they run inside the FIPS container -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <version>${version.maven-surefire-plugin}</version>
+                  <configuration>
+                     <skipTests>true</skipTests>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>io.fabric8</groupId>
+                  <artifactId>docker-maven-plugin</artifactId>
+                  <version>${version.docker-maven-plugin}</version>
+                  <configuration>
+                     <images>
+                        <image>
+                           <name>glassless-fips:${project.version}</name>
+                           <build>
+                              <dockerFile>Containerfile.fips</dockerFile>
+                              <contextDir>${project.basedir}</contextDir>
+                           </build>
+                           <run>
+                              <wait>
+                                 <exit>0</exit>
+                                 <time>900000</time>
+                              </wait>
+                              <log>
+                                 <enabled>true</enabled>
+                                 <prefix>FIPS</prefix>
+                                 <color>cyan</color>
+                              </log>
+                           </run>
+                        </image>
+                     </images>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>build-fips-image</id>
+                        <goals>
+                           <goal>build</goal>
+                        </goals>
+                        <phase>pre-integration-test</phase>
+                     </execution>
+                     <execution>
+                        <id>start-fips-container</id>
+                        <goals>
+                           <goal>start</goal>
+                        </goals>
+                        <phase>integration-test</phase>
+                     </execution>
+                     <execution>
+                        <id>stop-fips-container</id>
+                        <goals>
+                           <goal>stop</goal>
+                        </goals>
+                        <phase>post-integration-test</phase>
+                     </execution>
+                  </executions>
                </plugin>
             </plugins>
          </build>

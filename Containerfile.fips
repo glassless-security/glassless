@@ -1,0 +1,24 @@
+FROM registry.access.redhat.com/ubi10/ubi
+
+# Install Java 25 and crypto-policy tools
+RUN dnf install -y java-25-openjdk-devel crypto-policies-scripts openssl git-core && \
+    dnf clean all
+
+# Enable FIPS crypto policy
+RUN update-crypto-policies --set FIPS
+
+# Verify FIPS is active
+RUN cat /etc/crypto-policies/state/current && \
+    openssl list -providers
+
+ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk
+
+WORKDIR /build
+COPY . .
+
+# Initialize a stub git repo so git-commit-id-maven-plugin works
+# (.git is excluded by .dockerignore to keep the image small)
+RUN git init && git add -A && \
+    git -c user.name=build -c user.email=build@localhost commit -m "container build" --allow-empty
+
+CMD ["./mvnw", "-B", "verify"]

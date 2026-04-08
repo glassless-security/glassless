@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
@@ -251,6 +252,7 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("Initialize with IvParameterSpec")
         void testInitWithIvParameterSpec() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(), "DESede is not available in FIPS mode");
             byte[] iv = new byte[8];
             for (int i = 0; i < 8; i++) iv[i] = (byte) (i + 1);
 
@@ -423,6 +425,8 @@ public class AlgorithmParametersTest {
         @Test
         @DisplayName("Initialize with PBEParameterSpec")
         void testInitWithPBEParameterSpec() throws Exception {
+            assumeFalse(FIPSStatus.isFIPSEnabled(),
+                "PBEWithHmacSHA1 is not available in FIPS mode");
             byte[] salt = new byte[16];
             for (int i = 0; i < 16; i++) salt[i] = (byte) i;
             int iterationCount = 10000;

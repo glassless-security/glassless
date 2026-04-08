@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -95,6 +96,7 @@ public class HybridModeIntegrationTest {
       @Test
       @DisplayName("Provider reports hybrid mode enabled")
       void testProviderReportsHybridModeEnabled() {
+         assumeFalse(FIPSStatus.isFIPSEnabled(), "Hybrid mode is disabled in FIPS mode");
          System.setProperty("glassless.hybrid.enabled", "true");
          HybridModeConfig.clearCache();
 
@@ -107,6 +109,7 @@ public class HybridModeIntegrationTest {
       @Test
       @DisplayName("SHA-256 delegates to JDK in hybrid mode")
       void testSHA256DelegatesInHybridMode() throws Exception {
+         assumeFalse(FIPSStatus.isFIPSEnabled(), "Hybrid mode is disabled in FIPS mode");
          System.setProperty("glassless.hybrid.enabled", "true");
          HybridModeConfig.clearCache();
 
@@ -126,6 +129,7 @@ public class HybridModeIntegrationTest {
       @Test
       @DisplayName("SHA-512 delegates to JDK in hybrid mode")
       void testSHA512DelegatesInHybridMode() throws Exception {
+         assumeFalse(FIPSStatus.isFIPSEnabled(), "Hybrid mode is disabled in FIPS mode");
          System.setProperty("glassless.hybrid.enabled", "true");
          HybridModeConfig.clearCache();
 
@@ -145,6 +149,7 @@ public class HybridModeIntegrationTest {
       @Test
       @DisplayName("HmacSHA256 delegates to JDK in hybrid mode")
       void testHmacSHA256DelegatesInHybridMode() throws Exception {
+         assumeFalse(FIPSStatus.isFIPSEnabled(), "Hybrid mode is disabled in FIPS mode");
          System.setProperty("glassless.hybrid.enabled", "true");
          HybridModeConfig.clearCache();
 
@@ -164,6 +169,7 @@ public class HybridModeIntegrationTest {
       @Test
       @DisplayName("HmacSHA512 delegates to JDK in hybrid mode")
       void testHmacSHA512DelegatesInHybridMode() throws Exception {
+         assumeFalse(FIPSStatus.isFIPSEnabled(), "Hybrid mode is disabled in FIPS mode");
          System.setProperty("glassless.hybrid.enabled", "true");
          HybridModeConfig.clearCache();
 

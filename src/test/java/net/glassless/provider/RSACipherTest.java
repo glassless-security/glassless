@@ -11,6 +11,7 @@ import java.security.Security;
 
 import javax.crypto.Cipher;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -108,6 +109,8 @@ public class RSACipherTest {
          "SHA-256, 4096, 100"
       })
       void testRSAOAEPPadding(String hash, int keySize, int plaintextSize) throws Exception {
+         Assumptions.assumeFalse("SHA-1".equals(hash) && FIPSStatus.isFIPSEnabled(),
+            "RSA OAEP with SHA-1 is not available in FIPS mode");
          KeyPair keyPair = keySize == 2048 ? keyPair2048 : keyPair4096;
          String algorithm = String.format("RSA/ECB/OAEPWith%sAndMGF1Padding", hash);
 

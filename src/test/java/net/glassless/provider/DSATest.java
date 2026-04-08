@@ -22,6 +22,7 @@ import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -197,6 +198,7 @@ public class DSATest {
         @Test
         @DisplayName("SHA1withDSA sign and verify")
         void testSHA1withDSA() throws Exception {
+            Assumptions.assumeFalse(FIPSStatus.isFIPSEnabled(), "SHA1withDSA is not available in FIPS mode");
             Signature sig = Signature.getInstance("SHA1withDSA", PROVIDER_NAME);
 
             // Sign

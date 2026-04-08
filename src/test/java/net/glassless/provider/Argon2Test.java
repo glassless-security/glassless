@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
@@ -28,6 +29,7 @@ public class Argon2Test {
 
    @BeforeAll
    public static void setUp() {
+      assumeFalse(FIPSStatus.isFIPSEnabled(), "Argon2 is not available in FIPS mode");
       Security.addProvider(new GlaSSLessProvider());
    }
 

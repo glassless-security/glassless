@@ -24,6 +24,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAKeyGenParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +46,8 @@ public class KeyPairGeneratorTest {
         @ParameterizedTest(name = "RSA {0}-bit key")
         @ValueSource(ints = {1024, 2048, 3072, 4096})
         void testRSAKeyGeneration(int keySize) throws Exception {
+            Assumptions.assumeFalse(keySize < 2048 && FIPSStatus.isFIPSEnabled(),
+               "RSA keys smaller than 2048 bits are not allowed in FIPS mode");
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", PROVIDER_NAME);
             assertNotNull(keyGen);
 

@@ -3,12 +3,14 @@ package net.glassless.provider;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.Security;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
@@ -24,6 +26,12 @@ public class SHADigestTest {
    @BeforeAll
    static void setUp() {
       Security.addProvider(new GlaSSLessProvider());
+   }
+
+   @BeforeEach
+   void checkFIPSAvailability() {
+      assumeFalse("SHA-1".equals(algorithm) && FIPSStatus.isFIPSEnabled(),
+         "SHA-1 is not available in FIPS mode");
    }
 
    @Test

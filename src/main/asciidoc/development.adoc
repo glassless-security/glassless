@@ -171,6 +171,24 @@ mvn test -Dtest=MLKEMTest
 mvn test -Dtest=MLKEMTest -Dsurefire.useFile=false
 ----
 
+=== FIPS Mode Testing
+
+GlaSSLess can be tested in a real FIPS-enabled environment using a UBI 10 container with `update-crypto-policies --set FIPS`.
+This requires Docker or Podman.
+
+[source,bash]
+----
+# Run tests in FIPS mode via Maven (uses fabric8 docker-maven-plugin)
+mvn verify -Pfips
+
+# Or build and run the container directly
+docker build -f Containerfile.fips -t glassless-fips .
+docker run --rm glassless-fips
+----
+
+The `fips` profile builds a UBI 10 container with Java 25 and FIPS crypto policy enabled, then runs the full test suite inside it.
+Non-FIPS algorithms (MD5, SHA-1, DESede, ChaCha20-Poly1305, SCRYPT, etc.) are automatically skipped via JUnit assumptions.
+
 === OpenJDK jtreg Tests
 
 GlaSSLess is validated against the OpenJDK jtreg test suite, including TLS/JSSE compliance tests. See <<tls.adoc#,TLS Compliance>> for details.

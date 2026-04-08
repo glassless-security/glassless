@@ -3,6 +3,7 @@ package net.glassless.provider;
 import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -18,6 +19,7 @@ public class MD5DigestTest {
 
    @BeforeAll
    public static void setUp() {
+      assumeFalse(FIPSStatus.isFIPSEnabled(), "MD5 is not available in FIPS mode");
       Security.addProvider(new GlaSSLessProvider());
    }
 

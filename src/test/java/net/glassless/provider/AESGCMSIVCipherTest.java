@@ -34,6 +34,8 @@ public class AESGCMSIVCipherTest {
    }
 
    private static void assumeGcmSivAvailable() {
+      assumeTrue(!FIPSStatus.isFIPSEnabled(),
+         "AES-GCM-SIV is not available in FIPS mode");
       assumeTrue(OpenSSLCrypto.isAlgorithmAvailable("CIPHER", "aes-128-gcm-siv"),
          "AES-GCM-SIV requires OpenSSL 3.2+");
    }
