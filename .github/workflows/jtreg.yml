@@ -1,0 +1,147 @@
+name: jtreg Interoperability Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  jtreg:
+    name: "jtreg (${{ matrix.suite }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: javax/crypto
+            path: test/jdk/javax/crypto
+          - suite: java/security
+            path: test/jdk/java/security
+          - suite: sun/security/pkcs12
+            path: test/jdk/sun/security/pkcs12
+          - suite: javax/net/ssl
+            path: test/jdk/javax/net/ssl
+          - suite: sun/security/ssl
+            path: test/jdk/sun/security/ssl
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - name: Configure OpenJDK submodule
+        run: |
+          cd openjdk-jdk
+          git fetch --depth 1 origin tag jdk-25-ga
+          git checkout jdk-25-ga
+          git sparse-checkout init --cone
+          git sparse-checkout set \
+            test/jdk/java/security \
+            test/jdk/javax/crypto \
+            test/jdk/javax/net/ssl \
+            test/jdk/sun/security/pkcs12 \
+            test/jdk/sun/security/provider \
+            test/jdk/sun/security/ssl \
+            test/lib
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build GlaSSLess
+        run: mvn -B package -DskipTests -q
+
+      - name: Cache jtreg
+        id: cache-jtreg
+        uses: actions/cache@v5
+        with:
+          path: target/jtreg/jtreg
+          key: jtreg-8.2.1+1-v1
+
+      - name: Download jtreg
+        if: steps.cache-jtreg.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p target/jtreg
+          # Build from source since pre-built binaries are not reliably available
+          git clone --depth 1 https://github.com/openjdk/jtreg.git target/jtreg/jtreg-src
+          cd target/jtreg/jtreg-src
+          bash make/build.sh --jdk "$JAVA_HOME"
+          mv build/images/jtreg ../jtreg
+
+      - name: Create security properties
+        run: |
+          mkdir -p target/jtreg
+          {
+            echo "security.provider.1=net.glassless.provider.GlaSSLessProvider"
+            grep "^security\.provider\." "$JAVA_HOME/conf/security/java.security" \
+              | sort -t. -k3 -n \
+              | while IFS='=' read -r key value; do
+                  num="${key##*.}"
+                  echo "security.provider.$((num + 1))=$value"
+                done
+          } > target/jtreg/glassless-security.properties
+
+      - name: Find GlaSSLess JAR
+        id: jar
+        run: |
+          JAR=$(find target -maxdepth 1 -name 'glassless-provider-*.jar' \
+            -not -name '*-sources.jar' -not -name '*-javadoc.jar' -not -name '*-docs.jar' -not -name '*-asciidoc.jar' | head -1)
+          echo "path=$JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Patch TEST.ROOT for sparse checkout
+        run: sed -i 's/^groups=/#groups=/' openjdk-jdk/test/jdk/TEST.ROOT
+
+      - name: Run jtreg tests (${{ matrix.suite }})
+        run: |
+          cd openjdk-jdk
+          ../target/jtreg/jtreg/bin/jtreg \
+            -jdk:"$JAVA_HOME" \
+            -agentvm \
+            -conc:auto \
+            -verbose:summary \
+            -w ../target/jtreg/work \
+            -r ../target/jtreg/report \
+            -timeout:4 \
+            -vmoptions:"--enable-native-access=ALL-UNNAMED --module-path=$(cd .. && pwd)/${{ steps.jar.outputs.path }} --add-modules=net.glassless.provider -Djava.security.properties=$(cd .. && pwd)/target/jtreg/glassless-security.properties" \
+            ${{ matrix.path }} \
+            || true
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "## jtreg Results: ${{ matrix.suite }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f target/jtreg/report/text/summary.txt ]; then
+            TOTAL=$(wc -l < target/jtreg/report/text/summary.txt)
+            PASSED=$(grep -c "^Passed" target/jtreg/report/text/summary.txt || true)
+            FAILED=$(grep -c "^Failed\|^Error" target/jtreg/report/text/summary.txt || true)
+            echo "- **Total:** $TOTAL" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Passed:** $PASSED" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Failed:** $FAILED" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$FAILED" -gt 0 ]; then
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              echo "### Failed tests" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              grep "^Failed\|^Error" target/jtreg/report/text/summary.txt >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "No results found." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload jtreg report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: jtreg-report-${{ matrix.suite }}
+          path: |
+            target/jtreg/report/
+            target/jtreg/work/
+          retention-days: 7
