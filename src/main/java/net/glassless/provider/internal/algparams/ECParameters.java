@@ -144,6 +144,7 @@ public class ECParameters extends AlgorithmParametersSpi {
          case "secp256r1", "p-256", "prime256v1" -> "1.2.840.10045.3.1.7";
          case "secp384r1", "p-384" -> "1.3.132.0.34";
          case "secp521r1", "p-521" -> "1.3.132.0.35";
+         case "secp256k1" -> "1.3.132.0.10";
          case "secp224r1", "p-224" -> "1.3.132.0.33";
          case "secp192r1", "p-192", "prime192v1" -> "1.2.840.10045.3.1.1";
          default -> throw new IllegalArgumentException("Unknown curve: " + name);
@@ -155,6 +156,7 @@ public class ECParameters extends AlgorithmParametersSpi {
          case "1.2.840.10045.3.1.7" -> "secp256r1";
          case "1.3.132.0.34" -> "secp384r1";
          case "1.3.132.0.35" -> "secp521r1";
+         case "1.3.132.0.10" -> "secp256k1";
          case "1.3.132.0.33" -> "secp224r1";
          case "1.2.840.10045.3.1.1" -> "secp192r1";
          default -> throw new IllegalArgumentException("Unknown OID: " + oid);
