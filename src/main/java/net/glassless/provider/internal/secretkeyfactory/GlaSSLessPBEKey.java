@@ -14,7 +14,7 @@ public class GlaSSLessPBEKey implements PBEKey {
    @Serial
    private static final long serialVersionUID = 1L;
 
-   private char[] password;
+   private final char[] password;
    private final String algorithm;
 
    GlaSSLessPBEKey(char[] password, String algorithm) {

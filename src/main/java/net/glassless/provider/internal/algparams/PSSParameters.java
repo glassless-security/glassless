@@ -138,11 +138,11 @@ public class PSSParameters extends AlgorithmParametersSpi {
                case 0 -> // hashAlgorithm
                   this.mdName = parseAlgorithmIdentifier(der, offset, len);
                case 1 -> // maskGenAlgorithm
-                  parseMGFAlgorithm(der, offset, len);
+                  parseMGFAlgorithm(offset, len);
                case 2 -> // saltLength
-                  this.saltLen = parseInteger(der, offset, len);
+                  this.saltLen = parseInteger(der, offset);
                case 3 -> // trailerField
-                  this.trailerField = parseInteger(der, offset, len);
+                  this.trailerField = parseInteger(der, offset);
                default ->
                   offset[0] += len;
             }
@@ -170,14 +170,14 @@ public class PSSParameters extends AlgorithmParametersSpi {
    }
 
    @SuppressWarnings("UnusedVariable")
-   private void parseMGFAlgorithm(byte[] der, int[] offset, int len) {
+   private void parseMGFAlgorithm(int[] offset, int len) {
       int startOffset = offset[0];
       this.mgfName = "MGF1";
       offset[0] = startOffset + len;
    }
 
    @SuppressWarnings("UnusedVariable")
-   private int parseInteger(byte[] der, int[] offset, int len) throws IOException {
+   private int parseInteger(byte[] der, int[] offset) throws IOException {
       if (der[offset[0]++] != 0x02) {
          throw new IOException("Expected INTEGER tag");
       }

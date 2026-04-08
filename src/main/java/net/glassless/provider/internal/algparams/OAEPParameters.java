@@ -142,7 +142,7 @@ public class OAEPParameters extends AlgorithmParametersSpi {
                case 0 -> // hashAlgorithm
                   this.mdName = parseAlgorithmIdentifier(der, offset, len);
                case 1 -> // maskGenAlgorithm
-                  parseMGFAlgorithm(der, offset, len);
+                  parseMGFAlgorithm(offset, len);
                case 2 -> // pSourceAlgorithm
                   // Skip for now, use default
                   offset[0] += len;
@@ -175,7 +175,7 @@ public class OAEPParameters extends AlgorithmParametersSpi {
    }
 
    @SuppressWarnings("UnusedVariable")
-   private void parseMGFAlgorithm(byte[] der, int[] offset, int len) throws IOException {
+   private void parseMGFAlgorithm(int[] offset, int len) throws IOException {
       int startOffset = offset[0];
       // For MGF1, the parameters contain the hash algorithm
       this.mgfName = "MGF1";

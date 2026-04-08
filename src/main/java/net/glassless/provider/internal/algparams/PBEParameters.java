@@ -28,11 +28,6 @@ public class PBEParameters extends AlgorithmParametersSpi {
    private String algorithmName;
    private byte[] rawDER; // Store original DER for faithful re-encoding
 
-   // PBKDF2 OID: 1.2.840.113549.1.5.12
-   private static final byte[] PBKDF2_OID = {
-      0x2A, (byte) 0x86, 0x48, (byte) 0x86, (byte) 0xF7, 0x0D, 0x01, 0x05, 0x0C
-   };
-
    // PRF (HMAC) OID prefix: 1.2.840.113549.2.*
    private static final byte[] HMAC_OID_PREFIX = {
       0x2A, (byte) 0x86, 0x48, (byte) 0x86, (byte) 0xF7, 0x0D, 0x02
@@ -265,7 +260,7 @@ public class PBEParameters extends AlgorithmParametersSpi {
       }
 
       // Construct the algorithm name
-      if (hmacName != null && cipherName != null) {
+      if (cipherName != null) {
          this.algorithmName = "PBEWith" + hmacName + "And" + cipherName;
       }
    }

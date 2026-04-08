@@ -390,7 +390,7 @@ abstract class AbstractCipher extends CipherSpi {
          }
 
          // Step 2: Finalize the cipher operation with EVP_Final_ex
-         int finalCiphertextLen = 0;
+         int finalCiphertextLen;
          MemorySegment tagSegment = MemorySegment.NULL;
 
 

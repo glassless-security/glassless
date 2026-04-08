@@ -81,7 +81,7 @@ abstract class AbstractPBECipher extends AbstractCipher {
       // Extract salt and iteration count from params
       byte[] salt;
       int iterationCount;
-      AlgorithmParameterSpec ivSpec = null;
+      AlgorithmParameterSpec ivSpec;
 
       if (params instanceof PBEParameterSpec pbeParams) {
          salt = pbeParams.getSalt();
