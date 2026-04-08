@@ -171,6 +171,19 @@ mvn test -Dtest=MLKEMTest
 mvn test -Dtest=MLKEMTest -Dsurefire.useFile=false
 ----
 
+=== OpenJDK jtreg Tests
+
+GlaSSLess is validated against the OpenJDK jtreg test suite, including TLS/JSSE compliance tests. See <<tls.adoc#,TLS Compliance>> for details.
+
+[source,bash]
+----
+# Run all jtreg tests (crypto + TLS)
+./scripts/run-jtreg.sh
+
+# Run TLS tests only
+./scripts/run-jtreg.sh test/jdk/javax/net/ssl test/jdk/sun/security/ssl
+----
+
 === Using Assumptions
 
 Use `Assumptions.assumeTrue()` for optional features:

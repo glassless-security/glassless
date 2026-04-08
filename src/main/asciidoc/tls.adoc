@@ -1,0 +1,170 @@
+= TLS Compliance
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+GlaSSLess is validated against the OpenJDK JSSE (Java Secure Socket Extension) jtreg test suite to ensure correct interoperability with TLS, including TLS 1.3.
+
+== How It Works
+
+GlaSSLess is a JCA (Java Cryptography Architecture) _provider_. It does not implement TLS itself -- JSSE handles the TLS protocol, state machine, and record layer. However, JSSE delegates all underlying cryptographic operations to the JCA provider framework. When GlaSSLess is installed as the highest-priority provider, JSSE's TLS stack uses GlaSSLess for:
+
+[cols="1,2"]
+|===
+|TLS Function |JCA Service
+
+|Key Exchange |KeyAgreement (ECDH, X25519, X448), KeyPairGenerator (EC, RSA, DH)
+|Authentication |Signature (ECDSA, RSA-PSS, EdDSA), KeyFactory, CertificateFactory
+|Record Protection |Cipher (AES-GCM, AES-CBC, ChaCha20-Poly1305)
+|Integrity |MessageDigest (SHA-256, SHA-384), Mac (HMAC)
+|Key Derivation |KDF (HKDF, TLS 1.3 KDF)
+|Random |SecureRandom
+|Certificate Storage |KeyStore (PKCS12)
+|===
+
+This means running the JSSE jtreg tests with GlaSSLess validates that all of these cryptographic building blocks work correctly when composed together in a real TLS implementation.
+
+== Test Infrastructure
+
+The test suite uses https://openjdk.org/jtreg/[jtreg], the OpenJDK regression test harness. Tests are sourced from the https://github.com/openjdk/jdk[OpenJDK] repository via a Git submodule with sparse checkout.
+
+=== Running Locally
+
+[source,bash]
+----
+# Run all tests (crypto + TLS)
+./scripts/run-jtreg.sh
+
+# Run TLS tests only
+./scripts/run-jtreg.sh test/jdk/javax/net/ssl
+
+# Run JSSE internal implementation tests
+./scripts/run-jtreg.sh test/jdk/sun/security/ssl
+
+# Run a specific TLS test
+./scripts/run-jtreg.sh test/jdk/javax/net/ssl/TLSv13
+----
+
+=== CI Integration
+
+TLS tests are included in the `jtreg.yml` GitHub Actions workflow and run automatically on every push and pull request. Results are uploaded as artifacts with HTML reports.
+
+== Test Coverage
+
+The JSSE test suite covers the following areas:
+
+[cols="2,1,3"]
+|===
+|Test Directory |Tests |Coverage
+
+|`javax/net/ssl/TLSv13/` |3 |TLS 1.3 handshake, HelloRetryRequest key shares, out-of-sequence CCS
+|`javax/net/ssl/TLSv12/` |7 |TLS 1.2 protocol filtering, signature algorithms, short key rejection
+|`javax/net/ssl/TLSCommon/` |6 |Cross-version data exchange, handshake, EdDSA, concurrent access
+|`javax/net/ssl/compatibility/` |4 |ALPN, basic connect, HelloRetryRequest, SNI interop
+|`javax/net/ssl/ALPN/` |3 |Application-Layer Protocol Negotiation (SSLEngine, SSLSocket, SSLServerSocket)
+|`javax/net/ssl/ServerName/` |13 |Server Name Indication (SNI) with SSLEngine and SSLSocket
+|`javax/net/ssl/SSLEngine/` |14 |SSLEngine operations, large payloads, cipher suite negotiation, close handling
+|`javax/net/ssl/SSLSession/` |11 |Session management, resumption, timeout, cache size, renegotiation
+|`javax/net/ssl/Stapling/` |4 |OCSP stapling with SSLEngine and SSLSocket
+|`javax/net/ssl/HttpsURLConnection/` |8 |HTTPS client integration
+|`javax/net/ssl/DTLS/` |14 |Datagram TLS handshake, retransmission, reordering, cookie validation
+|`javax/net/ssl/TLS/` |10 |General TLS protocol and cipher suite tests
+|`javax/net/ssl/TLSv11/` |5 |TLS 1.1 block and stream ciphers
+|`sun/security/ssl/` |225 |Internal JSSE implementation: SSLSocket, SSLEngine, cipher suites, signature schemes
+|===
+
+== TLS 1.3 Compliance
+
+All dedicated TLS 1.3 tests pass:
+
+[cols="2,3"]
+|===
+|Test |What It Validates
+
+|`ClientHelloKeyShares` |Correct key share generation in ClientHello (X25519, secp256r1, etc.)
+|`HRRKeyShares` |HelloRetryRequest triggers correct key share re-generation
+|`EngineOutOfSeqCCS` |Graceful handling of out-of-sequence ChangeCipherSpec messages
+|===
+
+Additionally, the following TLS 1.3 functionality is validated through cross-version and compatibility tests:
+
+* **TLS 1.3 session resumption with SNI** (`ResumeTLS13withSNI`) -- passed
+* **TLS 1.3 renegotiation rejection** (`RenegotiateTLS13`) -- passed
+* **TLS 1.3 concurrent client access** (`ConcurrentClientAccessTest`) -- passed
+* **TLS 1.3 certificate message validation** (`CertMsgCheck`) -- passed
+* **TLS 1.3 session context management** (`CheckSessionContext`) -- passed
+* **ALPN negotiation** (used exclusively in TLS 1.3 for HTTP/2) -- passed
+* **HelloRetryRequest interop** (`HrrTest`) -- passed
+
+== TLS 1.2 Compliance
+
+GlaSSLess passes TLS 1.2 tests covering:
+
+* AES-GCM cipher suites (the primary TLS 1.2 cipher suites in modern deployments)
+* AES-CBC cipher suites with NoPadding (used by JSSE for TLS record encryption)
+* RSA, ECDSA, and EdDSA authentication
+* ECDHE and DHE key exchange
+* Short/weak key rejection (`DisabledShortRSAKeys`, `DisabledShortDSAKeys`)
+* SSLEngine and SSLSocket data paths
+* Large payload handling (`LargePacket`)
+
+== Known Limitations
+
+=== secp256k1 Client Authentication
+
+Tests using `secp256k1` EC keys for TLS client authentication fail because JSSE does not include `secp256k1` in its list of supported TLS signature schemes. This is a JSSE limitation, not a GlaSSLess issue -- `secp256k1` is not a standard TLS named group (it is primarily used in cryptocurrency applications).
+
+Affected tests: `ClientAuth`, `ClientHelloProcessing`, `SSLSessionFinalizeTest`, `SSLSocketConsistentSNI`, `SSLSocketExplorerMatchedSNI`, `SSLSocketExplorerWithCliSNI`, `SSLSocketExplorerWithSrvSNI`, `HttpsURLConnectionLocalCertificateChain`
+
+=== Legacy DHE Key Agreement
+
+Some tests using legacy Diffie-Hellman key exchange with weak parameters fail. Modern TLS deployments use ECDHE exclusively, and these tests exercise configurations that are disabled by default in current JDK releases.
+
+Affected tests: `WeakCipherSuite`, `ShortRSAKey512`, `SignatureAlgorithms`, `UseCipherSuitesOrder`, `CheckTlsEngineResults`
+
+=== Legacy TLS Protocols (TLS 1.0/1.1)
+
+Tests that require TLS 1.0 or TLS 1.1 protocol features (specifically the `server_hello_done` handshake message, which was removed in TLS 1.3) fail when these protocols are disabled. TLS 1.0 and 1.1 are deprecated (RFC 8996) and disabled by default in modern JDK and OpenSSL configurations.
+
+Affected tests: `GenericBlockCipher`, `GenericStreamCipher`, `ProtocolFilter`, `ShortRSAKeyGCM`, `TestJSSEClientProtocol`, `TestJSSEServerProtocol`, `TestJSSEClientDefaultProtocol`, `TestJSSENoCommonProtocols`
+
+=== Test Infrastructure Errors
+
+Approximately 55 tests report "Error" status due to missing jtreg infrastructure dependencies (e.g., `VMProps.java` for conditional test execution, or `@modules` directives for internal JDK packages). These are test harness configuration issues, not GlaSSLess failures.
+
+== Algorithms Exercised by TLS
+
+The following GlaSSLess algorithms are exercised during TLS test execution:
+
+=== TLS 1.3
+
+[cols="1,2"]
+|===
+|Algorithm |Usage
+
+|AES-256-GCM |`TLS_AES_256_GCM_SHA384` cipher suite
+|AES-128-GCM |`TLS_AES_128_GCM_SHA256` cipher suite
+|ChaCha20-Poly1305 |`TLS_CHACHA20_POLY1305_SHA256` cipher suite
+|SHA-256, SHA-384 |Handshake transcript hash
+|HKDF-SHA256, HKDF-SHA384 |TLS 1.3 key derivation (Extract + Expand)
+|X25519 |Key exchange (default)
+|secp256r1, secp384r1 |ECDHE key exchange
+|ECDSA (SHA-256, SHA-384) |Server/client authentication
+|RSA-PSS (SHA-256) |Server/client authentication
+|EdDSA (Ed25519) |Server/client authentication
+|===
+
+=== TLS 1.2
+
+[cols="1,2"]
+|===
+|Algorithm |Usage
+
+|AES-128-GCM, AES-256-GCM |GCM cipher suites
+|AES-128-CBC, AES-256-CBC |CBC cipher suites (NoPadding mode)
+|SHA-256, SHA-384, SHA-1 |PRF and certificate verification
+|HMAC-SHA256, HMAC-SHA384 |Record MAC (CBC cipher suites)
+|ECDH (secp256r1, secp384r1) |Key exchange
+|RSA, ECDSA |Server/client authentication
+|===
