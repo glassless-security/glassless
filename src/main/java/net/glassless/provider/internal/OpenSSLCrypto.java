@@ -45,6 +45,7 @@ public class OpenSSLCrypto {
    private static MethodHandle EVP_CIPHER_fetch;
    private static MethodHandle EVP_CIPHER_free;
    private static MethodHandle EVP_CIPHER_CTX_ctrl;
+   private static MethodHandle EVP_CIPHER_CTX_set_padding_handle;
    private static MethodHandle EVP_CIPHER_get_iv_length;
    private static MethodHandle EVP_CIPHER_get_key_length;
    private static MethodHandle EVP_CIPHER_get_block_size;
@@ -302,6 +303,10 @@ public class OpenSSLCrypto {
          EVP_CIPHER_CTX_ctrl = linker.downcallHandle(
             libcrypto.find("EVP_CIPHER_CTX_ctrl").orElseThrow(),
             FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
+         );
+         EVP_CIPHER_CTX_set_padding_handle = linker.downcallHandle(
+            libcrypto.find("EVP_CIPHER_CTX_set_padding").orElseThrow(),
+            FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
          );
          EVP_CIPHER_get_iv_length = linker.downcallHandle(
             libcrypto.find("EVP_CIPHER_get_iv_length").orElseThrow(),
@@ -898,8 +903,7 @@ public class OpenSSLCrypto {
    }
 
    public static int EVP_CIPHER_CTX_set_padding(MemorySegment ctx, int padding) throws Throwable {
-      // EVP_CTRL_SET_PADDING is 9 (defined in openssl/evp.h)
-      return EVP_CIPHER_CTX_ctrl(ctx, 9, padding, MemorySegment.NULL);
+      return (int) EVP_CIPHER_CTX_set_padding_handle.invokeExact(ctx, padding);
    }
 
    public static int EVP_CIPHER_get_iv_length(MemorySegment cipher) throws Throwable {

@@ -93,13 +93,7 @@ public class AESCipherTest {
             }
             byte[] encryptedBytes = cipher.doFinal(plaintext);
             assertNotNull(encryptedBytes);
-            int expectedLength = plaintext.length;
-            // For ECB and CBC, even with NoPadding, OpenSSL's EVP_EncryptFinal_ex often adds a block if input is a multiple of block size.
-            // This behavior is specific to some OpenSSL versions/configurations when working with EVP_CIPHER_CTX_set_padding(0).
-            if ((mode.equals("ECB") || mode.equals("CBC")) && (plaintext.length % 16 == 0)) {
-                expectedLength += 16;
-            }
-            assertEquals(expectedLength, encryptedBytes.length, "Encrypted length mismatch for " + algorithm);
+            assertEquals(plaintext.length, encryptedBytes.length, "Encrypted length mismatch for " + algorithm);
 
             // Decryption
             if (iv == null) {
