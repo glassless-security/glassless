@@ -4,7 +4,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>net.glassless</groupId>
    <artifactId>glassless-provider</artifactId>
-   <version>0.12-SNAPSHOT</version>
+   <version>0.12.0</version>
    <packaging>jar</packaging>
    <name>GlaSSLess Provider</name>
    <description>A JCA security provider that delegates cryptographic operations to OpenSSL via the Foreign Function and Memory API</description>
@@ -40,7 +40,7 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project.build.outputTimestamp>2026-04-02T12:22:22Z</project.build.outputTimestamp>
+      <project.build.outputTimestamp>2026-04-08T14:47:23Z</project.build.outputTimestamp>
       <maven.compiler.release>25</maven.compiler.release>
 
       <!-- Dependency versions -->
