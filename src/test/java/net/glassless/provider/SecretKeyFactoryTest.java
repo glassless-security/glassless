@@ -225,25 +225,6 @@ public class SecretKeyFactoryTest {
     }
 
     @Nested
-    @DisplayName("PBE SecretKeyFactory")
-    class PBETests {
-
-        @Test
-        @DisplayName("PBE key generation from password")
-        void testPBEKeyGeneration() throws Exception {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBE", PROVIDER_NAME);
-            assertNotNull(factory);
-
-            char[] password = "testPassword123!".toCharArray();
-            PBEKeySpec keySpec = new PBEKeySpec(password);
-            SecretKey key = factory.generateSecret(keySpec);
-
-            assertNotNull(key);
-            assertEquals("PBE", key.getAlgorithm());
-        }
-    }
-
-    @Nested
     @DisplayName("DESede SecretKeyFactory")
     class DESedeTests {
 

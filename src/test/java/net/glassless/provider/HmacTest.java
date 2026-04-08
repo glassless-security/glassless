@@ -4,7 +4,6 @@ import static net.glassless.provider.GlaSSLessProvider.PROVIDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -12,15 +11,11 @@ import java.security.Security;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -143,82 +138,7 @@ public class HmacTest {
         }
     }
 
-    @Nested
-    @DisplayName("HmacPBE variants")
-    class HmacPBETests {
-
-        @ParameterizedTest(name = "HmacPBE{0}")
-        @CsvSource({
-                "SHA1, 20",
-                "SHA224, 28",
-                "SHA256, 32",
-                "SHA384, 48",
-                "SHA512, 64"
-        })
-        void testHmacPBE(String algorithm, int expectedMacLength) throws Exception {
-            String macAlgorithm = "HmacPBE" + algorithm;
-            Mac mac = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
-            assertNotNull(mac);
-
-            // Create PBE key
-            String password = "testPassword123!";
-            PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBE");
-            SecretKey pbeKey = keyFactory.generateSecret(keySpec);
-
-            // Create PBE params
-            byte[] salt = generateSalt(16);
-            int iterationCount = 10000;
-            PBEParameterSpec pbeParams = new PBEParameterSpec(salt, iterationCount);
-
-            mac.init(pbeKey, pbeParams);
-            assertEquals(expectedMacLength, mac.getMacLength());
-
-            byte[] data = "Test data for PBE HMAC".getBytes(StandardCharsets.UTF_8);
-            byte[] result = mac.doFinal(data);
-
-            assertNotNull(result);
-            assertEquals(expectedMacLength, result.length);
-
-            // Verify consistency with same password, salt, and iteration count
-            Mac mac2 = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
-            mac2.init(pbeKey, pbeParams);
-            byte[] result2 = mac2.doFinal(data);
-            assertArrayEquals(result, result2);
-        }
-
-        @Test
-        @DisplayName("HmacPBESHA256 with different salts produces different results")
-        void testHmacPBEDifferentSalts() throws Exception {
-            String macAlgorithm = "HmacPBESHA256";
-            String password = "testPassword123!";
-            PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBE");
-            SecretKey pbeKey = keyFactory.generateSecret(keySpec);
-
-            byte[] salt1 = generateSalt(16);
-            byte[] salt2 = generateSalt(16);
-            int iterationCount = 10000;
-
-            byte[] data = "Test data".getBytes(StandardCharsets.UTF_8);
-
-            Mac mac1 = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
-            mac1.init(pbeKey, new PBEParameterSpec(salt1, iterationCount));
-            byte[] result1 = mac1.doFinal(data);
-
-            Mac mac2 = Mac.getInstance(macAlgorithm, PROVIDER_NAME);
-            mac2.init(pbeKey, new PBEParameterSpec(salt2, iterationCount));
-            byte[] result2 = mac2.doFinal(data);
-
-            // Different salts should produce different results
-            boolean different = false;
-            for (int i = 0; i < result1.length; i++) {
-                if (result1[i] != result2[i]) {
-                    different = true;
-                    break;
-                }
-            }
-           assertTrue(different, "Different salts should produce different MAC values");
-        }
-    }
+    // HmacPBE algorithms (HmacPBESHA1, HmacPBESHA256, etc.) use the PKCS#12 KDF
+    // (RFC 7292 Appendix B), not PBKDF2. These are left to SunJCE which implements
+    // the correct KDF.
 }

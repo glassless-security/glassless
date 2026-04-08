@@ -57,7 +57,10 @@ public abstract class AbstractPBKDF2SecretKeyFactory extends AbstractSecretKeyFa
 
       byte[] salt = pbeKeySpec.getSalt();
       if (salt == null) {
-         throw new InvalidKeySpecException("Salt cannot be null");
+         // Password-only PBEKeySpec — return a PBEKey wrapping the password.
+         // Key derivation will be deferred to the cipher's init method
+         // (e.g., when PKCS12KeyStore provides salt/iterations via AlgorithmParameters).
+         return new GlaSSLessPBEKey(password, algorithm);
       }
 
       int iterationCount = pbeKeySpec.getIterationCount();

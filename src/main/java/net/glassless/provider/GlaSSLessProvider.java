@@ -207,11 +207,6 @@ import net.glassless.provider.internal.lms.LMSKeyFactory;
 import net.glassless.provider.internal.lms.LMSSignature;
 import net.glassless.provider.internal.mac.AESCMACMac;
 import net.glassless.provider.internal.mac.AESGMACMac;
-import net.glassless.provider.internal.mac.HmacPBESHA1;
-import net.glassless.provider.internal.mac.HmacPBESHA224;
-import net.glassless.provider.internal.mac.HmacPBESHA256;
-import net.glassless.provider.internal.mac.HmacPBESHA384;
-import net.glassless.provider.internal.mac.HmacPBESHA512;
 import net.glassless.provider.internal.mac.HmacSHA1;
 import net.glassless.provider.internal.mac.HmacSHA224;
 import net.glassless.provider.internal.mac.HmacSHA256;
@@ -245,7 +240,6 @@ import net.glassless.provider.internal.mlkem.MLKEMKeyFactory;
 import net.glassless.provider.internal.mlkem.MLKEMKeyPairGenerator;
 import net.glassless.provider.internal.secretkeyfactory.AESSecretKeyFactory;
 import net.glassless.provider.internal.secretkeyfactory.DESedeSecretKeyFactory;
-import net.glassless.provider.internal.secretkeyfactory.PBESecretKeyFactory;
 import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA1AndAES_128;
 import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA1AndAES_256;
 import net.glassless.provider.internal.secretkeyfactory.PBEWithHmacSHA224AndAES_128;
@@ -877,14 +871,8 @@ public class GlaSSLessProvider extends Provider {
       putService(new Service(this, MAC, "HmacSHA3-512", HmacSHA3_512.class.getName(),
          List.of("OID.2.16.840.1.101.3.4.2.16", "2.16.840.1.101.3.4.2.16"), null));
 
-      // HmacPBE services
-      if (!fipsMode) {
-         putService(new Service(this, MAC, "HmacPBESHA1", HmacPBESHA1.class.getName(), null, null));
-      }
-      putService(new Service(this, MAC, "HmacPBESHA224", HmacPBESHA224.class.getName(), null, null));
-      putService(new Service(this, MAC, "HmacPBESHA256", HmacPBESHA256.class.getName(), null, null));
-      putService(new Service(this, MAC, "HmacPBESHA384", HmacPBESHA384.class.getName(), null, null));
-      putService(new Service(this, MAC, "HmacPBESHA512", HmacPBESHA512.class.getName(), null, null));
+      // HmacPBE algorithms use the PKCS#12 KDF (RFC 7292 Appendix B),
+      // not PBKDF2. These are left to SunJCE which implements the correct KDF.
 
       // CMAC and GMAC - FIPS approved
       putService(new Service(this, MAC, "AESCMAC", AESCMACMac.class.getName(),
@@ -1307,9 +1295,12 @@ public class GlaSSLessProvider extends Provider {
       putService(new Service(this, SECRET_KEY_FACTORY, "PBKDF2WithHmacSHA3-512",
          PBKDF2WithHmacSHA3_512.class.getName(), null, null));
 
-      // PBE, AES, DESede SecretKeyFactory
+      // AES, DESede SecretKeyFactory
       if (!fipsMode) {
-         putService(new Service(this, SECRET_KEY_FACTORY, "PBE", PBESecretKeyFactory.class.getName(), null, null));
+         // Note: "PBE" SecretKeyFactory is NOT registered here.
+         // SunJCE's "PBE" is an alias for PBEWithMD5AndDES and returns keys
+         // with algorithm "PBEWithMD5AndDES" — GlaSSLess cannot replicate this
+         // because it does not implement MD5+DES PBE.
          putService(new Service(this, SECRET_KEY_FACTORY, "DESede", DESedeSecretKeyFactory.class.getName(),
             List.of("TripleDES"), null));
          // SCRYPT - NOT FIPS approved
